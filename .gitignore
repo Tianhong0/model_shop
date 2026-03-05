@@ -1,0 +1,11 @@
+/Web/mall-app/node_modules/
+/Web/mall-app/.hbuilderx/
+/referr/
+/.vscode/
+/.claude/
+/.idea/
+/Web/mall-app/dist/
+/Web/admin-app/dist/
+/Web/admin-app/node_modules/
+/Web/mall-app/.tmp-three161/
+/Web/mall-app/.venv/

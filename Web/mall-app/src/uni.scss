@@ -1,0 +1,17 @@
+/* uni.scss */
+@import 'uview-plus/theme.scss';
+@import 'uview-plus/index.scss';
+
+$uni-primary: #4f46e5;
+$uni-success: #10b981;
+$uni-warning: #f59e0b;
+$uni-error: #ef4444;
+$uni-text-color: #1e293b;
+$uni-text-color-grey: #64748b;
+$uni-bg-color: #f8fafc;
+$uni-border-radius-base: 12rpx;
+$uni-border-radius-lg: 24rpx;
+
+$home-bg-grad-start: #f8fafc;
+$home-bg-grad-end: #eef2ff;
+$home-card-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.08);

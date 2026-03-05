@@ -1,0 +1,70 @@
+  server:
+    port: 9999 # 后端端口
+
+  spring:
+    application:
+      name: 3DShop-backend
+    profiles:
+      active: dev
+    servlet:
+      multipart:
+      # 单个文件的最大限制（例如改为 10MB）
+        max-file-size: 1000MB
+      # 单次请求的总文件限制（如果有多个文件上传，这个值要比上面大）
+        max-request-size: 5000MB
+    mail:
+      host: smtp.163.com
+      port: 465
+      username: 15693096384@163.com
+      password: ZB8VL33TUWyfh693
+      protocol: smtp
+      properties:
+        mail:
+          smtp:
+            auth: true
+            ssl:
+              enable: true
+
+  mybatis-plus:
+    type-aliases-package: org.majun.backend.entity
+    configuration:
+      map-underscore-to-camel-case: true
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+  # JWT配置
+  jwt:
+    # 密钥（生产环境请修改为更安全的密钥）
+    secret: 3DShop-backend-secret-key-for-jwt-token-generation-please-change-in-production
+    # Token过期时间（毫秒），7天
+    expiration: 604800000
+    # Token头部前缀
+    header: Authorization
+    # Token前缀
+    prefix: "Bearer "
+
+  minio:
+    endpoint: http://192.168.1.22:9000
+    accessKey: admin
+    secretKey: password123
+    bucketName: shop
+
+  # 自定义切片工具配置
+  slicer:
+    # Slic3r 可执行文件在 WSL 中的路径
+    path: /usr/bin/slic3r
+    # 非原生切片格式(如glb/gltf/fbx等)转换工具路径(推荐 assimp)
+    converterPath: /usr/bin/assimp
+    # 切片工作目录
+    workDir: /home/tianhong/slicer/
+
+  octoprint:
+    authHeaderKey: X-Api-Key
+    authHeaderValue: "Rk_Nq4z1hQuUklUf5EB2WMWyweAV446Csw3zSyZlVK0"
+    connectTimeoutMs: 5000
+    readTimeoutMs: 15000
+    pollIntervalMs: 5000
+
+  delivery:
+    auto-ship-enabled: true
+    auto-track-enabled: true
+    auto-track-interval-ms: 60000

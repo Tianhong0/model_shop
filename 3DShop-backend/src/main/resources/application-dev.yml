@@ -1,0 +1,64 @@
+spring:
+  # MySQL 配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 注意：在 WSL 中，如果数据库装在 Windows 侧，url 可能需要指向 Windows 的 IP
+    # 如果数据库装在 WSL 内部，直接用 localhost 即可
+    url: jdbc:mysql://localhost:3306/model_shop_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 123456
+      database: 0
+      timeout: 5000 # 连接超时时间(ms)
+      lettuce:
+        pool:
+          max-active: 8 # 连接池最大连接数
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+
+  # RabbitMQ 配置 (3D打印任务异步处理)
+  rabbitmq:
+    host: localhost
+    port: 6672
+    username: admin
+    password: 123456
+    virtual-host: /
+
+slicer:
+  converterPath: /usr/bin/assimp
+
+payment:
+  alipay:
+    appId: "9021000159637350"
+    privateKey: "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDRz6RUcRatO3aJODlV6cYkandRB5YUKyCU/b4YyWQgZOwnJnOKsO4Z41gGV6OIEsMjPYJfOIAP2SUDSsTJI7hvJw09T4fCXhzH2uSJfYleg/gG4zfL58YkywLq7rqJXlvJAGtLCk+uGh+uNv9Km2TjlUqMVyjN4PCxc59GmwdibjIqQdNZjdyRM6IPNyNAQeyPQIOzifB2O8YsZH7TZZjidFPmt6EzUAqVHDnmnDWB95YiMefSMsbko1xv2gXWaUgbIV69epb8QImMCM9mzJGQJgMCdM4VF1u4peP+zdd6VFWl+acUvCfaYErGQ/9EA3YUuQYgLUtvJZTSv7W0PpvXAgMBAAECggEAD5Wg2zTbPlrgXyjx+VO4CBRwcHBj0XOyo96FNEohSda1Q+MzSeYCiaG9dBsmZoEeRYvYF0KXIJY8jZYML/SbSoZYEWnK58Ed2iqEN0I/5elfjwNprZe1vB3oRZMd//4mSzPgxF4rtP7zw3kKVXxdbho0w1/mBATlXAj+l7wEPGdYm1URtsLeTe6+Xx1/P6Zxr/Zdjcbao5XQZ+3DICf74LcsrOjHONiKGVrLPwlNJphmKNVPS0uM7OgiuNQgf/jzwAIRH6OmBcN3fPn3IeKVG2AS8TanDX9Wjxca1rko4cKAr8JZUNkvVrhUounIXQbDMk2O409vHjcxEM3G/tnRQQKBgQDrn4LLPhR6z1EdssEIqGJ7TvjHpdoy6mcVUwG6LRZVgdzggaQWmtgtae/sBnCa/1aoq6I7sg2TIuTy3UGw+//D1E/6PZjCa6Po9HcZ+sdkRQon3579zlbXHgEKIFPpNdHITPXnaX7GzOf6FNaqGWWCnK51f1SsJkKI8rGLHbtZGQKBgQDj9K0Yu/FwBO6zl8mzP9sqPEfdff5kBIzAHQFsnv58WKXkWaQMFnt+1Ku/KOx82xsaaffKYnemKjvNcJQN9XitPrqdamKwhSynTNE6yzhYhfIVi+2RyyYdnRSoVwJCrRaDIb4Qsnh6gqd328qOp9K87m41tcJoS7XbtFzZW8gKbwKBgBvDPbwI4ozd5KblKw2EGaaB1Zpglmcta1v93dQ7/8evd4EUhWsMb7BaLSTYVWhN8b4KCyGRhzvw/p0HKPhbmPVQDORlYZx25mdKdsYe4GOWJu4v0SICsATEykaRLJHr/33kY40SxxdRiXvT/L8qIuXS5FN/31AxaeGNBxJnPG3xAoGBANTW1HP+r4x/Hn0TIWG7IqBJznPxOwAZ+2045+aKgWSKxMH0LKaYq1AdtAp1ZHGjhqff/1u5GqxMTLAiCCsMYlOn+UgXV/QnNC01HTp/GqoUzpbtorD49Cq8Sthu/Q5SXG2tqLAgYztIGKNh1bvi2HJNURvXDKCi6DcuLW9JMfsDAoGBAKsH8evtcyieUvGtK1fSu/Ib5EjPLDc0WQQQkzRRYzH3WRNyhjxRT/sTCMn2R1sGPV7ZD/tPOFFJxBkclXZFqMFawaShkLobNA23Og3gUB/8XUCrGncda3T8brrOp11qOHjAFsJzG/U/1Qqvb0Lu0Px9TecbeUTe/IrYMRA4tc0l"
+    appCertPath: "classpath:cert/alipay/appPublicCert.crt"
+    alipayPublicCertPath: "classpath:cert/alipay/alipayPublicCert.crt"
+    alipayRootCertPath: "classpath:cert/alipay/alipayRootCert.crt"
+    gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+    notifyUrl: "https://119.84.246.217:40225/api/orders/pay/alipay/notify"
+    returnUrl: ""
+    sellerId: ""
+    signType: RSA2
+    charset: UTF-8
+    format: json
+    timeoutMinutes: 30
+
+octoprint:
+  authHeaderKey: X-Api-Key
+  authHeaderValue: ${OCTOPRINT_API_KEY:}
+  connectTimeoutMs: 5000
+  readTimeoutMs: 15000
+  pollIntervalMs: 5000
+
+delivery:
+  auto-ship-enabled: true
+  auto-track-enabled: true
+  auto-track-interval-ms: 60000
+
