@@ -37,17 +37,7 @@
 				</view>
 			</view>
 			
-			<view class="recommend-section">
-				<view class="sec-title">猜你喜欢</view>
-				<!-- 简单列举几个推荐 -->
-				<view class="rec-list">
-					<view class="rec-item" v-for="i in 2" :key="i">
-						<image src="https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=300" mode="aspectFill"></image>
-						<text>极简手机壳</text>
-						<text class="p">￥39 起</text>
-					</view>
-				</view>
-			</view>
+		
 		</scroll-view>
 
 		<!-- 结算栏 -->

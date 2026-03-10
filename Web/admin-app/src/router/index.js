@@ -106,6 +106,24 @@ const routes = [
         ]
       },
       {
+        path: 'used/listings',
+        name: 'UsedListingManage',
+        component: () => import('../views/used/ListingManage.vue'),
+        meta: { title: '二手商品管理', requiresAuth: true }
+      },
+      {
+        path: 'used/orders',
+        name: 'UsedOrderManage',
+        component: () => import('../views/used/OrderManage.vue'),
+        meta: { title: '二手订单管理', requiresAuth: true }
+      },
+      {
+        path: 'used/reports',
+        name: 'UsedReportManage',
+        component: () => import('../views/used/ReportManage.vue'),
+        meta: { title: '二手举报处理', requiresAuth: true }
+      },
+      {
         path: 'print-queue',
         name: 'PrintQueue',
         component: () => import('../views/print/Queue.vue'),

@@ -14,6 +14,7 @@ import org.majun.backend.dto.DeliveryShipRequest;
 import org.majun.backend.dto.DeliveryStatusUpdateRequest;
 import org.majun.backend.dto.DeliveryTrackAddRequest;
 import org.majun.backend.dto.DeliveryTrackSimulateRequest;
+import org.majun.backend.dto.UserNotificationCreateCommand;
 import org.majun.backend.entity.SysOrder;
 import org.majun.backend.entity.SysOrderDelivery;
 import org.majun.backend.entity.SysOrderDeliveryTrack;
@@ -23,6 +24,7 @@ import org.majun.backend.repository.SysOrderDeliveryRepository;
 import org.majun.backend.repository.SysOrderDeliveryTrackRepository;
 import org.majun.backend.repository.SysOrderRepository;
 import org.majun.backend.service.OrderDeliveryService;
+import org.majun.backend.service.UserNotificationService;
 import org.majun.backend.vo.DeliveryDetailVO;
 import org.majun.backend.vo.DeliveryListVO;
 import org.majun.backend.vo.DeliveryTrackVO;
@@ -50,6 +52,7 @@ public class OrderDeliveryServiceImpl implements OrderDeliveryService {
     private final SysOrderDeliveryRepository deliveryRepository;
     private final SysOrderDeliveryTrackRepository trackRepository;
     private final ObjectMapper objectMapper;
+    private final UserNotificationService userNotificationService;
 
     @Override
     public Long shipOrder(DeliveryShipRequest request) {
@@ -78,6 +81,7 @@ public class OrderDeliveryServiceImpl implements OrderDeliveryService {
 
         syncOrderStatus(order, DeliveryStatus.SHIPPED.getCode());
         insertTrack(delivery.getId(), "包裹已由" + request.getDeliveryCompany() + "揽收", delivery.getDeliveryTime(), "system");
+        notifyMallDelivery(order, delivery);
 
         log.info("发货成功, orderId: {}, deliveryId: {}", order.getId(), delivery.getId());
         return delivery.getId();
@@ -377,6 +381,23 @@ public class OrderDeliveryServiceImpl implements OrderDeliveryService {
             throw new BusinessException(ResultCode.NOT_FOUND, "订单不存在");
         }
         return order;
+    }
+
+    private void notifyMallDelivery(SysOrder order, SysOrderDelivery delivery) {
+        if (order == null || delivery == null || order.getUserId() == null) {
+            return;
+        }
+        UserNotificationCreateCommand command = new UserNotificationCreateCommand();
+        command.setUserId(order.getUserId());
+        command.setCategory(UserNotificationServiceImpl.CATEGORY_LOGISTICS);
+        command.setNotificationType(UserNotificationServiceImpl.TYPE_MALL_DELIVERY);
+        command.setTitle("商城商品已发货");
+        command.setContent("订单" + order.getOrderSn() + "已由" + delivery.getDeliveryCompany() + "发出，可查看物流进度");
+        command.setBizId(order.getId());
+        command.setBizNo(order.getOrderSn());
+        command.setRedirectUrl("/pages/user/logistics-detail?orderSn=" + order.getOrderSn());
+        command.setPopupRequired(true);
+        userNotificationService.createNotification(command);
     }
 
     private void validateOrderShippable(SysOrder order) {

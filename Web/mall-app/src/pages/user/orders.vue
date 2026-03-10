@@ -44,17 +44,21 @@
 							<button class="btn primary" @click.stop="handleAction('pay', order, index)">去支付</button>
 						</template>
 						<template v-else-if="order.status === 2">
-							<button class="btn" @click.stop="goLogistics(order)">查看物流</button>
+							<button class="btn" @click.stop="goLogistics(order)">{{ order.allowLogistics ? '查看物流' : '查看详情' }}</button>
 							<button class="btn primary" @click.stop="handleAction('confirm', order, index)">确认收货</button>
 						</template>
 						<template v-else-if="order.status === 3">
-							<button class="btn" @click.stop="handleAction('delete', order, index)">删除订单</button>
-							<button class="btn primary" :disabled="order.hasComment" :class="{ disabled: order.hasComment }" @click.stop="handleAction('comment', order, index)">{{ order.hasComment ? '已评价' : '立即评价' }}</button>
+							<button class="btn" @click.stop="handleAction(order.allowDelete ? 'delete' : 'detail', order, index)">{{ order.allowDelete ? '删除订单' : '查看详情' }}</button>
+							<button v-if="order.allowComment" class="btn primary" :disabled="order.hasComment" :class="{ disabled: order.hasComment }" @click.stop="handleAction('comment', order, index)">{{ order.hasComment ? '已评价' : '立即评价' }}</button>
+							<button v-else class="btn primary" @click.stop="goDetail(order)">再次查看</button>
 						</template>
 						<template v-else-if="order.status === 4">
-							<button class="btn" @click.stop="handleAction('delete', order, index)">删除订单</button>
+							<button class="btn" @click.stop="handleAction(order.allowDelete ? 'delete' : 'detail', order, index)">{{ order.allowDelete ? '删除订单' : '查看详情' }}</button>
 						</template>
 						<template v-else-if="order.status === 1">
+							<button class="btn" @click.stop="goDetail(order)">查看详情</button>
+						</template>
+						<template v-else>
 							<button class="btn" @click.stop="goDetail(order)">查看详情</button>
 						</template>
 					</view>
@@ -69,6 +73,7 @@ import { ref, computed, watch } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { ensureLoginOrRedirect } from '../../utils/auth'
 import { getMyOrdersApi, cancelOrderApi, deleteOrderApi, confirmOrderReceiveApi, getMyOrderCommentsApi } from '../../api/order'
+import { cancelUsedOrderApi, confirmUsedOrderApi, getMyBuyUsedOrderPageApi } from '../../api/used'
 
 const tabs = ['全部', '待付款', '待收货', '已完成', '已取消']
 const activeTab = ref(0)
@@ -110,14 +115,32 @@ const formatStatusText = (status) => {
 	}
 }
 
+const formatUsedStatusText = (status) => {
+	switch (Number(status)) {
+		case 0: return '待付款'
+		case 1: return '待发货'
+		case 2: return '待收货'
+		case 3: return '已完成'
+		case 4: return '已取消'
+		case 5: return '售后中'
+		default: return '未知状态'
+	}
+}
+
 const mapOrderItem = (record) => {
 	const totalPrice = Number(record?.orderPrice || 0).toFixed(2)
 	return {
+		orderType: 'normal',
+		orderKey: `normal-${record?.id || record?.orderSn || ''}`,
 		id: record?.id,
 		no: record?.orderSn || '',
 		status: Number(record?.orderStatus ?? -1),
 		statusText: formatStatusText(record?.orderStatus),
 		hasComment: false,
+		allowDelete: true,
+		allowComment: true,
+		allowLogistics: true,
+		sortTime: record?.createTime || record?.payTime || '',
 		totalPrice,
 		items: [
 			{
@@ -131,30 +154,89 @@ const mapOrderItem = (record) => {
 	}
 }
 
+const mapUsedOrderItem = (record) => {
+	const totalPrice = Number(record?.orderAmount || 0).toFixed(2)
+	const status = Number(record?.status ?? -1)
+	const sellerName = record?.sellerNickname ? `卖家：${record.sellerNickname}` : '二手交易订单'
+	return {
+		orderType: 'used',
+		orderKey: `used-${record?.id || record?.orderSn || ''}`,
+		id: record?.id,
+		no: record?.orderSn || '',
+		status,
+		statusText: formatUsedStatusText(status),
+		hasComment: true,
+		allowDelete: false,
+		allowComment: false,
+		allowLogistics: status === 2,
+		sortTime: record?.createTime || record?.payTime || '',
+		totalPrice,
+		items: [
+			{
+				name: record?.listingTitle || '二手商品订单',
+				params: sellerName,
+				price: totalPrice,
+				num: 1,
+				image: record?.coverUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=200'
+			}
+		]
+	}
+}
+
+const sortOrderList = (list = []) => {
+	return [...list].sort((a, b) => {
+		const aTime = a?.sortTime ? new Date(a.sortTime).getTime() : 0
+		const bTime = b?.sortTime ? new Date(b.sortTime).getTime() : 0
+		return bTime - aTime
+	})
+}
+
+const buildMainOrderQuery = () => ({
+	pageNum: 1,
+	pageSize: 100,
+	orderStatus: activeTab.value === 1
+		? 0
+		: activeTab.value === 3
+			? 3
+			: activeTab.value === 4
+				? 4
+				: undefined
+})
+
+const buildUsedOrderQuery = () => ({
+	pageNum: 1,
+	pageSize: 100,
+	status: activeTab.value === 1
+		? 0
+		: activeTab.value === 3
+			? 3
+			: activeTab.value === 4
+				? 4
+				: undefined
+})
+
 const loadOrders = async () => {
 	loading.value = true
 	try {
-		const query = {
-			pageNum: 1,
-			pageSize: 100,
-			orderStatus: activeTab.value === 1
-				? 0
-				: activeTab.value === 3
-					? 3
-					: activeTab.value === 4
-						? 4
-						: undefined
-		}
-		const result = await getMyOrdersApi(query)
-		const records = Array.isArray(result?.records) ? result.records : []
-		const mapped = records.map(mapOrderItem)
+		const [normalResult, usedResult] = await Promise.all([
+			getMyOrdersApi(buildMainOrderQuery()),
+			getMyBuyUsedOrderPageApi(buildUsedOrderQuery())
+		])
+		const normalRecords = Array.isArray(normalResult?.records) ? normalResult.records : []
+		const usedRecords = Array.isArray(usedResult?.records) ? usedResult.records : []
+		const mapped = sortOrderList([
+			...normalRecords.map(mapOrderItem),
+			...usedRecords.map(mapUsedOrderItem)
+		])
 
 		if (mapped.some(item => item.status === 3)) {
 			const commentData = await getMyOrderCommentsApi({ pageNum: 1, pageSize: 500 })
 			const commentRecords = Array.isArray(commentData?.records) ? commentData.records : []
 			const commentedOrderSet = new Set(commentRecords.map(item => String(item?.orderId || '')))
 			mapped.forEach(item => {
-				item.hasComment = commentedOrderSet.has(String(item.id || ''))
+				if (item.orderType === 'normal') {
+					item.hasComment = commentedOrderSet.has(String(item.id || ''))
+				}
 			})
 		}
 
@@ -179,12 +261,22 @@ const goDetail = (order) => {
 		uni.showToast({ title: '订单号无效', icon: 'none' })
 		return
 	}
+	if (order.orderType === 'used') {
+		uni.navigateTo({
+			url: `/pages/used/order-detail?id=${encodeURIComponent(String(order.id || ''))}&role=buy`
+		})
+		return
+	}
 	uni.navigateTo({
 		url: `/pages/user/order-detail?orderSn=${encodeURIComponent(order.no)}&id=${encodeURIComponent(order.id || '')}`
 	})
 }
 
 const goLogistics = (order) => {
+	if (order?.orderType === 'used') {
+		goDetail(order)
+		return
+	}
 	if (!order?.no) {
 		uni.showToast({ title: '订单号无效', icon: 'none' })
 		return
@@ -204,7 +296,11 @@ const handleAction = async (type, order, index) => {
 			success: async (res) => {
 				if (res.confirm) {
 					try {
-						await cancelOrderApi(order.id)
+						if (order.orderType === 'used') {
+							await cancelUsedOrderApi(order.id)
+						} else {
+							await cancelOrderApi(order.id)
+						}
 						uni.showToast({ title: '订单已取消', icon: 'success' })
 						loadOrders()
 					} catch (error) {
@@ -222,7 +318,11 @@ const handleAction = async (type, order, index) => {
 					return
 				}
 				try {
-					await confirmOrderReceiveApi(order.no)
+					if (order.orderType === 'used') {
+						await confirmUsedOrderApi(order.id)
+					} else {
+						await confirmOrderReceiveApi(order.no)
+					}
 					uni.showToast({ title: '已确认收货', icon: 'success' })
 					await loadOrders()
 				} catch (error) {
@@ -231,6 +331,10 @@ const handleAction = async (type, order, index) => {
 			}
 		})
 	} else if (type === 'delete') {
+		if (order.orderType === 'used') {
+			goDetail(order)
+			return
+		}
 		uni.showModal({
 			title: '提示',
 			content: '确认删除该订单吗？删除后不可恢复',
@@ -249,11 +353,17 @@ const handleAction = async (type, order, index) => {
 			}
 		})
 	} else if (type === 'comment') {
+		if (order.orderType === 'used') {
+			goDetail(order)
+			return
+		}
 		if (order?.hasComment) {
 			uni.showToast({ title: '该订单已评价', icon: 'none' })
 			return
 		}
 		uni.navigateTo({ url: `/pages/user/order-comment-create?orderId=${order.id}` })
+	} else if (type === 'detail') {
+		goDetail(order)
 	}
 }
 </script>

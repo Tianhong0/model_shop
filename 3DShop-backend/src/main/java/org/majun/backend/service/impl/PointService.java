@@ -26,6 +26,7 @@ import java.util.Objects;
 public class PointService {
 
     public static final String BIZ_ORDER_PAY = "ORDER_PAY";
+    public static final String BIZ_USED_ORDER_SELL = "USED_ORDER_SELL";
     public static final String BIZ_ORDER_POINT_DEDUCT = "ORDER_POINT_DEDUCT";
     public static final String BIZ_ORDER_POINT_REFUND = "ORDER_POINT_REFUND";
     public static final String BIZ_BOUNTY_RELEASE = "BOUNTY_RELEASE";
@@ -85,6 +86,13 @@ public class PointService {
         if (points <= 0) return;
         String bizNo = taskSn;
         increase(userId, points, BIZ_BOUNTY_RELEASE, bizNo, taskId, "悬赏验收结算奖励积分");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void rewardUsedOrderSell(Long userId, Long orderId, String orderSn, java.math.BigDecimal amount) {
+        int points = toRewardPoints(amount, ORDER_REWARD_RATE);
+        if (points <= 0) return;
+        increase(userId, points, BIZ_USED_ORDER_SELL, orderSn, orderId, "二手交易卖出奖励积分");
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -1,9 +1,13 @@
 <script>
 	import { hasValidLogin } from './utils/auth'
+	import { startNotificationRuntime, stopNotificationRuntime } from './utils/notificationRuntime'
 
 	export default {
 		onLaunch: function() {
 			console.log('App Launch')
+			if (hasValidLogin()) {
+				startNotificationRuntime()
+			}
 			if (hasValidLogin()) {
 				setTimeout(() => {
 					uni.switchTab({ url: '/pages/index/index' })
@@ -12,9 +16,15 @@
 		},
 		onShow: function() {
 			console.log('App Show')
+			if (hasValidLogin()) {
+				startNotificationRuntime()
+			} else {
+				stopNotificationRuntime()
+			}
 		},
 		onHide: function() {
 			console.log('App Hide')
+			stopNotificationRuntime()
 		}
 	}
 </script>

@@ -10,8 +10,14 @@
 					<text class="role">{{roleLabel}}</text>
 					<text class="id">ID: {{userInfo.id}}</text>
 				</view>
-				<view class="settings" @click="uni.navigateTo({ url: '/pages/user/settings' })">
-					<uni-icons type="settings" size="24" color="#fff"></uni-icons>
+				<view class="header-actions">
+					<view class="message-entry" @click="goMessageCenter">
+						<uni-icons type="email" size="24" color="#fff"></uni-icons>
+						<view v-if="messageUnread > 0" class="message-badge">{{ messageUnread > 99 ? '99+' : messageUnread }}</view>
+					</view>
+					<view class="settings" @click="uni.navigateTo({ url: '/pages/user/settings' })">
+						<uni-icons type="settings" size="24" color="#fff"></uni-icons>
+					</view>
 				</view>
 			</view>
 
@@ -77,13 +83,15 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onUnload } from '@dcloudio/uni-app'
 import { doLogout, ensureLoginOrRedirect } from '../../utils/auth'
 import { getStoredUserRole, isDesignerRole } from '../../utils/role'
 import { getWalletAccountApi } from '../../api/wallet'
 import { getPointAccountApi } from '../../api/point'
 import { getMyFavoriteModelIdsApi } from '../../api/model'
 import { getMyAfterSaleListApi, getMyOrdersApi } from '../../api/order'
+import { getMyBuyUsedOrderPageApi, getMyUsedAfterSalePageApi } from '../../api/used'
+import { refreshNotificationSummary, NOTIFICATION_SUMMARY_EVENT } from '../../utils/notificationRuntime'
 // #ifdef APP-PLUS
 import AppTabbar from '../../components/AppTabbar.vue'
 // #endif
@@ -99,6 +107,7 @@ const walletAmount = ref('0.00')
 const pointAmount = ref(0)
 const favoriteCount = ref(0)
 const printTaskCount = ref(0)
+const messageUnread = ref(0)
 
 const userRole = ref('user')
 const roleLabel = computed(() => (isDesignerRole(userRole.value) ? '设计者' : '普通用户'))
@@ -120,17 +129,37 @@ onShow(() => {
 	}
 	userRole.value = role
 	loadOverview()
+	refreshNotificationSummary()
 })
 
 const loadOverview = async () => {
 	await Promise.all([loadAssetOverview(), loadOrderOverview()])
 }
 
+const handleNotificationSummary = (summary = {}) => {
+	messageUnread.value = Number(summary?.totalUnread || 0)
+}
+
+uni.$on(NOTIFICATION_SUMMARY_EVENT, handleNotificationSummary)
+
+onUnload(() => {
+	uni.$off(NOTIFICATION_SUMMARY_EVENT, handleNotificationSummary)
+})
+
 const getPageTotal = (pageData) => {
 	const total = Number(pageData?.total)
 	if (Number.isFinite(total) && total >= 0) return total
 	const records = Array.isArray(pageData?.records) ? pageData.records : []
 	return records.length
+}
+
+const safePageTotal = async (loader) => {
+	try {
+		const result = await loader()
+		return getPageTotal(result)
+	} catch (_) {
+		return 0
+	}
 }
 
 const loadAssetOverview = async () => {
@@ -158,29 +187,32 @@ const orderBadge = ref({
 const orderStatus = computed(() => ([
 	{ name: '待付款', icon: 'wallet', badge: orderBadge.value.waitPay, status: 1 },
 	{ name: '待收货', icon: 'shop', badge: orderBadge.value.waitReceive, status: 2 },
-	{ name: '已完成', icon: 'checkbox', badge: orderBadge.value.finished, status: 3 },
+	{ name: '已完成', icon: 'checkbox', badge: 0, status: 3 },
 	{ name: '售后', icon: 'help', badge: orderBadge.value.afterSale, path: '/pages/user/after-sale-list' }
 ]))
 
 const loadOrderOverview = async () => {
 	try {
-		const [waitPayData, producingData, waitReceiveData, finishedData, afterSaleData] = await Promise.all([
-			getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 0 }),
-			getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 1 }),
-			getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 2 }),
-			getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 3 }),
-			getMyAfterSaleListApi({ pageNum: 1, pageSize: 1 })
+		const [waitPay, producing, waitReceiveMain, finishedMain, afterSaleMain, usedWaitPay, usedWaitShip, usedWaitReceive, usedFinished, usedAfterSale] = await Promise.all([
+			safePageTotal(() => getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 0 })),
+			safePageTotal(() => getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 1 })),
+			safePageTotal(() => getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 2 })),
+			safePageTotal(() => getMyOrdersApi({ pageNum: 1, pageSize: 1, orderStatus: 3 })),
+			safePageTotal(() => getMyAfterSaleListApi({ pageNum: 1, pageSize: 1 })),
+			safePageTotal(() => getMyBuyUsedOrderPageApi({ pageNum: 1, pageSize: 1, status: 0 })),
+			safePageTotal(() => getMyBuyUsedOrderPageApi({ pageNum: 1, pageSize: 1, status: 1 })),
+			safePageTotal(() => getMyBuyUsedOrderPageApi({ pageNum: 1, pageSize: 1, status: 2 })),
+			safePageTotal(() => getMyBuyUsedOrderPageApi({ pageNum: 1, pageSize: 1, status: 3 })),
+			safePageTotal(() => getMyUsedAfterSalePageApi({ pageNum: 1, pageSize: 1 }))
 		])
 
-		const waitPay = getPageTotal(waitPayData)
-		const producing = getPageTotal(producingData)
-		const waitReceive = getPageTotal(waitReceiveData)
-		const finished = getPageTotal(finishedData)
-		const afterSale = getPageTotal(afterSaleData)
+		const waitReceive = waitReceiveMain + usedWaitShip + usedWaitReceive
+		const finished = finishedMain + usedFinished
+		const afterSale = afterSaleMain + usedAfterSale
 
 		printTaskCount.value = producing
 		orderBadge.value = {
-			waitPay,
+			waitPay: waitPay + usedWaitPay,
 			waitReceive: producing + waitReceive,
 			finished,
 			afterSale
@@ -199,6 +231,7 @@ const loadOrderOverview = async () => {
 const menus = computed(() => {
 	const isDesigner = isDesignerRole(userRole.value)
 	const list = [
+		{ name: '二手好物广场', icon: 'shop', path: '/pages/used/index' },
 		{ name: isDesigner ? '悬赏任务广场' : '我的悬赏任务', icon: 'fire-filled', path: '/pages/reward/index' },
 		{ name: '我的帖子', icon: 'chat-filled', path: '/pages/community/my-posts' },
 		{ name: '我的互动', icon: 'heart-filled', path: '/pages/community/my-interactions' },
@@ -238,6 +271,10 @@ const goFavoriteModels = () => {
 
 const goPrintTasks = () => {
 	uni.navigateTo({ url: '/pages/user/orders?status=2' })
+}
+
+const goMessageCenter = () => {
+	uni.navigateTo({ url: '/pages/user/message-center' })
 }
 
 const handleLogout = () => {
@@ -296,7 +333,45 @@ const handleLogout = () => {
 		.id { font-size: 24rpx; opacity: 0.8; margin-top: 6rpx; display: block; }
 	}
 	.settings {
+		width: 64rpx;
+		height: 64rpx;
+		border-radius: 32rpx;
+		background: rgba(255, 255, 255, 0.14);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.header-actions {
 		margin-left: auto;
+		display: flex;
+		align-items: center;
+		gap: 18rpx;
+	}
+	.message-entry {
+		position: relative;
+		width: 64rpx;
+		height: 64rpx;
+		border-radius: 32rpx;
+		background: rgba(255, 255, 255, 0.14);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.message-badge {
+		position: absolute;
+		top: -8rpx;
+		right: -8rpx;
+		min-width: 34rpx;
+		height: 34rpx;
+		padding: 0 8rpx;
+		border-radius: 18rpx;
+		background: #ef4444;
+		color: #ffffff;
+		font-size: 18rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
 	}
 }
 

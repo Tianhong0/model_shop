@@ -88,12 +88,15 @@ public class SecurityConfig {
                     // 支付宝异步回调放行
                     .requestMatchers("/api/orders/pay/alipay/notify").permitAll()
                     .requestMatchers("/api/bounty/pay/alipay/notify").permitAll()
+                    .requestMatchers("/api/used/order/pay/alipay/notify").permitAll()
                     // 打印进度 WebSocket 握手放行
                     .requestMatchers("/ws/print/progress").permitAll()
                     // 售后协商 WebSocket 握手放行（连接内再做token鉴权）
                     .requestMatchers("/ws/after-sale/message").permitAll()
                        // 悬赏协商 WebSocket 握手放行（连接内再做token鉴权）
                        .requestMatchers("/ws/bounty/message").permitAll()
+                          // 二手私聊 WebSocket 握手放行（连接内再做token鉴权）
+                          .requestMatchers("/ws/used/message").permitAll()
                     // Spring Boot 错误端点放行，避免真实异常被二次401掩盖
                     .requestMatchers("/error").permitAll()
                         // Swagger UI 放行

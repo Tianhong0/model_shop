@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.majun.backend.common.ResultCode;
 import org.majun.backend.common.exception.BusinessException;
+import org.majun.backend.dto.UserNotificationCreateCommand;
 import org.majun.backend.dto.OrderCommentAdminQueryRequest;
 import org.majun.backend.dto.OrderCommentCreateRequest;
 import org.majun.backend.dto.OrderCommentLikeToggleRequest;
@@ -33,6 +34,7 @@ import org.majun.backend.repository.SysOrderCommentReplyRepository;
 import org.majun.backend.repository.SysOrderRepository;
 import org.majun.backend.repository.SysUserRepository;
 import org.majun.backend.service.OrderCommentService;
+import org.majun.backend.service.UserNotificationService;
 import org.majun.backend.vo.OrderCommentDetailVO;
 import org.majun.backend.vo.OrderCommentLikeToggleVO;
 import org.majun.backend.vo.OrderCommentListVO;
@@ -60,6 +62,7 @@ public class OrderCommentServiceImpl implements OrderCommentService {
     private final SysOrderRepository orderRepository;
     private final SysModelRepository modelRepository;
     private final SysUserRepository userRepository;
+    private final UserNotificationService userNotificationService;
 
     @Override
     public Long createComment(OrderCommentCreateRequest request, Long userId) {
@@ -303,6 +306,7 @@ public class OrderCommentServiceImpl implements OrderCommentService {
             orderCommentRepository.update(null, new UpdateWrapper<SysOrderComment>().eq("id", request.getCommentId())
                     .setSql("like_count = IFNULL(like_count, 0) + 1"));
             active = true;
+            notifyCommentLike(comment, userId);
         }
 
         return new OrderCommentLikeToggleVO(request.getCommentId(), active);
@@ -392,6 +396,7 @@ public class OrderCommentServiceImpl implements OrderCommentService {
             orderCommentReplyRepository.update(null, new UpdateWrapper<SysOrderCommentReply>().eq("id", request.getReplyId())
                     .setSql("like_count = IFNULL(like_count, 0) + 1"));
             active = true;
+            notifyCommentReplyLike(comment, reply, userId);
         }
 
         return new OrderCommentReplyLikeToggleVO(request.getReplyId(), active);
@@ -485,5 +490,54 @@ public class OrderCommentServiceImpl implements OrderCommentService {
 
     private double round2(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    private void notifyCommentLike(SysOrderComment comment, Long actorUserId) {
+        if (comment == null || Objects.equals(comment.getUserId(), actorUserId)) {
+            return;
+        }
+        SysUser actor = userRepository.selectById(actorUserId);
+        UserNotificationCreateCommand command = new UserNotificationCreateCommand();
+        command.setUserId(comment.getUserId());
+        command.setCategory(UserNotificationServiceImpl.CATEGORY_LIKE);
+        command.setNotificationType(UserNotificationServiceImpl.TYPE_ORDER_COMMENT_LIKE);
+        command.setTitle("商品评价收到新点赞");
+        command.setContent(resolveUserName(actor) + "点赞了你的商品评价");
+        command.setSenderId(actorUserId);
+        command.setSenderName(resolveUserName(actor));
+        command.setBizId(comment.getId());
+        command.setRedirectUrl("/pages/custom/comment-list?modelId=" + comment.getModelId());
+        userNotificationService.createNotification(command);
+    }
+
+    private void notifyCommentReplyLike(SysOrderComment comment, SysOrderCommentReply reply, Long actorUserId) {
+        if (reply == null || Objects.equals(reply.getUserId(), actorUserId)) {
+            return;
+        }
+        SysUser actor = userRepository.selectById(actorUserId);
+        UserNotificationCreateCommand command = new UserNotificationCreateCommand();
+        command.setUserId(reply.getUserId());
+        command.setCategory(UserNotificationServiceImpl.CATEGORY_LIKE);
+        command.setNotificationType(UserNotificationServiceImpl.TYPE_ORDER_COMMENT_REPLY_LIKE);
+        command.setTitle("商品追评收到新点赞");
+        command.setContent(resolveUserName(actor) + "点赞了你在商品评价下的追评");
+        command.setSenderId(actorUserId);
+        command.setSenderName(resolveUserName(actor));
+        command.setBizId(reply.getId());
+        command.setRedirectUrl("/pages/custom/comment-list?modelId=" + (comment == null ? "" : comment.getModelId()));
+        userNotificationService.createNotification(command);
+    }
+
+    private String resolveUserName(SysUser user) {
+        if (user == null) {
+            return "用户";
+        }
+        if (StringUtils.hasText(user.getNickname())) {
+            return user.getNickname();
+        }
+        if (StringUtils.hasText(user.getUserName())) {
+            return user.getUserName();
+        }
+        return "用户";
     }
 }

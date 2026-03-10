@@ -80,6 +80,25 @@
             </el-menu-item>
           </el-sub-menu>
 
+          <el-sub-menu index="used-mgmt">
+            <template #title>
+              <el-icon><tickets /></el-icon>
+              <span>二手交易</span>
+            </template>
+            <el-menu-item index="/used/listings">
+              <el-icon><goods /></el-icon>
+              <span>商品管理</span>
+            </el-menu-item>
+            <el-menu-item index="/used/orders">
+              <el-icon><document /></el-icon>
+              <span>订单管理</span>
+            </el-menu-item>
+            <el-menu-item index="/used/reports">
+              <el-icon><warning /></el-icon>
+              <span>举报处理</span>
+            </el-menu-item>
+          </el-sub-menu>
+
           <el-sub-menu index="print-mgmt">
             <template #title>
               <el-icon><clock /></el-icon>

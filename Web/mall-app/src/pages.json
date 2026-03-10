@@ -141,6 +141,12 @@
 			}
 		},
 		{
+			"path": "pages/user/message-center",
+			"style": {
+				"navigationBarTitleText": "消息中心"
+			}
+		},
+		{
 			"path": "pages/user/designer-apply",
 			"style": {
 				"navigationBarTitleText": "申请成为设计者"
@@ -240,6 +246,60 @@
 			"path": "pages/reward/video-preview",
 			"style": {
 				"navigationBarTitleText": "视频预览"
+			}
+		},
+		{
+			"path": "pages/used/index",
+			"style": {
+				"navigationBarTitleText": "二手好物"
+			}
+		},
+		{
+			"path": "pages/used/detail",
+			"style": {
+				"navigationBarTitleText": "二手详情"
+			}
+		},
+		{
+			"path": "pages/used/publish",
+			"style": {
+				"navigationBarTitleText": "发布闲置"
+			}
+		},
+		{
+			"path": "pages/used/my-sales",
+			"style": {
+				"navigationBarTitleText": "我的出售"
+			}
+		},
+		{
+			"path": "pages/used/my-purchases",
+			"style": {
+				"navigationBarTitleText": "我的购买"
+			}
+		},
+		{
+			"path": "pages/used/order-detail",
+			"style": {
+				"navigationBarTitleText": "二手订单详情"
+			}
+		},
+		{
+			"path": "pages/used/chat",
+			"style": {
+				"navigationBarTitleText": "商品沟通"
+			}
+		},
+		{
+			"path": "pages/used/report",
+			"style": {
+				"navigationBarTitleText": "举报反馈"
+			}
+		},
+		{
+			"path": "pages/used/after-sale-create",
+			"style": {
+				"navigationBarTitleText": "申请二手售后"
 			}
 		}
 	],

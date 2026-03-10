@@ -23,6 +23,7 @@ import org.majun.backend.entity.SysPostMedia;
 import org.majun.backend.entity.SysPostReply;
 import org.majun.backend.entity.SysPostReplyInteraction;
 import org.majun.backend.entity.SysUser;
+import org.majun.backend.dto.UserNotificationCreateCommand;
 import org.majun.backend.repository.SysPostCategoryRepository;
 import org.majun.backend.repository.SysPostInteractionRepository;
 import org.majun.backend.repository.SysPostMediaRepository;
@@ -31,6 +32,7 @@ import org.majun.backend.repository.SysPostReplyInteractionRepository;
 import org.majun.backend.repository.SysPostRepository;
 import org.majun.backend.repository.SysUserRepository;
 import org.majun.backend.service.CommunityService;
+import org.majun.backend.service.UserNotificationService;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.PostCategoryVO;
 import org.majun.backend.vo.PostDetailVO;
@@ -64,6 +66,7 @@ public class CommunityServiceImpl implements CommunityService {
     private final SysPostReplyInteractionRepository postReplyInteractionRepository;
     private final SysPostInteractionRepository postInteractionRepository;
     private final SysUserRepository userRepository;
+    private final UserNotificationService userNotificationService;
 
     @Override
     public List<PostCategoryVO> getCategoryList() {
@@ -322,6 +325,7 @@ public class CommunityServiceImpl implements CommunityService {
             postReplyRepository.update(null, new UpdateWrapper<SysPostReply>().eq("id", request.getReplyId())
                     .setSql("like_count = like_count + 1"));
             active = true;
+            notifyReplyLike(reply, post, userId);
         }
 
         return new PostReplyLikeToggleVO(request.getReplyId(), active);
@@ -357,6 +361,7 @@ public class CommunityServiceImpl implements CommunityService {
             postInteractionRepository.insert(interaction);
             incrementCounter(request.getPostId(), request.getInteractType());
             active = true;
+            notifyPostLike(post, request.getInteractType(), userId);
         }
 
         return new PostInteractionToggleVO(request.getPostId(), request.getInteractType(), active);
@@ -631,5 +636,48 @@ public class CommunityServiceImpl implements CommunityService {
         vo.setMediaType(media.getMediaType());
         vo.setSortOrder(media.getSortOrder());
         return vo;
+    }
+
+    private void notifyPostLike(SysPost post, Integer interactType, Long actorUserId) {
+        if (!Objects.equals(interactType, 1) || post == null || Objects.equals(post.getUserId(), actorUserId)) {
+            return;
+        }
+        SysUser actor = userRepository.selectById(actorUserId);
+        UserNotificationCreateCommand command = new UserNotificationCreateCommand();
+        command.setUserId(post.getUserId());
+        command.setCategory(UserNotificationServiceImpl.CATEGORY_LIKE);
+        command.setNotificationType(UserNotificationServiceImpl.TYPE_COMMUNITY_POST_LIKE);
+        command.setTitle("社区帖子收到新点赞");
+        command.setContent(resolveUserName(actor) + "点赞了你的帖子《" + post.getTitle() + "》");
+        command.setSenderId(actorUserId);
+        command.setSenderName(resolveUserName(actor));
+        command.setBizId(post.getId());
+        command.setRedirectUrl("/pages/community/post-detail?id=" + post.getId());
+        userNotificationService.createNotification(command);
+    }
+
+    private void notifyReplyLike(SysPostReply reply, SysPost post, Long actorUserId) {
+        if (reply == null || Objects.equals(reply.getUserId(), actorUserId)) {
+            return;
+        }
+        SysUser actor = userRepository.selectById(actorUserId);
+        UserNotificationCreateCommand command = new UserNotificationCreateCommand();
+        command.setUserId(reply.getUserId());
+        command.setCategory(UserNotificationServiceImpl.CATEGORY_LIKE);
+        command.setNotificationType(UserNotificationServiceImpl.TYPE_COMMUNITY_REPLY_LIKE);
+        command.setTitle("社区回复收到新点赞");
+        command.setContent(resolveUserName(actor) + "点赞了你在《" + (post == null ? "社区帖子" : post.getTitle()) + "》下的回复");
+        command.setSenderId(actorUserId);
+        command.setSenderName(resolveUserName(actor));
+        command.setBizId(reply.getId());
+        command.setRedirectUrl("/pages/community/post-detail?id=" + reply.getPostId());
+        userNotificationService.createNotification(command);
+    }
+
+    private String resolveUserName(SysUser user) {
+        if (user == null) {
+            return "用户";
+        }
+        return StringUtils.hasText(user.getNickname()) ? user.getNickname() : (StringUtils.hasText(user.getUserName()) ? user.getUserName() : "用户");
     }
 }
