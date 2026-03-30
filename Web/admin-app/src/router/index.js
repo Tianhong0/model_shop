@@ -218,6 +218,18 @@ const routes = [
         name: 'EventParticipationManage',
         component: () => import('../views/event/ParticipationManage.vue'),
         meta: { title: '报名管理', requiresAuth: true }
+      },
+      {
+        path: 'group-buy/activities',
+        name: 'GroupBuyActivityList',
+        component: () => import('../views/group-buy/ActivityList.vue'),
+        meta: { title: '拼团活动', requiresAuth: true }
+      },
+      {
+        path: 'group-buy/batch-discount',
+        name: 'BatchDiscountConfig',
+        component: () => import('../views/group-buy/BatchDiscount.vue'),
+        meta: { title: '批量打印折扣', requiresAuth: true }
       }
     ]
   }

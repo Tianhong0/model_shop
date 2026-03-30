@@ -397,6 +397,42 @@
 			"style": {
 				"navigationBarTitleText": "详情"
 			}
+		},
+		{
+			"path": "pages/group-buy/list",
+			"style": {
+				"navigationBarTitleText": "拼团专区"
+			}
+		},
+		{
+			"path": "pages/group-buy/activity-detail",
+			"style": {
+				"navigationBarTitleText": "活动详情"
+			}
+		},
+		{
+			"path": "pages/group-buy/create",
+			"style": {
+				"navigationBarTitleText": "发起拼团"
+			}
+		},
+		{
+			"path": "pages/group-buy/group-detail",
+			"style": {
+				"navigationBarTitleText": "拼团详情"
+			}
+		},
+		{
+			"path": "pages/group-buy/join",
+			"style": {
+				"navigationBarTitleText": "参与拼团"
+			}
+		},
+		{
+			"path": "pages/group-buy/my-groups",
+			"style": {
+				"navigationBarTitleText": "我的拼团"
+			}
 		}
 	],
 	"easycom": {

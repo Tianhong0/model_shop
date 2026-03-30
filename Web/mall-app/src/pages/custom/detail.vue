@@ -244,6 +244,7 @@
 				</view>
 			</view>
 			<view class="btns">
+				<view class="btn group-buy" @click="goGroupBuy">参与拼团</view>
 				<view class="btn add-cart" @click="addToCart">加入购物车</view>
 				<view class="btn buy-now" @click="buyNow">立即下单</view>
 			</view>
@@ -999,6 +1000,28 @@ const goCart = () => {
 	uni.switchTab({ url: '/pages/cart/cart' })
 }
 
+const goGroupBuy = () => {
+	if (!modelInfo.value.id) {
+		uni.showToast({ title: '模型信息未加载完成', icon: 'none' })
+		return
+	}
+	// 保存当前定制参数到本地存储，供拼团页面使用
+	const customParams = {
+		modelId: modelInfo.value.id,
+		materialId: currentMaterial.value.id || null,
+		materialName: currentMaterial.value.name,
+		colorHex: selectedColorValue.value,
+		colorRgb: { ...rgbColor.value },
+		scale: Number(scale.value.toFixed(2)),
+		precision: Number(precisionMm.value.toFixed(2)),
+		fillDensity: Number(fillDensity.value),
+		filamentDiameter: Number(filamentDiameter.value.toFixed(2)),
+		remark: customRemark.value.trim() || ''
+	}
+	uni.setStorageSync('group_buy_custom_params', customParams)
+	uni.navigateTo({ url: `/pages/group-buy/list?modelId=${modelInfo.value.id}` })
+}
+
 const goCustomerService = () => {
 	const token = uni.getStorageSync('token')
 	if (!token) {
@@ -1639,7 +1662,7 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 		flex: 1;
 		height: 80rpx;
 		display: flex;
-		gap: 16rpx;
+		gap: 10rpx;
 	}
 
 	.btn {
@@ -1647,7 +1670,7 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 28rpx;
+		font-size: 24rpx;
 		font-weight: 600;
 		border-radius: 999rpx;
 
@@ -1660,6 +1683,12 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 		color: $text-primary;
 		background: $surface;
 		box-shadow: $shadow-card;
+	}
+
+	.group-buy {
+		color: #ffffff;
+		background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+		box-shadow: 0 4rpx 16rpx rgba(255, 107, 107, 0.35);
 	}
 
 	.buy-now {

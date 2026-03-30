@@ -172,6 +172,21 @@
             </el-menu-item>
           </el-sub-menu>
 
+          <el-sub-menu index="group-buy-mgmt">
+            <template #title>
+              <el-icon><goods /></el-icon>
+              <span>拼团管理</span>
+            </template>
+            <el-menu-item index="/group-buy/activities">
+              <el-icon><list /></el-icon>
+              <span>拼团活动</span>
+            </el-menu-item>
+            <el-menu-item index="/group-buy/batch-discount">
+              <el-icon><price-tag /></el-icon>
+              <span>批量打印折扣</span>
+            </el-menu-item>
+          </el-sub-menu>
+
           <el-sub-menu index="event-mgmt">
             <template #title>
               <el-icon><calendar /></el-icon>

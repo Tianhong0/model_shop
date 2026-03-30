@@ -40,6 +40,7 @@ import org.majun.backend.repository.WalletAccountRepository;
 import org.majun.backend.repository.WalletLedgerRepository;
 import org.majun.backend.repository.ModelMaterialRepository;
 import org.majun.backend.service.OrderPaymentService;
+import org.majun.backend.service.GroupBuyService;
 import org.majun.backend.vo.OrderBatchPayCreateResponse;
 import org.majun.backend.vo.OrderBatchPayStatusVO;
 import org.majun.backend.vo.OrderPayCreateResponse;
@@ -98,6 +99,7 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     private final ResourceLoader resourceLoader;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final PointService pointService;
+    private final GroupBuyService groupBuyService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -755,6 +757,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                     pointService.rewardOrderPaid(order.getUserId(), order.getId(), order.getOrderSn(), order.getOrderPrice());
                     // 环保材料积分奖励
                     rewardEcoMaterialIfApplicable(order);
+                    // 处理拼团支付成功
+                    handleGroupBuyPaid(order);
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(order.getId()));
                 }
             }
@@ -826,6 +830,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                         pointService.rewardOrderPaid(order.getUserId(), order.getId(), order.getOrderSn(), order.getOrderPrice());
                         // 环保材料积分奖励
                         rewardEcoMaterialIfApplicable(order);
+                        // 处理拼团支付成功
+                        handleGroupBuyPaid(order);
                     }
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(item.getOrderId()));
                 }
@@ -1157,6 +1163,22 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                 || !StringUtils.hasText(paymentProperties.getGatewayUrl())
                 || !StringUtils.hasText(paymentProperties.getNotifyUrl())) {
             throw new BusinessException("支付宝证书模式配置不完整，请检查 payment.alipay 配置");
+        }
+    }
+
+    /**
+     * 处理拼团订单支付成功
+     */
+    private void handleGroupBuyPaid(SysOrder order) {
+        if (order == null || order.getGroupBuyParticipantId() == null) {
+            return;
+        }
+        try {
+            // 调用拼团服务处理参与者支付成功
+            groupBuyService.handleParticipantPaid(order.getGroupBuyParticipantId());
+        } catch (Exception ex) {
+            log.warn("处理拼团支付成功失败 orderId={}, participantId={}",
+                    order.getId(), order.getGroupBuyParticipantId(), ex);
         }
     }
 }

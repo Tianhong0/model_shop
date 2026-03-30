@@ -61,6 +61,22 @@ public class SysOrder implements Serializable {
     @Schema(description = "Printer ID")
     private Long printerId;
 
+    @TableField("group_buy_group_id")
+    @Schema(description = "拼团组ID")
+    private Long groupBuyGroupId;
+
+    @TableField("group_buy_participant_id")
+    @Schema(description = "拼团参与ID")
+    private Long groupBuyParticipantId;
+
+    @TableField("batch_quantity")
+    @Schema(description = "批量打印数量")
+    private Integer batchQuantity;
+
+    @TableField("batch_discount")
+    @Schema(description = "批量打印折扣")
+    private BigDecimal batchDiscount;
+
     @TableField("is_delete")
     @TableLogic
     @Schema(description = "Logical delete flag")
