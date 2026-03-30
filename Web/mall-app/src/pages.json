@@ -1,6 +1,13 @@
 {
 	"pages": [
 		{
+			"path": "pages/splash/index",
+			"style": {
+				"navigationBarTitleText": "3D定制商城",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/auth/login",
 			"style": {
 				"navigationBarTitleText": "登录",
@@ -17,13 +24,17 @@
 			"path": "pages/index/index",
 			"style": {
 				"navigationBarTitleText": "3D打印定制商城",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true,
+				"backgroundTextStyle": "dark"
 			}
 		},
 		{
 			"path": "pages/mall/list",
 			"style": {
-				"navigationBarTitleText": "模型商城"
+				"navigationBarTitleText": "模型商城",
+				"enablePullDownRefresh": true,
+				"backgroundTextStyle": "dark"
 			}
 		},
 		{
@@ -78,6 +89,13 @@
 			"path": "pages/custom/comment-list",
 			"style": {
 				"navigationBarTitleText": "全部评价"
+			}
+		},
+		{
+			"path": "pages/custom/customer-service",
+			"style": {
+				"navigationBarTitleText": "在线客服",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -171,15 +189,39 @@
 			}
 		},
 		{
-			"path": "pages/community/event-detail",
+			"path": "pages/event/list",
 			"style": {
-				"navigationBarTitleText": "社区说明"
+				"navigationBarTitleText": "活动赛事"
 			}
 		},
 		{
-			"path": "pages/user/my-events",
+			"path": "pages/event/event-detail",
 			"style": {
-				"navigationBarTitleText": "社区历史入口"
+				"navigationBarTitleText": "活动详情"
+			}
+		},
+		{
+			"path": "pages/event/submissions",
+			"style": {
+				"navigationBarTitleText": "参赛作品"
+			}
+		},
+		{
+			"path": "pages/event/my-submission",
+			"style": {
+				"navigationBarTitleText": "我的作品"
+			}
+		},
+		{
+			"path": "pages/event/submission-detail",
+			"style": {
+				"navigationBarTitleText": "作品详情"
+			}
+		},
+		{
+			"path": "pages/event/my-events",
+			"style": {
+				"navigationBarTitleText": "我参与的活动"
 			}
 		},
 		{
@@ -237,6 +279,12 @@
 			}
 		},
 		{
+			"path": "pages/reward/rating",
+			"style": {
+				"navigationBarTitleText": "评价设计者"
+			}
+		},
+		{
 			"path": "pages/reward/model-preview",
 			"style": {
 				"navigationBarTitleText": "模型预览"
@@ -246,6 +294,36 @@
 			"path": "pages/reward/video-preview",
 			"style": {
 				"navigationBarTitleText": "视频预览"
+			}
+		},
+		{
+			"path": "pages/reward/designer-profile",
+			"style": {
+				"navigationBarTitleText": "设计者档案"
+			}
+		},
+		{
+			"path": "pages/reward/delivery",
+			"style": {
+				"navigationBarTitleText": "提交交付"
+			}
+		},
+		{
+			"path": "pages/reward/messages",
+			"style": {
+				"navigationBarTitleText": "在线沟通"
+			}
+		},
+		{
+			"path": "pages/reward/my-ratings",
+			"style": {
+				"navigationBarTitleText": "我的评价"
+			}
+		},
+		{
+			"path": "pages/reward/my-appeals",
+			"style": {
+				"navigationBarTitleText": "我的申诉"
 			}
 		},
 		{
@@ -301,6 +379,24 @@
 			"style": {
 				"navigationBarTitleText": "申请二手售后"
 			}
+		},
+		{
+			"path": "pages/model-list/index",
+			"style": {
+				"navigationBarTitleText": "清单广场"
+			}
+		},
+		{
+			"path": "pages/model-list/detail",
+			"style": {
+				"navigationBarTitleText": "清单详情"
+			}
+		},
+		{
+			"path": "pages/common/webview",
+			"style": {
+				"navigationBarTitleText": "详情"
+			}
 		}
 	],
 	"easycom": {
@@ -316,5 +412,4 @@
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8"
 	}
-
-	}
+}

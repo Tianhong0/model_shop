@@ -342,245 +342,182 @@ const submit = async () => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 40%, #f8fafc 100%);
-  padding: 24rpx;
+  background: $bg;
+  padding: 28rpx;
 }
 
-.hero {
-  padding: 16rpx 10rpx 20rpx;
-}
+.hero { padding: 12rpx 8rpx 24rpx; }
 
 .hero-title {
   display: block;
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  color: #0f172a;
-  letter-spacing: 1rpx;
+  color: $text1;
 }
 
 .hero-sub {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #64748b;
+  color: $text2;
 }
 
 .card {
-  background: #fff;
+  background: $card;
   border-radius: 24rpx;
-  padding: 28rpx;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 12rpx 32rpx rgba(79, 70, 229, 0.06);
+  padding: 32rpx;
+  box-shadow: $shadow;
 }
 
 .row {
   display: flex;
   align-items: center;
-  min-height: 90rpx;
-  border-bottom: 1px solid #f1f5f9;
+  min-height: 96rpx;
+  & + .row { border-top: 1rpx solid rgba(0,0,0,0.04); }
 }
 
 .row.column {
   display: block;
-  padding: 22rpx 0;
+  padding: 24rpx 0;
 }
 
 .label {
   width: 170rpx;
-  color: #64748b;
-  font-size: 25rpx;
+  color: $text2;
+  font-size: 28rpx;
 }
 
 .section-title {
   display: block;
-  color: #334155;
-  font-size: 25rpx;
+  color: $text1;
+  font-size: 28rpx;
   font-weight: 600;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
 }
 
 .value,
 .picker-value {
-  color: #0f172a;
-  font-size: 27rpx;
+  color: $text1;
+  font-size: 28rpx;
   font-weight: 500;
 }
 
 .input {
   flex: 1;
-  color: #0f172a;
-  font-size: 27rpx;
-  height: 76rpx;
-  line-height: 76rpx;
-  border-radius: 14rpx;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  color: $text1;
+  font-size: 28rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 16rpx;
+  background: $bg;
   padding: 0 20rpx;
   box-sizing: border-box;
 }
 
 .textarea {
   width: 100%;
-  min-height: 180rpx;
-  margin-top: 10rpx;
-  font-size: 26rpx;
-  color: #0f172a;
-  border-radius: 14rpx;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 16rpx 20rpx;
+  min-height: 200rpx;
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  color: $text1;
+  border-radius: 16rpx;
+  background: $bg;
+  padding: 20rpx;
   box-sizing: border-box;
 }
 
 .order-brief {
-  margin-top: 10rpx;
-  border: 1px solid #e2e8f0;
-  border-radius: 18rpx;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  padding: 18rpx;
+  margin-top: 12rpx;
+  border-radius: 20rpx;
+  background: $bg;
+  padding: 20rpx;
 }
 
-.goods-item {
-  display: flex;
-  margin-bottom: 18rpx;
-}
+.goods-item { display: flex; margin-bottom: 18rpx; }
 
 .brief-img {
   width: 132rpx;
   height: 132rpx;
-  border-radius: 14rpx;
-  background: #f1f5f9;
+  border-radius: 16rpx;
+  background: $card;
 }
 
-.goods-info {
-  margin-left: 16rpx;
-  flex: 1;
-}
-
-.brief-name {
-  display: block;
-  color: #0f172a;
-  font-size: 29rpx;
-  font-weight: 700;
-}
-
-.brief-params {
-  display: block;
-  color: #64748b;
-  font-size: 22rpx;
-  margin-top: 8rpx;
-}
-
-.price-line {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12rpx;
-}
-
-.brief-price {
-  color: #1e1b4b;
-  font-size: 31rpx;
-  font-weight: 700;
-}
-
-.brief-count {
-  color: #94a3b8;
-  font-size: 24rpx;
-}
-
-.sum-row {
-  display: flex;
-  justify-content: space-between;
-  color: #475569;
-  font-size: 24rpx;
-  margin-top: 10rpx;
-}
+.goods-info { margin-left: 16rpx; flex: 1; }
+.brief-name { display: block; color: $text1; font-size: 28rpx; font-weight: 700; }
+.brief-params { display: block; color: $text2; font-size: 22rpx; margin-top: 8rpx; }
+.price-line { display: flex; justify-content: space-between; margin-top: 12rpx; }
+.brief-price { color: $deep; font-size: 30rpx; font-weight: 700; }
+.brief-count { color: $text3; font-size: 24rpx; }
+.sum-row { display: flex; justify-content: space-between; color: $text2; font-size: 24rpx; margin-top: 10rpx; }
 
 .brief-row {
   display: flex;
   align-items: center;
-  min-height: 72rpx;
-  border-top: 1px dashed #dbeafe;
-  margin-top: 14rpx;
-  padding-top: 12rpx;
+  min-height: 76rpx;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx dashed rgba(0,0,0,0.08);
 }
 
-.brief-row.column {
-  display: block;
-}
-
-.brief-label {
-  width: 150rpx;
-  color: #475569;
-  font-size: 24rpx;
-}
+.brief-row.column { display: block; }
+.brief-label { width: 150rpx; color: $text2; font-size: 24rpx; }
 
 .upload-actions {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-top: 10rpx;
+  margin-top: 12rpx;
 }
 
 .mini-btn {
   margin: 0;
-  height: 66rpx;
-  line-height: 66rpx;
+  height: 68rpx;
+  line-height: 68rpx;
   padding: 0 28rpx;
-  border-radius: 33rpx;
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 60%, #6366f1 100%);
+  border-radius: 999rpx;
+  background: $gradient;
   color: #fff;
   font-size: 24rpx;
   border: none;
+  &:active { transform: scale(0.96); }
 }
 
-.upload-tip {
-  color: #64748b;
-  font-size: 22rpx;
-}
+.upload-tip { color: $text3; font-size: 22rpx; }
 
 .media-list {
   display: flex;
   flex-wrap: wrap;
   gap: 18rpx;
-  margin-top: 16rpx;
+  margin-top: 18rpx;
 }
 
-.media-item {
-  width: 180rpx;
-}
-
-.media-thumb {
-  width: 180rpx;
-  height: 180rpx;
-  border-radius: 14rpx;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-}
-
-.video-player {
-  width: 180rpx;
-  height: 180rpx;
-  border-radius: 14rpx;
-  background: #0f172a;
-  overflow: hidden;
-}
-
-.remove {
-  margin-top: 10rpx;
-  display: block;
-  text-align: center;
-  color: #dc2626;
-  font-size: 22rpx;
-}
+.media-item { width: 180rpx; }
+.media-thumb { width: 180rpx; height: 180rpx; border-radius: 16rpx; background: $bg; }
+.video-player { width: 180rpx; height: 180rpx; border-radius: 16rpx; background: $text1; overflow: hidden; }
+.remove { margin-top: 10rpx; display: block; text-align: center; color: $danger; font-size: 22rpx; font-weight: 500; }
 
 .submit-btn {
-  margin-top: 30rpx;
-  border-radius: 46rpx;
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #6366f1 100%);
+  margin-top: 36rpx;
+  border-radius: 999rpx;
+  background: $gradient;
   color: #fff;
-  box-shadow: 0 14rpx 26rpx rgba(79, 70, 229, 0.24);
+  font-size: 30rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 30rpx rgba(0, 191, 255, 0.25);
+  &:active { transform: scale(0.96); }
 }
 </style>

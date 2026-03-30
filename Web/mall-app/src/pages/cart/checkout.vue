@@ -14,7 +14,9 @@
 				<view class="no-address" v-else>
 					<text>请选择收货地址</text>
 				</view>
-				<view class="arrow">></view>
+				<view class="arrow">
+					<uni-icons type="right" size="16" color="#94a3b8"></uni-icons>
+				</view>
 			</view>
 
 			<!-- 商品列表 -->
@@ -72,17 +74,22 @@
 					<!-- <label class="pay-item">
 						<view class="pay-icon">🟢</view>
 						<text>微信支付</text>
-						<radio value="wx" checked color="#4f46e5" />
+						<radio value="wx" checked color="#00bfff" />
 					</label> -->
 					<label class="pay-item">
 						<view class="pay-icon">🔵</view>
 						<text>支付宝</text>
-						<radio value="ali" color="#4f46e5" />
+						<radio value="ali" color="#00bfff" />
+					</label>
+					<label class="pay-item">
+						<view class="pay-icon">⚫</view>
+						<text>抖音支付</text>
+						<radio value="douyin" color="#00bfff" />
 					</label>
 					<label class="pay-item">
 						<view class="pay-icon">💰</view>
 						<text>余额支付 (可用￥{{ availableBalance }})</text>
-						<radio value="wallet" color="#4f46e5" />
+						<radio value="wallet" color="#00bfff" />
 					</label>
 				</radio-group>
 			</view>
@@ -109,6 +116,8 @@ import {
 	createOrderApi,
 	createAlipayAppPayApi,
 	createAlipayBatchPayApi,
+	createDouyinAppPayApi,
+	createDouyinBatchPayApi,
 	payOrderByWalletApi,
 	payBatchByWalletApi,
 	getOrderPayStatusApi,
@@ -471,29 +480,50 @@ const buildOrderRequest = (item) => {
 const prepareOrderPricing = async () => {
 	if (preparingOrder.value) return
 	if (!orderItems.value.length) return
-	if (orderItems.value.length > 1) {
-		pendingOrders.value = []
-		pendingBatchId.value = null
-		applyPricingFromItems()
-		return
-	}
-
-	const currentItem = orderItems.value[0]
-	const orderRequest = buildOrderRequest(currentItem)
-	if (!orderRequest.modelId) {
-		uni.showToast({ title: '缺少模型信息，无法获取订单金额', icon: 'none' })
-		return
-	}
 
 	preparingOrder.value = true
+	pendingOrders.value = []
+	pendingBatchId.value = null
 	uni.showLoading({ title: '正在获取订单金额...' })
+
 	try {
-		const orderResult = await createOrderApi(orderRequest)
-		pendingOrders.value = [buildPendingOrderMeta(orderResult)]
-		pendingBatchId.value = null
-		applyPricingFromOrder(orderResult)
+		const orderResults = []
+		let totalBasePrice = 0
+		let totalMaterialCost = 0
+		let totalGoodsAmount = 0
+		let totalShippingFee = 0
+		let totalDiscount = 0
+		let totalPayAmount = 0
+
+		for (const item of orderItems.value) {
+			const quantity = Math.max(1, Number(item?.num || 1))
+			for (let i = 0; i < quantity; i += 1) {
+				const orderRequest = buildOrderRequest(item)
+				if (!orderRequest.modelId) {
+					throw new Error('缺少模型信息，无法下单')
+				}
+				const orderResult = await createOrderApi(orderRequest)
+				orderResults.push(buildPendingOrderMeta(orderResult))
+
+				totalBasePrice += Number(orderResult?.basePrice || 0)
+				totalMaterialCost += Number(orderResult?.materialCost || 0)
+				totalGoodsAmount += Number(orderResult?.goodsAmount || orderResult?.orderPrice || 0)
+				totalShippingFee += Number(orderResult?.shippingFee || orderResult?.freightFee || 0)
+				totalDiscount += Number(orderResult?.discountAmount || orderResult?.couponDiscount || 0)
+				totalPayAmount += Number(orderResult?.payAmount || orderResult?.orderPrice || 0)
+			}
+		}
+
+		pendingOrders.value = orderResults
+		basePrice.value = normalizeMoney(totalBasePrice)
+		materialCost.value = normalizeMoney(totalMaterialCost)
+		goodsTotal.value = normalizeMoney(totalGoodsAmount)
+		shippingFee.value = normalizeMoney(totalShippingFee)
+		discount.value = normalizeMoney(totalDiscount)
+		payAmount.value = normalizeMoney(totalPayAmount)
 	} catch (error) {
 		uni.showToast({ title: error?.message || '获取订单金额失败', icon: 'none' })
+		applyPricingFromItems()
 	} finally {
 		uni.hideLoading()
 		preparingOrder.value = false
@@ -508,7 +538,7 @@ const handlePay = async () => {
 		uni.showToast({ title: '订单金额确认中，请稍候', icon: 'none' })
 		return
 	}
-	if (payMethod.value !== 'ali' && payMethod.value !== 'wallet') {
+	if (payMethod.value !== 'ali' && payMethod.value !== 'wallet' && payMethod.value !== 'douyin') {
 		uni.showToast({ title: '当前支付方式不支持', icon: 'none' })
 		return
 	}
@@ -540,6 +570,8 @@ const handlePay = async () => {
 
 		const orderIds = createdOrders.map(item => item.orderId)
 		const useBatchPay = orderIds.length > 1
+
+		// 支付宝支付
 		const executeAlipayPay = async () => {
 			const alipayReady = await ensureAlipayAvailable()
 			if (!alipayReady) {
@@ -567,6 +599,82 @@ const handlePay = async () => {
 					success: () => resolve(true),
 					fail: (err) => reject(err)
 				})
+			})
+
+			if (useBatchPay) {
+				if (!pendingBatchId.value) {
+					throw new Error('批量支付单创建失败')
+				}
+				try {
+					await syncBatchPayStatusApi(pendingBatchId.value)
+				} catch (syncError) {
+					// 无回调场景下主动查单可能短暂失败，后续轮询兜底
+				}
+			} else {
+				try {
+					await syncOrderPayStatusApi(orderIds[0])
+				} catch (syncError) {
+					// 无回调场景下主动查单可能短暂失败，后续轮询兜底
+				}
+			}
+
+			uni.showLoading({ title: '支付结果确认中...' })
+			const paid = useBatchPay
+				? await pollBatchPayStatus(pendingBatchId.value)
+				: await pollPayStatus(orderIds[0])
+			uni.hideLoading()
+			if (!paid) {
+				uni.showToast({ title: '支付结果确认超时，请稍后在订单页查看', icon: 'none' })
+				return false
+			}
+			return true
+		}
+
+		// 抖音支付
+		const executeDouyinPay = async () => {
+			const payResult = useBatchPay
+				? await createDouyinBatchPayApi({ orderIds })
+				: await createDouyinAppPayApi({ orderId: orderIds[0] })
+
+			if (useBatchPay) {
+				pendingBatchId.value = payResult?.batchId || null
+			}
+			uni.hideLoading()
+
+			// 调用抖音支付
+			await new Promise((resolve, reject) => {
+				// #ifdef APP-PLUS
+				// 尝试使用原生插件
+				const douyinPay = uni.requireNativePlugin('DouyinPay')
+				if (douyinPay) {
+					douyinPay.pay({
+						orderInfo: payResult.orderInfo
+					}, (res) => {
+						if (res.code === 0 || res.code === '0') {
+							resolve(true)
+						} else {
+							reject(new Error(res.message || '抖音支付失败'))
+						}
+					})
+				} else {
+					// 使用uni.requestPayment
+					uni.requestPayment({
+						provider: 'toutiao',
+						orderInfo: payResult.orderInfo,
+						success: () => resolve(true),
+						fail: (err) => reject(err)
+					})
+				}
+				// #endif
+
+				// #ifndef APP-PLUS
+				uni.requestPayment({
+					provider: 'toutiao',
+					orderInfo: payResult.orderInfo,
+					success: () => resolve(true),
+					fail: (err) => reject(err)
+				})
+				// #endif
 			})
 
 			if (useBatchPay) {
@@ -631,6 +739,11 @@ const handlePay = async () => {
 					throw walletError
 				}
 			}
+		} else if (currentPayMethod === 'douyin') {
+			const paid = await executeDouyinPay()
+			if (!paid) {
+				return
+			}
 		} else {
 			const paid = await executeAlipayPay()
 			if (!paid) {
@@ -676,11 +789,28 @@ const selectAddress = () => {
 </script>
 
 <style scoped lang="scss">
+$sky-blue: #00bfff;
+$sky-light: #5ce1ff;
+$sky-deep: #0099cc;
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$danger: #ff4d6d;
+$gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .checkout-container {
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background-color: #f8fafc;
+	background-color: $surface;
 }
 
 .checkout-scroll {
@@ -690,151 +820,284 @@ const selectAddress = () => {
 .section-title {
 	font-size: 30rpx;
 	font-weight: 700;
-	color: #1e293b;
+	color: $text-primary;
 	margin-bottom: 24rpx;
 }
 
 .address-section {
-	background-color: #ffffff;
-	padding: 30rpx;
+	background-color: $surface-raised;
+	padding: 32rpx;
 	display: flex;
 	align-items: center;
-	margin-bottom: 20rpx;
-	.address-icon { font-size: 40rpx; }
-	.arrow { font-size: 32rpx; color: #94a3b8; }
+	margin: 24rpx;
+	border-radius: 24rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out both;
+
+	.address-icon {
+		font-size: 40rpx;
+	}
+	.arrow {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 	.address-info {
 		flex: 1;
 		margin-left: 20rpx;
+
 		.user-info {
 			display: flex;
 			align-items: center;
-			.name { font-size: 32rpx; font-weight: 700; color: #1e293b; }
-			.phone { font-size: 26rpx; color: #64748b; margin-left: 20rpx; }
+			.name {
+				font-size: 32rpx;
+				font-weight: 700;
+				color: $text-primary;
+			}
+			.phone {
+				font-size: 26rpx;
+				color: $text-secondary;
+				margin-left: 20rpx;
+			}
 		}
-		.detail { font-size: 26rpx; color: #64748b; margin-top: 10rpx; display: block; }
+		.detail {
+			font-size: 26rpx;
+			color: $text-secondary;
+			margin-top: 10rpx;
+			display: block;
+		}
 	}
-	.no-address { flex: 1; margin-left: 20rpx; font-size: 28rpx; color: #94a3b8; }
+	.no-address {
+		flex: 1;
+		margin-left: 20rpx;
+		font-size: 28rpx;
+		color: $text-muted;
+	}
 }
 
 .goods-section {
-	background-color: #ffffff;
-	padding: 30rpx;
-	margin-bottom: 20rpx;
+	background-color: $surface-raised;
+	padding: 32rpx;
+	margin: 0 24rpx 24rpx;
+	border-radius: 24rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out 0.05s both;
+
 	.goods-item {
 		display: flex;
 		margin-bottom: 30rpx;
-		&:last-child { margin-bottom: 0; }
-		.goods-img { width: 140rpx; height: 140rpx; border-radius: 12rpx; background-color: #f1f5f9; }
+		&:last-child {
+			margin-bottom: 0;
+		}
+		.goods-img {
+			width: 140rpx;
+			height: 140rpx;
+			border-radius: 20rpx;
+			background-color: $surface;
+		}
 		.goods-info {
 			flex: 1;
 			margin-left: 24rpx;
-			.name { font-size: 28rpx; font-weight: 600; color: #1e293b; display: block; }
-			.params { font-size: 22rpx; color: #94a3b8; margin-top: 8rpx; display: block; }
+
+			.name {
+				font-size: 28rpx;
+				font-weight: 600;
+				color: $text-primary;
+				display: block;
+			}
+			.params {
+				font-size: 24rpx;
+				color: $text-muted;
+				margin-top: 8rpx;
+				display: block;
+			}
 			.price-row {
 				margin-top: 16rpx;
 				display: flex;
 				justify-content: space-between;
-				.price { font-size: 30rpx; font-weight: 700; color: #1e293b; }
-				.num { font-size: 26rpx; color: #94a3b8; }
+
+				.price {
+					font-size: 30rpx;
+					font-weight: 700;
+					color: $text-primary;
+				}
+				.num {
+					font-size: 26rpx;
+					color: $text-muted;
+				}
 			}
 		}
 	}
 }
 
 .fee-section {
-	background-color: #ffffff;
-	padding: 30rpx;
-	margin-bottom: 20rpx;
+	background-color: $surface-raised;
+	padding: 32rpx;
+	margin: 0 24rpx 24rpx;
+	border-radius: 24rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out 0.1s both;
+
 	.fee-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 20rpx;
-		&:last-child { margin-bottom: 0; }
-		.label { font-size: 26rpx; color: #64748b; }
-		.val { font-size: 26rpx; color: #1e293b; }
-		.discount { color: #ef4444; }
+		&:last-child {
+			margin-bottom: 0;
+		}
+		.label {
+			font-size: 28rpx;
+			color: $text-secondary;
+		}
+		.val {
+			font-size: 28rpx;
+			color: $text-primary;
+		}
+		.discount {
+			color: $danger;
+		}
 	}
 	.points-row {
 		.points-input {
 			width: 220rpx;
 			height: 62rpx;
 			padding: 0 18rpx;
-			border-radius: 12rpx;
-			background: #f8fafc;
+			border-radius: 999rpx;
+			background: $surface;
 			font-size: 24rpx;
 			text-align: right;
-			color: #1e293b;
+			color: $text-primary;
 		}
 	}
 }
 
 .pay-section {
-	background-color: #ffffff;
-	padding: 30rpx;
+	background-color: $surface-raised;
+	padding: 32rpx;
+	margin: 0 24rpx 24rpx;
+	border-radius: 24rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out 0.15s both;
+
 	.pay-item {
 		display: flex;
 		align-items: center;
-		padding: 30rpx 0;
-		border-bottom: 2rpx solid #f8fafc;
-		&:last-child { border-bottom: 0; }
-		.pay-icon { font-size: 40rpx; }
-		text { flex: 1; font-size: 28rpx; color: #1e293b; margin-left: 24rpx; }
+		padding: 28rpx 0;
+		position: relative;
+
+		&:not(:last-child)::after {
+			content: '';
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			height: 1rpx;
+			background: rgba(0, 0, 0, 0.03);
+		}
+
+		.pay-icon {
+			font-size: 40rpx;
+		}
+		text {
+			flex: 1;
+			font-size: 28rpx;
+			color: $text-primary;
+			margin-left: 24rpx;
+		}
 	}
 }
 
 .footer-bar {
 	height: 110rpx;
-	background-color: #ffffff;
-	border-top: 2rpx solid #f1f5f9;
+	background: rgba(255, 255, 255, 0.88);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
 	display: flex;
 	align-items: center;
 	padding: 0 30rpx;
 	padding-bottom: env(safe-area-inset-bottom);
+	box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.04);
+
 	.total-price {
 		flex: 1;
 		display: flex;
 		align-items: baseline;
-		.label { font-size: 24rpx; color: #64748b; }
-		.symbol { font-size: 24rpx; color: #ef4444; font-weight: 700; margin-left: 8rpx; }
-		.val { font-size: 40rpx; color: #ef4444; font-weight: 700; }
+
+		.label {
+			font-size: 24rpx;
+			color: $text-secondary;
+		}
+		.symbol {
+			font-size: 24rpx;
+			color: $danger;
+			font-weight: 700;
+			margin-left: 8rpx;
+		}
+		.val {
+			font-size: 40rpx;
+			color: $danger;
+			font-weight: 700;
+		}
 	}
 	.submit-btn {
 		width: 260rpx;
 		height: 80rpx;
-		background-color: #4f46e5;
-		color: #ffffff;
-		border-radius: 40rpx;
+		background: $gradient-primary;
+		color: $surface-raised;
+		border-radius: 999rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-size: 30rpx;
 		font-weight: 600;
+		box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
+
+		&:active {
+			transform: scale(0.96);
+		}
 	}
 }
 
 .success-modal {
 	width: 560rpx;
-	background-color: #ffffff;
+	background-color: $surface-raised;
 	border-radius: 32rpx;
 	padding: 60rpx 40rpx;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	.t { font-size: 36rpx; font-weight: 700; color: #1e293b; margin-top: 30rpx; }
-	.d { font-size: 26rpx; color: #64748b; margin-top: 20rpx; text-align: center; }
+	box-shadow: $shadow-card;
+
+	.t {
+		font-size: 36rpx;
+		font-weight: 700;
+		color: $text-primary;
+		margin-top: 30rpx;
+	}
+	.d {
+		font-size: 26rpx;
+		color: $text-secondary;
+		margin-top: 20rpx;
+		text-align: center;
+	}
 	.btn {
 		margin-top: 50rpx;
 		width: 100%;
 		height: 88rpx;
-		background-color: #4f46e5;
-		color: #ffffff;
-		border-radius: 44rpx;
+		background: $gradient-primary;
+		color: $surface-raised;
+		border-radius: 999rpx;
 		font-size: 30rpx;
 		font-weight: 600;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
+
+		&:active {
+			transform: scale(0.96);
+		}
 	}
 }
 </style>

@@ -1,17 +1,61 @@
-/* uni.scss */
+/* uni.scss — 全局设计令牌（Design Tokens） */
 @import 'uview-plus/theme.scss';
 @import 'uview-plus/index.scss';
 
-$uni-primary: #4f46e5;
-$uni-success: #10b981;
-$uni-warning: #f59e0b;
-$uni-error: #ef4444;
-$uni-text-color: #1e293b;
-$uni-text-color-grey: #64748b;
-$uni-bg-color: #f8fafc;
-$uni-border-radius-base: 12rpx;
-$uni-border-radius-lg: 24rpx;
+/* ============================
+   果冻质感 · 极简设计系统
+   Jelly-Soft Minimalist Design
+   ============================ */
 
-$home-bg-grad-start: #f8fafc;
+/* —— 主色板 —— */
+$uni-primary: #00bfff;
+$uni-primary-light: #5ce1ff;
+$uni-primary-deep: #0099cc;
+$uni-success: #10b981;
+$uni-success-light: #34d399;
+$uni-warning: #f59e0b;
+$uni-warning-light: #fcd34d;
+$uni-error: #ef4444;
+$uni-danger: #ff4d6d;
+
+/* —— 表面与背景 —— */
+$uni-bg-color: #f8f8f8;
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+
+/* —— 文字层级 —— */
+$uni-text-color: #1a2030;
+$uni-text-color-grey: #64748b;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+
+/* —— 边框 —— */
+$border-subtle: rgba(0, 0, 0, 0.04);
+
+/* —— 圆角 —— */
+$uni-border-radius-base: 16rpx;
+$uni-border-radius-lg: 24rpx;
+$uni-border-radius-xl: 32rpx;
+$radius-pill: 999rpx;
+
+/* —— 阴影系统 —— */
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$shadow-card-hover: 0 12rpx 48rpx rgba(0, 0, 0, 0.07);
+$shadow-float: 0 16rpx 56rpx rgba(0, 0, 0, 0.10);
+$shadow-btn: 0 6rpx 24rpx rgba(0, 191, 255, 0.25);
+
+/* —— 渐变 —— */
+$gradient-primary: linear-gradient(135deg, $uni-primary 0%, $uni-primary-light 100%);
+$gradient-success: linear-gradient(135deg, $uni-success 0%, $uni-success-light 100%);
+$gradient-warning: linear-gradient(135deg, $uni-warning 0%, $uni-warning-light 100%);
+$gradient-danger: linear-gradient(135deg, $uni-error 0%, $uni-danger 100%);
+
+/* —— 毛玻璃 —— */
+$glass-bg: rgba(255, 255, 255, 0.72);
+$glass-blur: blur(24px);
+
+/* —— 旧变量兼容 —— */
+$home-bg-grad-start: #f8f8f8;
 $home-bg-grad-end: #eef2ff;
-$home-card-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.08);
+$home-card-shadow: $shadow-card;

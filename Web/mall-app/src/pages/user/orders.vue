@@ -1,27 +1,32 @@
 <template>
 	<view class="order-list-container">
-		<view class="tabs">
-			<view 
-				v-for="(tab, index) in tabs" 
-				:key="index" 
-				class="tab-item" 
-				:class="{ active: activeTab === index }"
-				@click="activeTab = index"
-			>
-				{{tab}}
+		<!-- Glass Tab Bar -->
+		<view class="tabs-wrap">
+			<view class="tabs">
+				<view
+					v-for="(tab, index) in tabs"
+					:key="index"
+					class="tab-item"
+					:class="{ active: activeTab === index }"
+					@click="activeTab = index"
+				>
+					{{tab}}
+				</view>
 			</view>
 		</view>
 
 		<scroll-view scroll-y class="order-scroll">
 			<view v-if="displayOrders.length === 0" class="empty-orders">
 				<view class="empty-icon">📦</view>
-				<text>暂无相关订单</text>
+				<text class="empty-text">暂无相关订单</text>
 			</view>
 
-			<view class="order-card" v-for="(order, index) in displayOrders" :key="index" @click="goDetail(order)">
+			<view class="order-card fadeInUp" v-for="(order, index) in displayOrders" :key="index" @click="goDetail(order)">
 				<view class="order-header">
 					<text class="order-no">订单号: {{order.no}}</text>
-					<text class="status">{{order.statusText}}</text>
+					<view class="status-badge">
+						<text class="status">{{order.statusText}}</text>
+					</view>
 				</view>
 				<view class="goods-list">
 					<view class="goods-item" v-for="(item, idx) in order.items" :key="idx">
@@ -369,38 +374,65 @@ const handleAction = async (type, order, index) => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .order-list-container {
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background-color: #f8fafc;
+	background-color: $bg;
+}
+
+.tabs-wrap {
+	background: rgba(255,255,255,0.72);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
 }
 
 .tabs {
 	display: flex;
-	background-color: #ffffff;
-	padding: 0 20rpx;
+	padding: 0 24rpx;
+
 	.tab-item {
 		flex: 1;
-		height: 90rpx;
+		height: 96rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-size: 28rpx;
-		color: #64748b;
+		color: $text2;
 		position: relative;
+		transition: color 0.25s;
+
 		&.active {
-			color: #4f46e5;
+			color: $primary;
 			font-weight: 700;
+
 			&::after {
 				content: '';
 				position: absolute;
 				bottom: 0;
 				left: 30%;
 				right: 30%;
-				height: 4rpx;
-				background-color: #4f46e5;
-				border-radius: 2rpx;
+				height: 6rpx;
+				background: $gradient;
+				border-radius: 999rpx;
 			}
 		}
 	}
@@ -408,81 +440,164 @@ const handleAction = async (type, order, index) => {
 
 .order-scroll {
 	flex: 1;
+	padding: 8rpx 0;
 }
 
 .empty-orders {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding-top: 200rpx;
-	.empty-icon { font-size: 100rpx; margin-bottom: 20rpx; }
-	text { font-size: 28rpx; color: #94a3b8; }
+	padding-top: 240rpx;
+
+	.empty-icon {
+		font-size: 120rpx;
+		margin-bottom: 24rpx;
+	}
+
+	.empty-text {
+		font-size: 28rpx;
+		color: $text3;
+	}
+}
+
+.fadeInUp {
+	animation: fadeInUp 0.4s ease both;
 }
 
 .order-card {
-	background-color: #ffffff;
-	margin: 20rpx;
-	border-radius: 20rpx;
-	padding: 24rpx;
+	background-color: $card;
+	margin: 20rpx 28rpx;
+	border-radius: 24rpx;
+	padding: 32rpx;
+	box-shadow: $shadow;
+
 	.order-header {
 		display: flex;
 		justify-content: space-between;
-		padding-bottom: 20rpx;
-		border-bottom: 2rpx solid #f1f5f9;
-		.order-no { font-size: 24rpx; color: #94a3b8; }
-		.status { font-size: 24rpx; color: #4f46e5; font-weight: 700; }
+		align-items: center;
+		padding-bottom: 24rpx;
+
+		.order-no {
+			font-size: 24rpx;
+			color: $text3;
+		}
+
+		.status-badge {
+			.status {
+				font-size: 24rpx;
+				color: $primary;
+				font-weight: 700;
+				background: rgba(0, 191, 255, 0.08);
+				padding: 6rpx 20rpx;
+				border-radius: 999rpx;
+			}
+		}
 	}
+
 	.goods-list {
-		padding: 20rpx 0;
+		padding: 24rpx 0;
+
 		.goods-item {
 			display: flex;
 			margin-bottom: 20rpx;
-			&:last-child { margin-bottom: 0; }
-			.goods-img { width: 120rpx; height: 120rpx; border-radius: 12rpx; background-color: #f1f5f9; }
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+
+			.goods-img {
+				width: 120rpx;
+				height: 120rpx;
+				border-radius: 16rpx;
+				background-color: $bg;
+			}
+
 			.goods-info {
 				flex: 1;
 				margin-left: 20rpx;
-				.name { font-size: 26rpx; font-weight: 600; color: #1e293b; display: block; }
-				.params { font-size: 22rpx; color: #94a3b8; margin-top: 4rpx; display: block; }
+
+				.name {
+					font-size: 28rpx;
+					font-weight: 600;
+					color: $text1;
+					display: block;
+				}
+
+				.params {
+					font-size: 24rpx;
+					color: $text3;
+					margin-top: 6rpx;
+					display: block;
+				}
+
 				.price-row {
-					margin-top: 10rpx;
+					margin-top: 12rpx;
 					display: flex;
 					justify-content: space-between;
-					.price { font-size: 26rpx; font-weight: 700; color: #1e293b; }
-					.num { font-size: 24rpx; color: #94a3b8; }
+
+					.price {
+						font-size: 28rpx;
+						font-weight: 700;
+						color: $text1;
+					}
+
+					.num {
+						font-size: 24rpx;
+						color: $text3;
+					}
 				}
 			}
 		}
 	}
+
 	.order-footer {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding-top: 20rpx;
-		border-top: 2rpx solid #f1f5f9;
+		padding-top: 24rpx;
+
 		.total {
 			font-size: 24rpx;
-			color: #64748b;
-			.amount { font-size: 32rpx; color: #1e293b; font-weight: 700; margin-left: 10rpx; }
+			color: $text2;
+
+			.amount {
+				font-size: 32rpx;
+				color: $text1;
+				font-weight: 700;
+				margin-left: 10rpx;
+			}
 		}
+
 		.btns {
 			display: flex;
 			gap: 16rpx;
+
 			.btn {
 				margin: 0;
-				height: 60rpx;
-				padding: 0 30rpx;
+				height: 64rpx;
+				padding: 0 32rpx;
 				font-size: 24rpx;
-				border-radius: 30rpx;
+				border-radius: 999rpx;
 				display: flex;
 				align-items: center;
-				&.primary {
-					background-color: #4f46e5;
-					color: #ffffff;
+				background: $bg;
+				color: $text2;
+				transition: transform 0.15s;
+
+				&:active {
+					transform: scale(0.96);
 				}
+
+				&.primary {
+					background: $gradient;
+					color: #ffffff;
+					box-shadow: 0 6rpx 20rpx rgba(0, 191, 255, 0.25);
+				}
+
 				&.disabled {
-					background-color: #cbd5e1;
-					color: #f8fafc;
+					background-color: #e8e8e8;
+					color: $text3;
+					box-shadow: none;
 				}
 			}
 		}

@@ -1,27 +1,41 @@
 <template>
 	<view class="reward-container">
 		<view class="reward-header">
-			<view class="title">悬赏定制中心</view>
-			<view class="desc">发布需求 · 竞标接单 · 交付验收</view>
-			<view class="stats">
-				<view class="stat-item">
-					<text class="val">{{stats.active}}</text>
-					<text class="lab">正在进行</text>
-				</view>
-				<view class="stat-item">
-					<text class="val">￥{{stats.totalBounty}}</text>
-					<text class="lab">累计赏金</text>
-				</view>
-				<view class="stat-item">
-					<text class="val">{{stats.successRate}}%</text>
-					<text class="lab">解决率</text>
+			<view class="header-bg"></view>
+			<view class="header-content">
+				<view class="title">悬赏定制中心</view>
+				<view class="desc">发布需求 · 竞标接单 · 交付验收</view>
+				<view class="stats">
+					<view class="stat-item">
+						<text class="val">{{stats.active}}</text>
+						<text class="lab">正在进行</text>
+					</view>
+					<view class="stat-item">
+						<text class="val">￥{{stats.totalBounty}}</text>
+						<text class="lab">累计赏金</text>
+					</view>
+					<view class="stat-item">
+						<text class="val">{{stats.successRate}}%</text>
+						<text class="lab">解决率</text>
+					</view>
 				</view>
 			</view>
 		</view>
 
+		<view class="designer-actions" v-if="isDesigner">
+			<view class="action-item" @click="goMyRatings">
+				<text class="action-icon">★</text>
+				<text class="action-label">我的评价</text>
+			</view>
+			<view class="action-item" @click="goMyAppeals">
+				<text class="action-icon">✉</text>
+				<text class="action-label">我的申诉</text>
+			</view>
+		</view>
+
 		<view class="search-bar">
-			<uni-icons type="search" size="18" color="#94a3b8"></uni-icons>
-			<input v-model="keyword" type="text" placeholder="搜索需求、标签或发布者" />
+			<uni-icons type="search" size="18" color="#8a9aaa"></uni-icons>
+			<input v-model="keyword" type="text" placeholder="搜索需求、标签或发布者" placeholder-style="color: #8a9aaa;" />
 		</view>
 
 		<scroll-view scroll-x class="tab-scroll">
@@ -99,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getBountyTaskPageApi } from '../../api/reward'
 import { getStoredUserRole, isDesignerRole } from '../../utils/role'
@@ -110,9 +124,9 @@ const isDesigner = computed(() => isDesignerRole(userRole.value))
 
 const tabs = computed(() => {
 	if (isDesigner.value) {
-		return ['全部', '招募中', '进行中', '待验收', '已完成', '我的接单']
+		return ['全部', '待审核', '待支付', '招募中', '进行中', '待验收', '已完成', '我的接单']
 	}
-	return ['全部', '招募中', '进行中', '待验收', '已完成', '我的发布']
+	return ['全部', '待审核', '待支付', '招募中', '进行中', '待验收', '已完成', '我的发布']
 })
 
 const categories = ['全部', '模型建模', '结构设计', '打印服务', '渲染展示', '装配改造']
@@ -127,9 +141,14 @@ const activeCategory = ref('全部')
 const activeSort = ref('latest')
 const keyword = ref('')
 
+watch(activeTab, () => {
+	reloadData()
+})
+
 const rewards = ref([])
 
 const statusMap = {
+	'-1': { status: 'pending_review', statusText: '待审核' },
 	0: { status: 'pending_pay', statusText: '待支付托管' },
 	1: { status: 'recruiting', statusText: '招募中' },
 	2: { status: 'in_progress', statusText: '已选标' },
@@ -144,7 +163,7 @@ const loadRewards = async () => {
 	try {
 		const data = await getBountyTaskPageApi({ pageNum: 1, pageSize: 100 })
 		const records = data?.records || []
-		rewards.value = records.map(item => {
+		return records.map(item => {
 			const m = statusMap[item.status] || { status: 'recruiting', statusText: '招募中' }
 			return {
 				id: item.id,
@@ -166,13 +185,33 @@ const loadRewards = async () => {
 		})
 	} catch (error) {
 		uni.showToast({ title: error?.message || '加载悬赏失败', icon: 'none' })
+		return []
+	}
+}
+
+const allRewards = ref([])
+
+const reloadData = async () => {
+	// 每次都重新加载所有任务
+	allRewards.value = await loadRewards()
+
+	const tab = tabs.value[activeTab.value]
+	if (tab === '我的发布') {
+		// 我的发布：根据 ownerId 过滤
+		rewards.value = allRewards.value.filter(r => r.ownerId === currentUserId.value)
+	} else if (tab === '我的接单') {
+		// 我的接单：根据 bidderId 过滤（暂时显示全部）
+		rewards.value = allRewards.value
+	} else {
+		// 其他 tab：显示所有任务
+		rewards.value = allRewards.value
 	}
 }
 
 onShow(() => {
 	userRole.value = getStoredUserRole()
 	currentUserId.value = String((uni.getStorageSync('user_profile') || {}).id || '')
-	loadRewards()
+	reloadData()
 })
 
 const stats = computed(() => {
@@ -187,12 +226,13 @@ const displayRewards = computed(() => {
 	let list = rewards.value
 
 	const tab = tabs.value[activeTab.value]
+	// "我的发布"已经在reloadData中通过ownerId过滤，"我的接单"暂时显示全部
+	if (tab === '待审核') list = list.filter(r => r.status === 'pending_review')
+	if (tab === '待支付') list = list.filter(r => r.status === 'pending_pay')
 	if (tab === '招募中') list = list.filter(r => r.status === 'recruiting')
 	if (tab === '进行中') list = list.filter(r => r.status === 'in_progress')
 	if (tab === '待验收') list = list.filter(r => r.status === 'pending_accept')
 	if (tab === '已完成') list = list.filter(r => r.status === 'completed')
-	if (tab === '我的发布') list = list.filter(r => r.ownerId === currentUserId.value)
-	if (tab === '我的接单') list = list.filter(r => r.bidderId === currentUserId.value)
 
 	if (activeCategory.value !== '全部') {
 		list = list.filter(r => r.category === activeCategory.value)
@@ -234,152 +274,265 @@ const goDetail = (item) => {
 const quickAction = (item) => {
 	goDetail(item)
 }
+
+const goMyRatings = () => {
+	uni.navigateTo({ url: '/pages/reward/my-ratings' })
+}
+
+const goMyAppeals = () => {
+	uni.navigateTo({ url: '/pages/reward/my-appeals' })
+}
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+@keyframes breathGlow {
+	0%, 100% { box-shadow: 0 0 12rpx rgba(0,191,255,0.15); }
+	50% { box-shadow: 0 0 24rpx rgba(0,191,255,0.35); }
+}
+@keyframes jellyPop {
+	0% { transform: scale(1); }
+	30% { transform: scale(1.15); }
+	50% { transform: scale(0.95); }
+	70% { transform: scale(1.05); }
+	100% { transform: scale(1); }
+}
+
 .reward-container {
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background-color: #f8fafc;
+	background-color: $bg;
 	padding-bottom: 140rpx;
 }
 
 .reward-header {
-	background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-	padding: 60rpx 40rpx;
-	color: #ffffff;
+	position: relative;
+	overflow: hidden;
+	.header-bg {
+		position: absolute;
+		inset: 0;
+		background: $gradient;
+	}
+	.header-content {
+		position: relative;
+		padding: 60rpx 40rpx 48rpx;
+		color: #ffffff;
+	}
 	.title { font-size: 44rpx; font-weight: 700; }
-	.desc { font-size: 26rpx; opacity: 0.9; margin-top: 10rpx; }
+	.desc { font-size: 26rpx; opacity: 0.85; margin-top: 10rpx; }
 	.stats {
 		display: flex;
-		margin-top: 40rpx;
+		margin-top: 36rpx;
+		background: rgba(255,255,255,0.15);
+		border-radius: 24rpx;
+		padding: 24rpx 0;
+		backdrop-filter: blur(12px);
 		.stat-item {
 			flex: 1;
 			text-align: center;
 			.val { font-size: 36rpx; font-weight: 700; display: block; }
-			.lab { font-size: 22rpx; opacity: 0.8; margin-top: 6rpx; }
+			.lab { font-size: 22rpx; opacity: 0.8; margin-top: 8rpx; display: block; }
 		}
 	}
 }
 
+.designer-actions {
+	display: flex;
+	gap: 24rpx;
+	margin: 28rpx 32rpx 0;
+	animation: fadeInUp 0.4s ease-out;
+	.action-item {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12rpx;
+		height: 88rpx;
+		background-color: $card;
+		border-radius: 24rpx;
+		box-shadow: $shadow-card;
+		&:active { transform: scale(0.96); }
+	}
+	.action-icon {
+		font-size: 32rpx;
+		color: $primary;
+		animation: jellyPop 0.6s ease-out;
+	}
+	.action-label { font-size: 28rpx; color: $text-primary; font-weight: 600; }
+}
+
 .search-bar {
-	margin: 20rpx 30rpx 0;
-	height: 72rpx;
-	background-color: #ffffff;
-	border-radius: 36rpx;
+	margin: 28rpx 32rpx 0;
+	height: 76rpx;
+	background-color: $card;
+	border-radius: 999rpx;
 	display: flex;
 	align-items: center;
-	padding: 0 24rpx;
-	input { flex: 1; margin-left: 16rpx; font-size: 26rpx; }
+	padding: 0 28rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out;
+	input { flex: 1; margin-left: 16rpx; font-size: 28rpx; color: $text-primary; }
 }
 
 .tab-scroll {
 	white-space: nowrap;
-	padding: 20rpx 30rpx 0;
+	padding: 24rpx 32rpx 0;
 	.tab-item {
 		display: inline-block;
-		margin-right: 30rpx;
-		font-size: 26rpx;
-		color: #64748b;
-		padding-bottom: 10rpx;
-		&.active { color: #f59e0b; font-weight: 700; border-bottom: 4rpx solid #f59e0b; }
+		margin-right: 36rpx;
+		font-size: 28rpx;
+		color: $text-secondary;
+		padding-bottom: 14rpx;
+		transition: all 0.25s;
+		&.active {
+			color: $primary;
+			font-weight: 700;
+			border-bottom: 6rpx solid $primary;
+			border-radius: 3rpx;
+		}
 	}
 }
 
 .filter-row {
-	padding: 20rpx 30rpx;
-	background-color: #ffffff;
-	margin-top: 20rpx;
+	padding: 24rpx 32rpx;
+	background-color: $card;
+	margin: 20rpx 32rpx 0;
+	border-radius: 24rpx;
+	box-shadow: $shadow-card;
 	.filter-group {
-		.label { font-size: 24rpx; color: #94a3b8; margin-bottom: 10rpx; display: block; }
+		.label { font-size: 24rpx; color: $text-muted; margin-bottom: 14rpx; display: block; }
 		.chips {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 12rpx;
+			gap: 14rpx;
 			.chip {
-				font-size: 22rpx;
-				color: #64748b;
-				background-color: #f1f5f9;
-				padding: 4rpx 16rpx;
-				border-radius: 8rpx;
-				&.active { background-color: #fffbeb; color: #d97706; }
+				font-size: 24rpx;
+				color: $text-secondary;
+				background-color: $bg;
+				padding: 8rpx 24rpx;
+				border-radius: 999rpx;
+				transition: all 0.2s;
+				&.active {
+					background-color: rgba(0, 191, 255, 0.12);
+					color: $deep;
+					font-weight: 600;
+				}
 			}
 		}
 	}
 	.sort-group {
 		margin-top: 20rpx;
 		display: flex;
-		gap: 20rpx;
+		gap: 28rpx;
 		.sort {
 			font-size: 24rpx;
-			color: #94a3b8;
-			&.active { color: #4f46e5; font-weight: 700; }
+			color: $text-muted;
+			transition: all 0.2s;
+			&.active { color: $primary; font-weight: 700; }
 		}
 	}
 }
 
 .list-scroll {
 	flex: 1;
-	padding: 20rpx 30rpx;
+	padding: 24rpx 32rpx;
 }
 
 .empty {
 	text-align: center;
-	color: #94a3b8;
+	color: $text-muted;
 	margin-top: 120rpx;
+	font-size: 28rpx;
 }
 
 .reward-card {
-	background-color: #ffffff;
+	background-color: $card;
 	border-radius: 24rpx;
-	padding: 30rpx;
-	margin-bottom: 24rpx;
-	box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.02);
+	padding: 32rpx;
+	margin-bottom: 28rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.4s ease-out both;
+	&:active { transform: scale(0.98); }
 	.card-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		.price { font-size: 36rpx; color: #f59e0b; font-weight: 700; }
+		.price { font-size: 36rpx; color: $deep; font-weight: 700; }
 		.status {
-			font-size: 22rpx; padding: 4rpx 16rpx; border-radius: 20rpx;
-			&.recruiting { background-color: #fffbeb; color: #d97706; }
-			&.in_progress { background-color: #e0e7ff; color: #4f46e5; }
-			&.pending_accept { background-color: #fef3c7; color: #d97706; }
-			&.completed { background-color: #dcfce7; color: #16a34a; }
+			font-size: 22rpx;
+			padding: 6rpx 20rpx;
+			border-radius: 999rpx;
+			font-weight: 500;
+			animation: breathGlow 2s ease-in-out infinite;
+			&.pending_review { background-color: rgba(255, 153, 0, 0.1); color: #ff9900; }
+			&.pending_pay { background-color: rgba(255, 77, 109, 0.1); color: $danger; }
+			&.recruiting { background-color: rgba(0, 191, 255, 0.1); color: $deep; }
+			&.in_progress { background-color: rgba(0, 191, 255, 0.15); color: $primary; }
+			&.pending_accept { background-color: rgba(0, 191, 255, 0.1); color: $deep; }
+			&.completed {
+				background-color: rgba(16, 185, 129, 0.1);
+				color: $success;
+				animation: none;
+			}
+			&.closed { background-color: rgba(0,0,0,0.05); color: $text-muted; animation: none; }
 		}
 	}
-	.title { font-size: 30rpx; font-weight: 700; color: #1e293b; margin-top: 20rpx; display: block; }
-	.content { font-size: 26rpx; color: #64748b; margin-top: 12rpx; line-height: 1.6; display: block; }
+	.title { font-size: 30rpx; font-weight: 700; color: $text-primary; margin-top: 20rpx; display: block; }
+	.content {
+		font-size: 28rpx; color: $text-secondary; margin-top: 12rpx; line-height: 1.6; display: block;
+		overflow: hidden; text-overflow: ellipsis;
+		display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+	}
 	.tags {
 		margin-top: 20rpx;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 12rpx;
-		.tag { font-size: 22rpx; color: #94a3b8; background-color: #f1f5f9; padding: 4rpx 16rpx; border-radius: 8rpx; }
+		.tag {
+			font-size: 22rpx; color: $text-muted; background-color: $bg;
+			padding: 6rpx 20rpx; border-radius: 999rpx;
+		}
 	}
 	.meta {
 		margin-top: 20rpx;
-		font-size: 22rpx;
-		color: #94a3b8;
+		font-size: 24rpx;
+		color: $text-muted;
 		display: flex;
 		justify-content: space-between;
 	}
 	.card-footer {
 		margin-top: 24rpx;
 		padding-top: 20rpx;
-		border-top: 2rpx solid #f8fafc;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		.info { font-size: 22rpx; color: #94a3b8; }
+		.info { font-size: 24rpx; color: $text-muted; }
 		.btns .btn {
-			height: 52rpx;
-			padding: 0 20rpx;
-			font-size: 22rpx;
-			border-radius: 26rpx;
-			background-color: #4f46e5;
+			height: 56rpx;
+			padding: 0 28rpx;
+			font-size: 24rpx;
+			border-radius: 999rpx;
+			background: $gradient;
 			color: #ffffff;
+			font-weight: 500;
+			&:active { transform: scale(0.96); }
 		}
 	}
 }
@@ -391,15 +544,17 @@ const quickAction = (item) => {
 	right: 0;
 	padding: 20rpx 40rpx;
 	padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
-	background-color: #ffffff;
-	box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.05);
+	background: rgba(255,255,255,0.72);
+	backdrop-filter: blur(24px);
+	box-shadow: 0 -4rpx 24rpx rgba(0,0,0,0.06);
 	.pub-btn {
 		height: 88rpx;
-		background-color: #f59e0b;
+		background: $gradient;
 		color: #ffffff;
-		border-radius: 44rpx;
+		border-radius: 999rpx;
 		font-size: 30rpx;
 		font-weight: 700;
+		&:active { transform: scale(0.96); }
 	}
 }
 </style>

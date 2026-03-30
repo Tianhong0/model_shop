@@ -107,6 +107,12 @@ export const confirmUsedOrderApi = (orderId) => request({
   method: 'POST'
 })
 
+export const updateUsedOrderAddressApi = (data) => request({
+  url: '/api/used/order/address/update',
+  method: 'POST',
+  data
+})
+
 export const sendUsedMessageApi = (data) => request({
   url: '/api/used/message/send',
   method: 'POST',

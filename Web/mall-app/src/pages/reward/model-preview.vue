@@ -191,19 +191,40 @@ onLoad((options) => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
 .preview-page {
 	min-height: 100vh;
-	background-color: #f8fafc;
-	padding: 24rpx;
+	background-color: $bg;
+	padding: 28rpx 32rpx;
 }
 
 .viewer-card {
 	position: relative;
-	background: #fff;
-	border-radius: 20rpx;
+	background: $card;
+	border-radius: 24rpx;
 	overflow: hidden;
-	box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.06);
-	margin-bottom: 20rpx;
+	box-shadow: $shadow-card;
+	margin-bottom: 28rpx;
+	animation: fadeInUp 0.4s ease-out;
 }
 
 .three-viewer {
@@ -214,17 +235,19 @@ onLoad((options) => {
 
 .badge-3d {
 	position: absolute;
-	right: 20rpx;
-	top: 20rpx;
-	padding: 10rpx 18rpx;
+	right: 24rpx;
+	top: 24rpx;
+	padding: 12rpx 24rpx;
 	border-radius: 999rpx;
-	background: rgba(15, 23, 42, 0.65);
+	background: rgba(0, 153, 204, 0.75);
+	backdrop-filter: blur(12px);
 	display: flex;
 	align-items: center;
-	gap: 8rpx;
+	gap: 10rpx;
 	color: #fff;
 	font-size: 22rpx;
 	z-index: 2;
+	&:active { transform: scale(0.96); }
 
 	.spin {
 		animation: spin 1.2s linear infinite;
@@ -232,34 +255,36 @@ onLoad((options) => {
 }
 
 .info-card {
-	background: #fff;
-	border-radius: 20rpx;
-	padding: 20rpx 24rpx;
+	background: $card;
+	border-radius: 24rpx;
+	padding: 28rpx 32rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.4s ease-out 0.1s both;
 
 	.name {
 		font-size: 30rpx;
-		font-weight: 600;
-		color: #1e293b;
+		font-weight: 700;
+		color: $text-primary;
 	}
 
 	.meta {
-		margin-top: 8rpx;
-		font-size: 24rpx;
-		color: #64748b;
+		margin-top: 10rpx;
+		font-size: 26rpx;
+		color: $text-secondary;
 	}
 
 	.color-row {
-		margin-top: 20rpx;
+		margin-top: 24rpx;
 		display: flex;
 		align-items: center;
-		gap: 14rpx;
+		gap: 16rpx;
 	}
 
 	.color-preview-circle {
 		width: 48rpx;
 		height: 48rpx;
 		border-radius: 50%;
-		border: 2rpx solid #e2e8f0;
+		box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
 		flex-shrink: 0;
 
 		&.large {
@@ -269,62 +294,66 @@ onLoad((options) => {
 	}
 
 	.color-value {
-		font-size: 24rpx;
-		color: #334155;
+		font-size: 26rpx;
+		color: $text-primary;
 		flex: 1;
 	}
 
 	.color-picker-btn {
-		padding: 8rpx 20rpx;
+		padding: 10rpx 24rpx;
 		border-radius: 999rpx;
-		background: #eef2ff;
-		color: #4f46e5;
-		font-size: 22rpx;
+		background: rgba(0, 191, 255, 0.1);
+		color: $deep;
+		font-size: 24rpx;
+		font-weight: 500;
+		&:active { transform: scale(0.96); }
 	}
 }
 
 .color-popup-mask {
 	position: fixed;
 	inset: 0;
-	background: rgba(15, 23, 42, 0.42);
+	background: rgba(26, 32, 48, 0.42);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 24rpx;
+	padding: 32rpx;
 	z-index: 20;
 }
 
 .color-popup {
 	width: 100%;
 	max-width: 680rpx;
-	background: #fff;
-	border-radius: 20rpx;
-	padding: 24rpx;
+	background: $card;
+	border-radius: 24rpx;
+	padding: 32rpx;
+	box-shadow: 0 16rpx 60rpx rgba(0,0,0,0.12);
 }
 
 .popup-title {
 	font-size: 30rpx;
-	font-weight: 600;
-	color: #1e293b;
+	font-weight: 700;
+	color: $text-primary;
 }
 
 .popup-preview-row {
-	margin-top: 20rpx;
+	margin-top: 24rpx;
 	display: flex;
 	align-items: center;
-	gap: 14rpx;
+	gap: 16rpx;
 }
 
 .popup-color-text {
-	font-size: 24rpx;
-	color: #334155;
+	font-size: 26rpx;
+	color: $text-primary;
+	font-weight: 500;
 }
 
 .popup-slider-item {
-	margin-top: 18rpx;
+	margin-top: 20rpx;
 	display: flex;
 	align-items: center;
-	gap: 10rpx;
+	gap: 12rpx;
 
 	slider {
 		flex: 1;
@@ -332,48 +361,47 @@ onLoad((options) => {
 }
 
 .popup-label {
-	width: 30rpx;
-	font-size: 24rpx;
-	color: #334155;
+	width: 36rpx;
+	font-size: 26rpx;
+	color: $text-primary;
+	font-weight: 600;
 }
 
 .popup-input {
-	width: 88rpx;
-	height: 56rpx;
-	border-radius: 12rpx;
-	background: #f1f5f9;
+	width: 96rpx;
+	height: 60rpx;
+	border-radius: 16rpx;
+	background: $bg;
 	text-align: center;
-	font-size: 22rpx;
-	color: #334155;
+	font-size: 24rpx;
+	color: $text-primary;
 }
 
 .popup-actions {
-	margin-top: 22rpx;
+	margin-top: 28rpx;
 	display: flex;
-	gap: 12rpx;
+	gap: 16rpx;
 }
 
 .popup-btn {
 	flex: 1;
-	height: 72rpx;
-	line-height: 72rpx;
-	border-radius: 14rpx;
+	height: 76rpx;
+	line-height: 76rpx;
+	border-radius: 999rpx;
 	text-align: center;
-	font-size: 26rpx;
+	font-size: 28rpx;
+	font-weight: 500;
 
 	&.cancel {
-		background: #f1f5f9;
-		color: #475569;
+		background: $bg;
+		color: $text-secondary;
+		&:active { transform: scale(0.96); }
 	}
 
 	&.confirm {
-		background: #4f46e5;
+		background: $gradient;
 		color: #fff;
+		&:active { transform: scale(0.96); }
 	}
-}
-
-@keyframes spin {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
 }
 </style>

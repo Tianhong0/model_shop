@@ -210,27 +210,78 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
+.page-container {
+  padding: 0;
+}
+
 .table-card {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
 }
+
 .header-actions {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
 }
+
+.header-actions :deep(.el-input__wrapper) {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.header-actions :deep(.el-input__wrapper:hover) {
+  border-color: var(--border-dark);
+}
+
+.header-actions :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-lighter);
+}
+
+.header-actions :deep(.el-select .el-input__wrapper) {
+  background: var(--bg-secondary);
+}
+
 .table-wrapper {
   overflow-x: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
 }
+
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
-  overflow-x: auto;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* 对话框内的描述列表样式 */
+:deep(.el-descriptions) {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+:deep(.el-descriptions__label) {
+  font-weight: 500;
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary);
+}
+
+:deep(.el-descriptions__content) {
+  color: var(--text-primary);
 }
 </style>

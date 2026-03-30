@@ -2,6 +2,7 @@ package org.majun.backend.enums;
 
 public enum BountyTaskStatus {
 
+    PENDING_REVIEW(-1, "待审核"),
     WAIT_ESCROW_PAYMENT(0, "待支付托管"),
     RECRUITING(1, "招募中"),
     PICKED(2, "已选标"),

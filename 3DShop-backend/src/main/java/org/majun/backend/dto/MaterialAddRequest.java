@@ -44,4 +44,10 @@ public class MaterialAddRequest {
      */
     @Schema(description = "是否信任材质")
     private Boolean isTrusted;
+
+    /**
+     * 是否环保材质
+     */
+    @Schema(description = "是否环保材质")
+    private Boolean isEco;
 }

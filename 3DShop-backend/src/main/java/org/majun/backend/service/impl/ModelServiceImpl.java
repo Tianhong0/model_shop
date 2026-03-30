@@ -959,6 +959,7 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         modelMaterial.setMaterialName(request.getName());
         modelMaterial.setPrice(request.getPrice());
         modelMaterial.setIsTrusted(request.getIsTrusted() != null ? request.getIsTrusted() : false);
+        modelMaterial.setIsEco(request.getIsEco() != null ? request.getIsEco() : false);
         modelMaterial.setCreateTime(java.time.LocalDateTime.now().toString());
 
         modelMaterialRepository.insert(modelMaterial);
@@ -1004,6 +1005,7 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         // 查询模型的所有材质
         LambdaQueryWrapper<ModelMaterial> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ModelMaterial::getModelId, modelId)
+               .orderByDesc(ModelMaterial::getIsEco)  // 环保材质优先
                .orderByAsc(ModelMaterial::getCreateTime);
 
         List<ModelMaterial> modelMaterials = modelMaterialRepository.selectList(wrapper);
@@ -1016,6 +1018,7 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
                     vo.setName(mm.getMaterialName());
                     vo.setPrice(java.math.BigDecimal.valueOf(mm.getPrice()));
                     vo.setIsTrusted(mm.getIsTrusted());
+                    vo.setIsEco(Boolean.TRUE.equals(mm.getIsEco()));
                     return vo;
                 })
                 .collect(java.util.stream.Collectors.toList());
@@ -1043,6 +1046,7 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         modelMaterial.setMaterialName(request.getName());
         modelMaterial.setPrice(request.getPrice());
         modelMaterial.setIsTrusted(request.getIsTrusted() != null ? request.getIsTrusted() : false);
+        modelMaterial.setIsEco(request.getIsEco() != null ? request.getIsEco() : false);
 
         int updateCount = modelMaterialRepository.updateById(modelMaterial);
         if (updateCount == 0) {

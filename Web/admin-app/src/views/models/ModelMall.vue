@@ -214,7 +214,13 @@
             <div v-if="form.materials && form.materials.length > 0" class="materials-list">
               <div v-for="(material, index) in form.materials" :key="material.id || index" class="material-item">
                 <div class="material-info">
-                  <div class="material-name">{{ material.name }}</div>
+                  <div class="material-name">
+                    {{ material.name }}
+                    <el-tag v-if="material.isEco" type="success" size="small" style="margin-left: 8px">
+                      <el-icon style="margin-right: 2px"><SuccessFilled /></el-icon>
+                      环保
+                    </el-tag>
+                  </div>
                   <div class="material-details">
                     <el-input-number
                       v-model="material.price"
@@ -225,9 +231,9 @@
                       style="width: 120px; margin-right: 10px"
                       @change="updateMaterialInfo(index, material)"
                     />
-            
+
                     <span>元/克</span>
-             
+
                   </div>
                 </div>
                 <div class="material-actions">
@@ -284,6 +290,13 @@
             style="width: 100%"
           />
         </el-form-item>
+        <el-form-item label="环保材质">
+          <el-switch v-model="materialForm.isEco" active-text="是" inactive-text="否" />
+          <div class="eco-tip" v-if="materialForm.isEco">
+            <el-icon color="#22c55e"><SuccessFilled /></el-icon>
+            <span>选择环保材质的用户将获得额外积分奖励</span>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="materialDialogVisible = false">取消</el-button>
@@ -305,6 +318,7 @@
         <el-descriptions-item label="文件路径" :span="2">
           <div v-if="currentModel.filePath">
             <span>{{ getFileName(currentModel.filePath) }}</span>
+            <el-button link type="primary" @click="handlePreview3D">预览3D</el-button>
             <el-button link type="primary" @click="window.open(currentModel.filePath, '_blank')">下载</el-button>
           </div>
           <span v-else>-</span>
@@ -329,10 +343,12 @@
           <el-tag
             v-for="material in currentModel.materials"
             :key="material.id"
+            :type="material.isEco ? 'success' : 'info'"
             size="small"
             style="margin-right: 8px; margin-bottom: 4px;"
           >
             {{ material.name }} (￥{{ material.price }}/克)
+            <el-icon v-if="material.isEco" style="margin-left: 4px"><SuccessFilled /></el-icon>
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="可用材质" :span="2" v-else>
@@ -343,13 +359,30 @@
         <el-button @click="detailVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 3D模型预览弹窗 -->
+    <el-dialog v-model="preview3DVisible" title="3D模型预览" width="900px" top="5vh" destroy-on-close>
+      <ThreePreview
+        v-if="preview3DVisible"
+        :model-url="preview3DUrl"
+        :model-type="preview3DType"
+        @loaded="onPreviewLoaded"
+        @error="onPreviewError"
+      />
+      <template #footer>
+        <el-button @click="downloadModelFile">下载模型</el-button>
+        <el-button @click="preview3DVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete, Star, Upload, Edit } from '@element-plus/icons-vue'
+import { Plus, Delete, Star, Upload, Edit, SuccessFilled } from '@element-plus/icons-vue'
+import ThreePreview from '../../components/ThreePreview.vue'
+import request from '../../utils/request'
 import {
   getModelList,
   getModelDetail,
@@ -375,9 +408,14 @@ const categoryOptions = ref([])
 const total = ref(0)
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
+const preview3DVisible = ref(false)
+const preview3DUrl = ref('')
+const preview3DType = ref('glb')
+const preview3DError = ref(false)
 const dialogType = ref('add')
 const currentModel = ref(null)
 const fileInputRef = ref(null)
+const modelViewerContainer = ref(null)
 const modelFileInputRef = ref(null)
 const imageUploading = ref(false)
 const modelFileUploading = ref(false)
@@ -696,7 +734,8 @@ const formatProgress = (percentage) => {
 // 材质表单
 const materialForm = reactive({
   name: '',
-  price: 0
+  price: 0,
+  isEco: false
 })
 
 // 显示材质编辑对话框
@@ -704,13 +743,17 @@ const showMaterialDialog = (material = null, index = -1) => {
   if (material) {
     // 编辑模式
     editingMaterialIndex.value = index
-    Object.assign(materialForm, material)
+    Object.assign(materialForm, {
+      ...material,
+      isEco: material.isEco || false
+    })
   } else {
     // 新增模式
     editingMaterialIndex.value = -1
     Object.assign(materialForm, {
       name: '',
-      price: 0
+      price: 0,
+      isEco: false
     })
   }
   materialDialogVisible.value = true
@@ -721,7 +764,8 @@ const updateMaterialInfo = async (index, material) => {
   try {
     const payload = {
       ...material,
-      price: Number(material.price)
+      price: Number(material.price),
+      isEco: material.isEco || false
     }
     if (form.id && material.id && !material.id.toString().startsWith('temp_')) {
       // 调用API更新材质
@@ -996,6 +1040,97 @@ const handleViewDetail = async (row) => {
   }
 }
 
+// 动态加载 Three.js
+const loadThreeJs = () => {
+  return new Promise((resolve) => {
+    if (window.THREE) {
+      resolve()
+      return
+    }
+    const baseUrl = window.location.origin
+    // 加载 Three.js 主库
+    const loader = new window.XMLHttpRequest()
+    loader.open('GET', baseUrl + '/three/three.module.js', true)
+    loader.onload = () => {
+      // 动态执行脚本
+      const script = document.createElement('script')
+      script.textContent = loader.responseText
+      document.head.appendChild(script)
+      resolve()
+    }
+    loader.onerror = () => {
+      // 如果本地没有，尝试 CDN
+      loadFromCDN().then(resolve)
+    }
+    loader.send()
+  })
+}
+
+// 从 CDN 加载（备选方案）
+const loadFromCDN = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script')
+    // 使用 unpkg 国内镜像
+    script.src = 'https://unpkg.com/three@0.160.0/build/three.module.js'
+    script.type = 'module'
+    script.onload = () => resolve()
+    script.onerror = () => {
+      ElMessage.error('3D预览组件加载失败')
+      resolve()
+    }
+    document.head.appendChild(script)
+  })
+}
+
+// 预览3D模型
+// 预览3D模型 - 在新窗口打开
+// 预览3D模型 - 使用 ThreePreview 组件
+const handlePreview3D = () => {
+  if (!currentModel.value?.filePath) {
+    ElMessage.warning('暂无模型文件，无法预览')
+    return
+  }
+
+  // 检查文件格式是否支持
+  const filePath = currentModel.value.filePath
+  const ext = filePath.split('.').pop().toLowerCase()
+  const supportedFormats = ['glb', 'gltf', 'stl', 'obj', '3mf']
+
+  if (!supportedFormats.includes(ext)) {
+    ElMessage.warning('该文件格式暂不支持')
+    return
+  }
+
+  // 设置模型URL - 使用动态baseURL
+  let modelUrl = filePath
+  if (!filePath.startsWith('http://') && !filePath.startsWith('https://')) {
+    const baseURL = request.defaults.baseURL || 'http://127.0.0.1:9999'
+    modelUrl = baseURL + (filePath.startsWith('/') ? '' : '/') + filePath
+  }
+
+  preview3DUrl.value = modelUrl
+  preview3DType.value = ext
+  preview3DVisible.value = true
+}
+
+// 预览加载完成
+const onPreviewLoaded = () => {
+  console.log('3D模型加载成功')
+}
+
+// 预览加载失败
+const onPreviewError = (err) => {
+  console.error('3D模型加载失败:', err)
+  ElMessage.error('3D模型加载失败，请尝试下载查看')
+}
+
+// 下载模型文件
+const downloadModelFile = () => {
+  if (currentModel.value?.filePath) {
+    window.open(currentModel.value.filePath, '_blank')
+  }
+}
+
 // 删除
 const handleDelete = (row) => {
   ElMessageBox.confirm(`确定要删除模型 ${row.modelName} 吗？`, '警告', {
@@ -1057,7 +1192,8 @@ const submitForm = async () => {
         await addMaterial(modelId, {
           materialId: material.materialId || null,
           name: material.name,
-          price: Number(material.price)
+          price: Number(material.price),
+          isEco: material.isEco || false
         })
       }
 
@@ -1092,170 +1228,228 @@ onMounted(() => {
   fetchCategories()
   fetchModelList()
 })
+
+// 监听弹窗关闭，清理 model-viewer
+watch(preview3DVisible, (val) => {
+  if (!val && modelViewerContainer.value) {
+    modelViewerContainer.value.innerHTML = ''
+  }
+})
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
+.page-container {
+  padding: 0;
+}
+
 .table-card {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
 }
+
 .header-actions {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
 }
+
+.header-actions :deep(.el-input__wrapper),
+.header-actions :deep(.el-select .el-input__wrapper) {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.header-actions :deep(.el-input__wrapper:hover) {
+  border-color: var(--border-dark);
+}
+
+.header-actions :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-lighter);
+}
+
 .table-wrapper {
   overflow-x: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
 }
+
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
-  overflow-x: auto;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
 }
+
 .no-image {
   width: 60px;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
-  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* 图片上传样式 */
 .image-upload-container {
-  margin-top: 10px;
+  margin-top: 12px;
 }
+
 .image-list {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
+
 .image-item {
   position: relative;
   width: 100px;
   height: 100px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
 }
+
+.image-item:hover {
+  box-shadow: var(--shadow-md);
+}
+
 .image-item.is-main {
-  border: 2px solid #67c23a;
+  border: 2px solid var(--success-color);
+  box-shadow: 0 0 0 3px var(--success-light);
 }
+
 .image-actions {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
-  justify-content: space-around;
-  padding: 4px;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px;
 }
-.image-actions .el-button {
-  margin: 0;
-  padding: 4px;
-}
+
 .upload-btn {
   width: 100px;
   height: 100px;
-  border: 2px dashed #dcdfe6;
-  border-radius: 8px;
+  border: 2px dashed var(--border-dark);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: #f5f7fa;
-  transition: all 0.3s;
+  background: var(--bg-secondary);
+  transition: all 0.3s ease;
 }
+
 .upload-btn:hover {
-  border-color: #409eff;
-  background: #ecf5ff;
+  border-color: var(--primary-color);
+  background: var(--primary-lighter);
 }
+
 .upload-btn .el-icon {
   font-size: 24px;
-  color: #909399;
+  color: var(--text-muted);
   margin-bottom: 4px;
 }
+
+.upload-btn:hover .el-icon {
+  color: var(--primary-color);
+}
+
 .upload-btn div {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-muted);
 }
 
 /* 文件上传样式 */
 .file-upload-container {
-  margin-top: 10px;
+  margin-top: 12px;
 }
+
 .file-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
 }
+
 .file-name {
   font-size: 14px;
-  color: #606266;
+  color: var(--text-primary);
+  font-weight: 500;
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .file-upload-container .upload-btn {
   width: 100%;
   height: 80px;
-  border: 2px dashed #dcdfe6;
-  border-radius: 8px;
+  border: 2px dashed var(--border-dark);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: #f5f7fa;
-  transition: all 0.3s;
-  margin-bottom: 10px;
-}
-.file-upload-container .upload-btn:hover {
-  border-color: #409eff;
-  background: #ecf5ff;
-}
-.file-upload-container .upload-btn .el-icon {
-  font-size: 24px;
-  color: #909399;
-  margin-bottom: 4px;
-}
-.file-upload-container .upload-btn div {
-  font-size: 12px;
-  color: #909399;
-}
-.file-tip {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 5px;
+  background: var(--bg-secondary);
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
 }
 
-/* 上传进度条样式 */
-.image-upload-container,
-.file-upload-container {
-  margin-top: 10px;
+.file-upload-container .upload-btn:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-lighter);
+}
+
+.file-upload-container .upload-btn .el-icon {
+  font-size: 24px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.file-upload-container .upload-btn div {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.file-tip {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
 }
 
 /* 自定义进度条样式 */
 :deep(.el-progress--text-inside .el-progress-bar__outer) {
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 :deep(.el-progress-bar__inner) {
@@ -1263,51 +1457,100 @@ onMounted(() => {
 }
 
 :deep(.el-progress--success .el-progress-bar__inner) {
-  background-color: #67c23a;
+  background: linear-gradient(90deg, var(--success-color), #34d399);
 }
 
 /* 材质管理样式 */
 .materials-container {
-  margin-top: 10px;
+  margin-top: 12px;
 }
+
 .materials-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
+
 .materials-list {
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: var(--bg-secondary);
 }
+
 .material-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #ebeef5;
+  padding: 12px;
+  margin: 4px 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
 }
+
+.material-item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
 .material-item:last-child {
   border-bottom: none;
 }
+
 .material-name {
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
+
 .material-details {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
+
 .no-materials {
-  padding: 20px;
+  padding: 24px;
   text-align: center;
-  color: #909399;
-  background: #f5f7fa;
-  border-radius: 4px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
 }
+
 .material-actions {
   display: flex;
   gap: 8px;
+}
+
+.eco-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--success-light);
+  border-radius: var(--radius-md);
+  color: var(--success-color);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.preview-3d-container {
+  width: 100%;
+  min-height: 400px;
+}
+
+.preview-iframe {
+  width: 100%;
+  height: 500px;
+  border-radius: var(--radius-md);
+  border: none;
+}
+
+.preview-tip {
+  width: 100%;
+  padding: 40px 0;
 }
 </style>

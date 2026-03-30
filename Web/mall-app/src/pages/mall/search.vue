@@ -92,9 +92,31 @@ onLoad((options) => {
 </script>
 
 <style scoped lang="scss">
+$sky-blue: #00bfff;
+$sky-light: #5ce1ff;
+$sky-deep: #0099cc;
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$danger: #ff4d6d;
+$gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes imgFadeIn {
+	from { opacity: 0; transform: scale(0.97); }
+	to { opacity: 1; transform: scale(1); }
+}
+
 .search-page {
 	min-height: 100vh;
-	background: #f6f7fb;
+	background: $surface;
 	padding: 24rpx;
 }
 
@@ -102,67 +124,83 @@ onLoad((options) => {
 	display: flex;
 	align-items: center;
 	gap: 16rpx;
-	background: #fff;
-	border-radius: 16rpx;
+	background: $surface-raised;
+	border-radius: 24rpx;
 	padding: 16rpx;
+	box-shadow: $shadow-card;
 
 	input {
 		flex: 1;
 		height: 68rpx;
-		background: #f8fafc;
-		border-radius: 12rpx;
-		padding: 0 20rpx;
+		background: $surface;
+		border-radius: 999rpx;
+		padding: 0 24rpx;
 		font-size: 28rpx;
+		color: $text-primary;
+
+		&::placeholder {
+			color: $text-muted;
+		}
 	}
 
 	.search-btn {
 		height: 68rpx;
 		line-height: 68rpx;
-		padding: 0 28rpx;
-		border-radius: 12rpx;
-		background: #4f46e5;
+		padding: 0 36rpx;
+		border-radius: 999rpx;
+		background: $gradient-primary;
 		color: #fff;
-		font-size: 26rpx;
+		font-size: 28rpx;
+		font-weight: 600;
+		border: none;
+		box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
+
+		&:active {
+			transform: scale(0.96);
+		}
 	}
 }
 
 .result-header {
 	font-size: 24rpx;
-	color: #64748b;
-	margin: 24rpx 8rpx;
+	color: $text-secondary;
+	margin: 28rpx 8rpx;
 }
 
 .model-list {
 	display: flex;
 	flex-direction: column;
-	gap: 20rpx;
+	gap: 24rpx;
 }
 
 .model-card {
-	background: #fff;
-	border-radius: 16rpx;
+	background: $surface-raised;
+	border-radius: 24rpx;
 	overflow: hidden;
 	display: flex;
-	box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.06);
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out both;
 }
 
 .model-image {
 	width: 220rpx;
 	height: 220rpx;
-	background: #e2e8f0;
+	background: $surface;
+	animation: imgFadeIn 0.4s ease-out both;
 }
 
 .empty-image {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #94a3b8;
+	color: $text-muted;
 	font-size: 24rpx;
+	background: $surface;
 }
 
 .model-content {
 	flex: 1;
-	padding: 20rpx;
+	padding: 24rpx;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
@@ -171,14 +209,14 @@ onLoad((options) => {
 .model-name {
 	font-size: 30rpx;
 	font-weight: 700;
-	color: #0f172a;
+	color: $text-primary;
 }
 
 .model-desc {
 	margin-top: 12rpx;
-	font-size: 24rpx;
+	font-size: 26rpx;
 	line-height: 1.5;
-	color: #64748b;
+	color: $text-secondary;
 	display: -webkit-box;
 	line-clamp: 2;
 	-webkit-line-clamp: 2;
@@ -190,7 +228,7 @@ onLoad((options) => {
 	margin-top: 16rpx;
 	font-size: 32rpx;
 	font-weight: 700;
-	color: #4f46e5;
+	color: $sky-blue;
 }
 
 .empty-wrap {
@@ -200,6 +238,6 @@ onLoad((options) => {
 
 .empty-text {
 	font-size: 28rpx;
-	color: #94a3b8;
+	color: $text-muted;
 }
 </style>

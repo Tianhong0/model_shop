@@ -9,7 +9,7 @@
 						</swiper-item>
 					</swiper>
 					<view class="preview-entry" @click.stop="handlePreviewClick">
-						<uni-icons type="eye" size="16" color="#1f2937"></uni-icons>
+						<uni-icons type="eye" size="16" color="#1a2030"></uni-icons>
 						<text>点击进入交互式 3D 预览</text>
 					</view>
 					<view class="preview-tags">
@@ -27,7 +27,7 @@
 						:autoRotate="is3DRotating"
 					/>
 					<view class="preview-entry solid" @click.stop="toggleRotation">
-						<uni-icons :type="is3DRotating ? 'refresh-filled' : 'eye'" size="16" color="#ffffff" :class="{ spin: is3DRotating }"></uni-icons>
+						<uni-icons :type="is3DRotating ? 'refresh-filled' : 'eye'" size="16" color="#00bfff" :class="{ spin: is3DRotating }"></uni-icons>
 						<text>{{ is3DRotating ? '自动旋转中' : '点击开启旋转' }}</text>
 					</view>
 					<view class="preview-close" @click.stop="showReal3D = false">
@@ -41,7 +41,7 @@
 				<view class="title-row">
 					<text class="name">{{ modelInfo.name }}</text>
 					<view class="fav-btn" :class="{ active: isFavorited }" @click="toggleFavorite">
-						<uni-icons :type="isFavorited ? 'heart-filled' : 'heart'" size="18" :color="isFavorited ? '#ef4444' : '#64748b'"></uni-icons>
+						<uni-icons :type="isFavorited ? 'heart-filled' : 'heart'" size="18" :color="isFavorited ? '#ef4444' : '#5a6a7a'"></uni-icons>
 					</view>
 				</view>
 				<text class="desc">{{ modelInfo.desc }}</text>
@@ -69,7 +69,7 @@
 						<view class="dot"></view>
 						<text>模型定制</text>
 					</view>
-					<uni-icons :type="isParamExpanded ? 'up' : 'down'" size="16" color="#64748b"></uni-icons>
+					<uni-icons :type="isParamExpanded ? 'up' : 'down'" size="16" color="#5a6a7a"></uni-icons>
 				</view>
 
 				<view v-if="isParamExpanded" class="options-wrap">
@@ -82,10 +82,14 @@
 								v-for="(item, index) in materials"
 								:key="index"
 								class="option-item"
-								:class="{ active: selectedMaterial === index }"
+								:class="{ active: selectedMaterial === index, 'eco-material': item.isEco }"
 								@click="selectedMaterial = index"
 							>
-								{{ item.name }}
+								<text>{{ item.name }}</text>
+								<view v-if="item.isEco" class="eco-badge">
+									<uni-icons type="checkbox-filled" size="12" color="#22c55e"></uni-icons>
+									<text class="eco-text">环保</text>
+								</view>
 							</view>
 						</view>
 					</view>
@@ -114,7 +118,7 @@
 							/>
 						</view>
 						<text class="current-text">当前精度 {{ precisionLabel }}</text>
-						<slider :value="precisionSliderValue" :min="5" :max="50" @change="onPrecisionChange" activeColor="#2563eb" block-size="18" />
+						<slider :value="precisionSliderValue" :min="5" :max="50" @change="onPrecisionChange" activeColor="#00bfff" block-size="18" />
 						<view class="range-labels">
 							<text>0.05mm</text>
 							<text>高精细</text>
@@ -127,7 +131,7 @@
 							<text class="label">缩放比例</text>
 							<text class="sub-val">{{ Math.round(scale * 100) }}%</text>
 						</view>
-						<slider :value="scale * 10" :min="5" :max="20" @change="onScaleChange" activeColor="#2563eb" block-size="18" />
+						<slider :value="scale * 10" :min="5" :max="20" @change="onScaleChange" activeColor="#00bfff" block-size="18" />
 						<view class="range-labels">
 							<text>50%</text>
 							<text>原始</text>
@@ -147,7 +151,7 @@
 							/>
 						</view>
 						<text class="current-text">当前密度 {{ fillDensityLabel }}</text>
-						<slider :value="fillDensity" :min="0" :max="100" @change="onFillDensityChange" activeColor="#2563eb" block-size="18" />
+						<slider :value="fillDensity" :min="0" :max="100" @change="onFillDensityChange" activeColor="#00bfff" block-size="18" />
 					</view>
 
 					<view class="option-panel">
@@ -162,7 +166,7 @@
 							/>
 						</view>
 						<text class="current-text">范围 {{ filamentRangeLabel }}</text>
-						<slider :value="filamentSliderValue" :min="50" :max="300" @change="onFilamentSliderChange" activeColor="#2563eb" block-size="18" />
+						<slider :value="filamentSliderValue" :min="50" :max="300" @change="onFilamentSliderChange" activeColor="#00bfff" block-size="18" />
 					</view>
 
 					<view class="option-panel">
@@ -217,7 +221,7 @@
 						</view>
 						<view class="comment-actions">
 							<view class="comment-like" :class="{ active: isCommentLiked(comment) }" @click.stop="toggleCommentLike(comment)">
-								<uni-icons :type="isCommentLiked(comment) ? 'heart-filled' : 'heart'" size="18" :color="isCommentLiked(comment) ? '#ef4444' : '#64748b'" />
+								<uni-icons :type="isCommentLiked(comment) ? 'heart-filled' : 'heart'" size="18" :color="isCommentLiked(comment) ? '#ef4444' : '#5a6a7a'" />
 								<text class="comment-like-text">{{ Number(comment.likeCount || 0) }}</text>
 							</view>
 						</view>
@@ -230,12 +234,12 @@
 
 		<view class="bottom-bar">
 			<view class="action-icons">
-				<view class="icon-item">
-					<uni-icons type="chat" size="22" color="#475569"></uni-icons>
+				<view class="icon-item" @click="goCustomerService">
+					<uni-icons type="chat" size="22" color="#5a6a7a"></uni-icons>
 					<text>客服</text>
 				</view>
 				<view class="icon-item" @click="goCart">
-					<uni-icons type="cart" size="22" color="#475569"></uni-icons>
+					<uni-icons type="cart" size="22" color="#5a6a7a"></uni-icons>
 					<text>购物车</text>
 				</view>
 			</view>
@@ -784,13 +788,14 @@ const loadModelDetail = async (modelId) => {
 				id: item.id,
 				name: item.name || `材质${index + 1}`,
 				add: Number(item.price || 0),
-				color: parseColor(item.color)
+				color: parseColor(item.color),
+				isEco: item.isEco || false
 			}))
 			rgbColor.value = parseRgbFromColor(detail.materials[0]?.color || '#4f46e5')
 			tempRgbColor.value = { ...rgbColor.value }
 			selectedMaterial.value = 0
 		} else {
-			materials.value = [{ id: 0, name: '默认材质', add: 0, color: '#4f46e5' }]
+			materials.value = [{ id: 0, name: '默认材质', add: 0, color: '#4f46e5', isEco: false }]
 			rgbColor.value = { r: 79, g: 70, b: 229 }
 			tempRgbColor.value = { ...rgbColor.value }
 			selectedMaterial.value = 0
@@ -993,14 +998,45 @@ const buyNow = async () => {
 const goCart = () => {
 	uni.switchTab({ url: '/pages/cart/cart' })
 }
+
+const goCustomerService = () => {
+	const token = uni.getStorageSync('token')
+	if (!token) {
+		uni.navigateTo({ url: '/pages/auth/login' })
+		return
+	}
+	uni.navigateTo({ url: '/pages/custom/customer-service' })
+}
 </script>
 
 <style scoped lang="scss">
+$sky-blue: #00bfff;
+$sky-light: #5ce1ff;
+$sky-deep: #0099cc;
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$danger: #ff4d6d;
+$gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes imgFadeIn {
+	from { opacity: 0; transform: scale(0.97); }
+	to { opacity: 1; transform: scale(1); }
+}
+
 .detail-container {
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background: #f9fafb;
+	background: $surface;
 }
 
 .detail-scroll {
@@ -1010,15 +1046,24 @@ const goCart = () => {
 .preview-section {
 	position: relative;
 	width: 100%;
-	height: 586rpx;
-	background: linear-gradient(151deg, #f9fafb 0%, rgba(239, 246, 255, 0.3) 100%);
+	padding-bottom: 100%;
+	background: linear-gradient(151deg, $surface 0%, rgba(0, 191, 255, 0.05) 100%);
 
 	.main-swiper,
-	.main-img,
 	.three-viewer {
+		position: absolute;
+		left: 0;
+		top: 0;
 		width: 100%;
 		height: 100%;
 		display: block;
+	}
+
+	.main-img {
+		width: 100%;
+		height: 100%;
+		display: block;
+		animation: imgFadeIn 0.4s ease-out both;
 	}
 }
 
@@ -1028,15 +1073,15 @@ const goCart = () => {
 	right: 24rpx;
 	bottom: 24rpx;
 	height: 88rpx;
-	border-radius: 32rpx;
+	border-radius: 999rpx;
 	background: rgba(255, 255, 255, 0.3);
-	border: 2rpx solid rgba(255, 255, 255, 0.4);
 	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 10rpx;
-	color: #1f2937;
+	color: $text-primary;
 	font-size: 26rpx;
 	font-weight: 500;
 
@@ -1046,10 +1091,10 @@ const goCart = () => {
 		bottom: 24rpx;
 		height: 64rpx;
 		padding: 0 24rpx;
-		background: rgba(37, 99, 235, 0.88);
-		border: none;
+		background: $gradient-primary;
 		color: #ffffff;
 		font-size: 24rpx;
+		border-radius: 999rpx;
 	}
 }
 
@@ -1065,10 +1110,11 @@ const goCart = () => {
 		padding: 8rpx 16rpx;
 		font-size: 20rpx;
 		font-weight: 700;
-		border-radius: 16rpx;
-		background: rgba(0, 0, 0, 0.05);
-		color: #4b5563;
-		border: 2rpx solid rgba(255, 255, 255, 0.2);
+		border-radius: 999rpx;
+		background: rgba(255, 255, 255, 0.75);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		color: $text-secondary;
 	}
 }
 
@@ -1079,7 +1125,9 @@ const goCart = () => {
 	width: 60rpx;
 	height: 60rpx;
 	border-radius: 50%;
-	background: rgba(15, 23, 42, 0.35);
+	background: rgba(0, 0, 0, 0.25);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1088,32 +1136,41 @@ const goCart = () => {
 .info-card,
 .custom-card,
 .comment-card {
-	margin: 20rpx;
-	padding: 28rpx;
-	background: #ffffff;
-	border: 2rpx solid #e5e7eb;
+	margin: 24rpx;
+	padding: 32rpx;
+	background: $surface-raised;
 	border-radius: 24rpx;
+	box-shadow: $shadow-card;
 	box-sizing: border-box;
+	animation: fadeInUp 0.35s ease-out both;
 }
 
 .info-card {
-	margin-top: -26rpx;
+	margin-top: -36rpx;
 	position: relative;
 	z-index: 3;
+}
+
+.custom-card {
+	animation-delay: 0.05s;
+}
+
+.comment-card {
+	animation-delay: 0.1s;
 }
 
 .series-text {
 	font-size: 22rpx;
 	font-weight: 600;
-	color: #2563eb;
+	color: $sky-blue;
 	padding: 8rpx 16rpx;
 	border-radius: 999rpx;
-	background: #eff6ff;
+	background: rgba(0, 191, 255, 0.1);
 	display: inline-block;
 }
 
 .title-row {
-	margin-top: 14rpx;
+	margin-top: 16rpx;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -1121,9 +1178,9 @@ const goCart = () => {
 
 	.name {
 		flex: 1;
-		font-size: 38rpx;
+		font-size: 36rpx;
 		font-weight: 700;
-		color: #111827;
+		color: $text-primary;
 		line-height: 1.4;
 	}
 }
@@ -1132,34 +1189,42 @@ const goCart = () => {
 	width: 64rpx;
 	height: 64rpx;
 	border-radius: 50%;
-	background: #ffffff;
-	border: 2rpx solid #e5e7eb;
+	background: $surface;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 
 	&.active {
 		background: #fff1f2;
-		border-color: #fecdd3;
 	}
 }
 
 .desc {
 	display: block;
 	margin-top: 16rpx;
-	font-size: 25rpx;
+	font-size: 28rpx;
 	line-height: 1.7;
-	color: #4b5563;
+	color: $text-secondary;
 }
 
 .price-row {
 	margin-top: 24rpx;
-	padding-top: 20rpx;
-	border-top: 2rpx solid #f1f5f9;
+	padding-top: 24rpx;
+	position: relative;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	gap: 20rpx;
+
+	&::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		height: 1rpx;
+		background: rgba(0, 0, 0, 0.03);
+	}
 }
 
 .price-box {
@@ -1169,14 +1234,14 @@ const goCart = () => {
 	.symbol {
 		font-size: 30rpx;
 		font-weight: 700;
-		color: #111827;
+		color: $text-primary;
 	}
 
 	.price {
 		margin-left: 4rpx;
 		font-size: 56rpx;
 		font-weight: 800;
-		color: #111827;
+		color: $text-primary;
 	}
 }
 
@@ -1189,15 +1254,15 @@ const goCart = () => {
 		display: flex;
 		justify-content: flex-end;
 		gap: 10rpx;
-		font-size: 22rpx;
+		font-size: 24rpx;
 	}
 
 	.metric-label {
-		color: #94a3b8;
+		color: $text-muted;
 	}
 
 	.metric-val {
-		color: #334155;
+		color: $text-primary;
 		font-weight: 600;
 	}
 }
@@ -1205,7 +1270,7 @@ const goCart = () => {
 .section-title {
 	font-size: 30rpx;
 	font-weight: 700;
-	color: #111827;
+	color: $text-primary;
 	margin-bottom: 20rpx;
 }
 
@@ -1226,21 +1291,20 @@ const goCart = () => {
 	width: 18rpx;
 	height: 18rpx;
 	border-radius: 50%;
-	background: #2563eb;
+	background: $sky-blue;
 }
 
 .options-wrap {
 	margin-top: 24rpx;
 	display: flex;
 	flex-direction: column;
-	gap: 20rpx;
+	gap: 24rpx;
 }
 
 .option-panel {
-	padding: 22rpx;
+	padding: 24rpx;
 	border-radius: 20rpx;
-	border: 2rpx solid #e5e7eb;
-	background: #ffffff;
+	background: $surface;
 }
 
 .panel-head {
@@ -1252,12 +1316,12 @@ const goCart = () => {
 	.label {
 		font-size: 26rpx;
 		font-weight: 600;
-		color: #334155;
+		color: $text-primary;
 	}
 
 	.sub-val {
 		font-size: 24rpx;
-		color: #64748b;
+		color: $text-secondary;
 	}
 }
 
@@ -1270,24 +1334,52 @@ const goCart = () => {
 
 .option-item {
 	padding: 12rpx 28rpx;
-	border-radius: 14rpx;
+	border-radius: 999rpx;
 	font-size: 24rpx;
-	color: #64748b;
-	background: #f3f4f6;
-	border: 2rpx solid transparent;
+	color: $text-secondary;
+	background: $surface-raised;
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+
+	&:active {
+		transform: scale(0.96);
+	}
 
 	&.active {
-		color: #2563eb;
-		background: #eff6ff;
-		border-color: #bfdbfe;
+		color: $sky-blue;
+		background: rgba(0, 191, 255, 0.1);
+		box-shadow: inset 0 0 0 2rpx rgba(0, 191, 255, 0.3);
 	}
+
+	&.eco-material {
+		background: rgba(34, 197, 94, 0.08);
+
+		&.active {
+			background: rgba(34, 197, 94, 0.15);
+			box-shadow: inset 0 0 0 2rpx rgba(34, 197, 94, 0.5);
+		}
+	}
+}
+
+.eco-badge {
+	display: flex;
+	align-items: center;
+	gap: 4rpx;
+	margin-left: 4rpx;
+}
+
+.eco-text {
+	font-size: 20rpx;
+	color: #22c55e;
+	font-weight: 500;
 }
 
 .current-text {
 	display: block;
 	margin-top: 10rpx;
-	font-size: 22rpx;
-	color: #64748b;
+	font-size: 24rpx;
+	color: $text-secondary;
 }
 
 .range-labels {
@@ -1295,16 +1387,15 @@ const goCart = () => {
 	display: flex;
 	justify-content: space-between;
 	font-size: 20rpx;
-	color: #94a3b8;
+	color: $text-muted;
 }
 
 .num-input {
 	width: 170rpx;
 	height: 58rpx;
-	border-radius: 10rpx;
-	border: 2rpx solid #e2e8f0;
-	background: #f8fafc;
-	padding: 0 14rpx;
+	border-radius: 999rpx;
+	background: $surface;
+	padding: 0 18rpx;
 	font-size: 24rpx;
 	text-align: right;
 	box-sizing: border-box;
@@ -1321,7 +1412,7 @@ const goCart = () => {
 	width: 40rpx;
 	height: 40rpx;
 	border-radius: 50%;
-	border: 2rpx solid #e2e8f0;
+	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 
 	&.large {
 		width: 52rpx;
@@ -1332,20 +1423,24 @@ const goCart = () => {
 .color-value {
 	flex: 1;
 	font-size: 24rpx;
-	color: #475569;
+	color: $text-secondary;
 }
 
 .color-picker-btn {
 	height: 56rpx;
-	padding: 0 20rpx;
-	border-radius: 28rpx;
-	background: #eff6ff;
-	color: #2563eb;
+	padding: 0 24rpx;
+	border-radius: 999rpx;
+	background: rgba(0, 191, 255, 0.1);
+	color: $sky-blue;
 	font-size: 24rpx;
 	font-weight: 600;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
+	&:active {
+		transform: scale(0.96);
+	}
 }
 
 .remark-input {
@@ -1354,15 +1449,15 @@ const goCart = () => {
 	height: 160rpx;
 	padding: 20rpx;
 	font-size: 24rpx;
-	border-radius: 14rpx;
-	background: #f8fafc;
+	border-radius: 16rpx;
+	background: $surface-raised;
 	box-sizing: border-box;
 }
 
 .comment-empty {
 	font-size: 24rpx;
-	color: #94a3b8;
-	padding: 8rpx 0;
+	color: $text-muted;
+	padding: 16rpx 0;
 }
 
 .comment-header-row {
@@ -1374,17 +1469,26 @@ const goCart = () => {
 
 .more-link {
 	font-size: 24rpx;
-	color: #2563eb;
+	color: $sky-blue;
 	font-weight: 600;
 }
 
 .comment-item {
-	padding: 18rpx 0;
-	border-bottom: 1px solid #f1f5f9;
+	padding: 20rpx 0;
+	position: relative;
+
+	&:not(:last-child)::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 1rpx;
+		background: rgba(0, 0, 0, 0.03);
+	}
 }
 
 .comment-item:last-child {
-	border-bottom: none;
 	padding-bottom: 0;
 }
 
@@ -1398,7 +1502,7 @@ const goCart = () => {
 	width: 64rpx;
 	height: 64rpx;
 	border-radius: 50%;
-	background-color: #e2e8f0;
+	background-color: $surface;
 }
 
 .comment-user-meta {
@@ -1411,16 +1515,16 @@ const goCart = () => {
 .comment-user {
 	font-size: 26rpx;
 	font-weight: 600;
-	color: #0f172a;
+	color: $text-primary;
 }
 
 .comment-time {
-	font-size: 22rpx;
-	color: #94a3b8;
+	font-size: 24rpx;
+	color: $text-muted;
 }
 
 .comment-score-row {
-	margin-top: 8rpx;
+	margin-top: 12rpx;
 	display: flex;
 	align-items: center;
 	gap: 12rpx;
@@ -1433,22 +1537,22 @@ const goCart = () => {
 }
 
 .comment-score-text {
-	font-size: 22rpx;
-	color: #2563eb;
+	font-size: 24rpx;
+	color: $sky-blue;
 }
 
 .comment-text {
 	display: block;
-	margin-top: 8rpx;
-	font-size: 24rpx;
-	line-height: 1.5;
-	color: #334155;
+	margin-top: 12rpx;
+	font-size: 28rpx;
+	line-height: 1.6;
+	color: $text-primary;
 }
 
 .comment-media {
 	display: flex;
 	gap: 12rpx;
-	margin-top: 12rpx;
+	margin-top: 16rpx;
 	flex-wrap: wrap;
 }
 
@@ -1457,8 +1561,12 @@ const goCart = () => {
 .comment-media-video {
 	width: 180rpx;
 	height: 180rpx;
-	border-radius: 12rpx;
-	background: #0f172a;
+	border-radius: 16rpx;
+	background: $surface;
+}
+
+.comment-media-thumb {
+	animation: imgFadeIn 0.4s ease-out both;
 }
 
 .comment-actions {
@@ -1471,9 +1579,9 @@ const goCart = () => {
 	display: inline-flex;
 	align-items: center;
 	gap: 6rpx;
-	padding: 6rpx 12rpx;
+	padding: 8rpx 16rpx;
 	border-radius: 999rpx;
-	background-color: #f8fafc;
+	background-color: $surface;
 }
 
 .comment-like.active {
@@ -1481,8 +1589,8 @@ const goCart = () => {
 }
 
 .comment-like-text {
-	font-size: 22rpx;
-	color: #64748b;
+	font-size: 24rpx;
+	color: $text-secondary;
 }
 
 .comment-like.active .comment-like-text {
@@ -1490,17 +1598,24 @@ const goCart = () => {
 }
 
 .footer-placeholder {
-	height: 140rpx;
+	height: calc(120rpx + env(safe-area-inset-bottom) + 40rpx);
 }
 
 .bottom-bar {
-	height: 110rpx;
-	padding: 0 20rpx;
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 100;
+	height: 120rpx;
+	padding: 0 24rpx;
 	padding-bottom: env(safe-area-inset-bottom);
 	display: flex;
 	align-items: center;
-	background: #ffffff;
-	border-top: 2rpx solid #e5e7eb;
+	background: rgba(255, 255, 255, 0.88);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
+	box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.04);
 
 	.action-icons {
 		display: flex;
@@ -1516,16 +1631,15 @@ const goCart = () => {
 		text {
 			margin-top: 2rpx;
 			font-size: 20rpx;
-			color: #64748b;
+			color: $text-secondary;
 		}
 	}
 
 	.btns {
 		flex: 1;
-		height: 78rpx;
+		height: 80rpx;
 		display: flex;
-		border-radius: 16rpx;
-		overflow: hidden;
+		gap: 16rpx;
 	}
 
 	.btn {
@@ -1533,18 +1647,25 @@ const goCart = () => {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 26rpx;
+		font-size: 28rpx;
 		font-weight: 600;
+		border-radius: 999rpx;
+
+		&:active {
+			transform: scale(0.96);
+		}
 	}
 
 	.add-cart {
-		color: #334155;
-		background: #f1f5f9;
+		color: $text-primary;
+		background: $surface;
+		box-shadow: $shadow-card;
 	}
 
 	.buy-now {
 		color: #ffffff;
-		background: #2563eb;
+		background: $gradient-primary;
+		box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
 	}
 }
 
@@ -1554,7 +1675,7 @@ const goCart = () => {
 	right: 0;
 	top: 0;
 	bottom: 0;
-	background-color: rgba(15, 23, 42, 0.35);
+	background-color: rgba(0, 0, 0, 0.35);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1563,16 +1684,17 @@ const goCart = () => {
 
 .color-popup {
 	width: 620rpx;
-	background-color: #ffffff;
-	border-radius: 20rpx;
-	padding: 24rpx;
+	background-color: $surface-raised;
+	border-radius: 24rpx;
+	padding: 32rpx;
 	box-sizing: border-box;
+	box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.12);
 }
 
 .popup-title {
-	font-size: 28rpx;
+	font-size: 30rpx;
 	font-weight: 700;
-	color: #1e293b;
+	color: $text-primary;
 }
 
 .popup-preview-row {
@@ -1584,7 +1706,7 @@ const goCart = () => {
 
 .popup-color-text {
 	font-size: 24rpx;
-	color: #475569;
+	color: $text-secondary;
 }
 
 .popup-slider-item {
@@ -1602,41 +1724,46 @@ const goCart = () => {
 	width: 24rpx;
 	font-size: 24rpx;
 	font-weight: 700;
-	color: #334155;
+	color: $text-primary;
 }
 
 .popup-num {
 	width: 64rpx;
 	text-align: right;
 	font-size: 24rpx;
-	color: #475569;
+	color: $text-secondary;
 }
 
 .popup-actions {
-	margin-top: 24rpx;
+	margin-top: 28rpx;
 	display: flex;
 	justify-content: flex-end;
 	gap: 16rpx;
 }
 
 .popup-btn {
-	min-width: 120rpx;
-	height: 64rpx;
-	border-radius: 32rpx;
+	min-width: 130rpx;
+	height: 68rpx;
+	border-radius: 999rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 24rpx;
+	font-size: 26rpx;
 	font-weight: 600;
 
+	&:active {
+		transform: scale(0.96);
+	}
+
 	&.cancel {
-		background-color: #f1f5f9;
-		color: #475569;
+		background-color: $surface;
+		color: $text-secondary;
 	}
 
 	&.confirm {
-		background-color: #2563eb;
+		background: $gradient-primary;
 		color: #ffffff;
+		box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
 	}
 }
 

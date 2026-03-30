@@ -13,6 +13,8 @@
             active-text="正常营业"
             inactive-text="系统维护"
             active-color="#10b981"
+            :loading="statusUpdating"
+            @change="handleStatusChange"
           />
         </el-form-item>
 
@@ -22,6 +24,53 @@
         </el-form-item>
         <el-form-item label="深色侧边栏">
           <el-switch v-model="configStore.sidebarDark" />
+        </el-form-item>
+        <el-form-item label="系统图标">
+          <div class="icon-config">
+            <div class="icon-preview">
+              <div class="preview-box">
+                <img v-if="configStore.siteIconUrl" :src="configStore.siteIconUrl" class="preview-image" alt="icon" />
+                <el-icon v-else :size="24"><component :is="configStore.siteIcon || 'Cpu'" /></el-icon>
+              </div>
+              <span class="preview-label">预览</span>
+            </div>
+            <div class="icon-options">
+              <el-select v-model="configStore.siteIcon" placeholder="选择内置图标" style="width: 200px" clearable>
+                <el-option
+                  v-for="icon in iconList"
+                  :key="icon"
+                  :label="icon"
+                  :value="icon"
+                >
+                  <div class="icon-option-item">
+                    <el-icon :size="18"><component :is="icon" /></el-icon>
+                    <span>{{ icon }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div class="or-divider">或</div>
+              <el-upload
+                class="icon-upload"
+                :show-file-list="false"
+                :before-upload="beforeIconUpload"
+                :http-request="handleIconUpload"
+                accept="image/*"
+              >
+                <el-button type="primary" plain :loading="iconUploading">
+                  <el-icon><Upload /></el-icon>
+                  {{ iconUploading ? '上传中...' : '上传自定义图标' }}
+                </el-button>
+              </el-upload>
+              <el-button
+                v-if="configStore.siteIconUrl"
+                type="danger"
+                plain
+                @click="clearCustomIcon"
+              >
+                清除自定义图标
+              </el-button>
+            </div>
+          </div>
         </el-form-item>
 
         <el-divider content-position="left">小程序内容配置（后端实时）</el-divider>
@@ -78,16 +127,81 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { Upload } from '@element-plus/icons-vue'
 import { useConfigStore } from '../../store/config'
 import { getAdminOperationStatus, getHomeConfig, updateAdminOperationStatus } from '../../api/operation'
+import { uploadFile } from '../../api/model'
 
 const router = useRouter()
 const configStore = useConfigStore()
 
 const loading = ref(false)
 const saving = ref(false)
+const statusUpdating = ref(false)
+const iconUploading = ref(false)
 const homeBanners = ref([])
 const homeNotices = ref([])
+
+// 常用图标列表（Element Plus 图标）
+const iconList = [
+  'Cpu', 'Monitor', 'HomeFilled', 'House', 'Shop', 'Goods', 'GoodsFilled',
+  'Box', 'Grid', 'Menu', 'Apps', 'List',
+  'Document', 'DocumentFilled', 'Folder', 'FolderFilled', 'Files',
+  'Star', 'StarFilled', 'Collection', 'CollectionFilled',
+  'TrendCharts', 'DataAnalysis', 'DataLine', 'DataBoard', 'PieChart',
+  'User', 'UserFilled', 'Avatar', 'People', 'Management',
+  'Setting', 'SettingFilled', 'Tools', 'Operation',
+  'Bell', 'BellFilled', 'Notification', 'Message', 'ChatDotRound',
+  'Search', 'ZoomIn', 'View', 'Hide', 'Filter',
+  'Download', 'Upload', 'UploadFilled', 'Link', 'Connection',
+  'Location', 'LocationFilled', 'MapLocation', 'Compass',
+  'Calendar', 'CalendarFilled', 'Clock', 'Timer',
+  'Phone', 'PhoneFilled', 'Iphone', 'Cellphone',
+  'Promotion', 'Position', 'Flag', 'FlagFilled', 'Medal',
+  'Trophy', 'TrophyFilled', 'Present', 'PresentFilled', 'Gift',
+  'Wallet', 'WalletFilled', 'CreditCard', 'Money', 'Coin',
+  'Picture', 'PictureFilled', 'PictureRounded', 'Camera', 'CameraFilled',
+  'VideoCamera', 'VideoCameraFilled', 'Film', 'Microphone',
+  'Headset', 'Service'
+]
+
+// 图标上传前验证
+const beforeIconUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+// 上传自定义图标
+const handleIconUpload = async (options) => {
+  iconUploading.value = true
+  try {
+    const url = await uploadFile(options.file, 'icon')
+    configStore.siteIconUrl = url
+    configStore.saveToStorage()
+    ElMessage.success('图标上传成功')
+  } catch (error) {
+    ElMessage.error(error?.message || '上传失败')
+  } finally {
+    iconUploading.value = false
+  }
+}
+
+// 清除自定义图标
+const clearCustomIcon = () => {
+  configStore.siteIconUrl = ''
+  configStore.saveToStorage()
+  ElMessage.success('已清除自定义图标')
+}
 
 const fetchOperationStatus = async () => {
   try {
@@ -95,6 +209,20 @@ const fetchOperationStatus = async () => {
     configStore.siteStatus = Boolean(data?.operating)
   } catch (e) {
     ElMessage.error('获取运营状态失败')
+  }
+}
+
+const handleStatusChange = async (val) => {
+  statusUpdating.value = true
+  try {
+    await updateAdminOperationStatus({ operating: val })
+    ElMessage.success(val ? '系统已开启正常营业' : '系统已进入维护模式')
+  } catch (e) {
+    // 恢复原状态
+    configStore.siteStatus = !val
+    ElMessage.error(e?.message || '更新运营状态失败')
+  } finally {
+    statusUpdating.value = false
   }
 }
 
@@ -123,6 +251,8 @@ const handleSave = async () => {
   saving.value = true
   try {
     await updateAdminOperationStatus({ operating: Boolean(configStore.siteStatus) })
+    // 应用主题颜色
+    configStore.applyTheme()
     ElMessage.success('界面配置已应用')
   } catch (e) {
     ElMessage.error(e?.message || '保存配置失败')
@@ -133,6 +263,8 @@ const handleSave = async () => {
 
 const handleReset = () => {
   configStore.$reset()
+  // 重置后应用默认主题
+  configStore.applyTheme()
   ElMessage.info('界面配置已重置')
 }
 
@@ -141,24 +273,102 @@ onMounted(fetchOperationStatus)
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
-.modern-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.page-container {
+  padding: 0;
 }
+
+.modern-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
 .card-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   margin-bottom: 32px;
-  color: #1e293b;
+  color: var(--text-primary);
   text-align: center;
 }
+
 .ops-header {
   display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.icon-config {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.icon-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-box {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #818cf8 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.preview-box .el-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-image {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+}
+
+.preview-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.icon-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.or-divider {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.icon-option-item {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  padding: 4px 0;
+}
+
+.icon-option-item .el-icon {
+  flex-shrink: 0;
+}
+
+:deep(.el-select-dropdown__item) {
+  height: auto !important;
+  padding: 8px 12px !important;
 }
 </style>

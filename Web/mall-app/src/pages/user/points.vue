@@ -1,6 +1,6 @@
 <template>
 	<view class="points-page">
-		<view class="summary card">
+		<view class="summary-card">
 			<text class="title">可用积分</text>
 			<text class="amount">{{ account.availablePoints }}</text>
 			<view class="meta-row">
@@ -9,7 +9,7 @@
 			</view>
 		</view>
 
-		<view class="list card" v-if="list.length">
+		<view class="list-card" v-if="list.length">
 			<view class="item" v-for="item in list" :key="item.id">
 				<view class="left">
 					<text class="name">{{ formatBiz(item) }}</text>
@@ -20,7 +20,7 @@
 				</text>
 			</view>
 		</view>
-		<view v-else class="card empty">暂无积分流水</view>
+		<view v-else class="empty-card">暂无积分流水</view>
 	</view>
 </template>
 
@@ -82,49 +82,70 @@ const formatTime = (value) => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
 .points-page {
 	min-height: 100vh;
-	padding: 24rpx;
-	background: #f8fafc;
+	padding: 28rpx;
+	background: $bg;
 }
 
-.card {
-	background: #fff;
-	border-radius: 18rpx;
-	padding: 24rpx;
-	margin-bottom: 20rpx;
-}
-
-.summary {
-	.title { font-size: 24rpx; color: #64748b; }
-	.amount { display: block; margin-top: 14rpx; font-size: 56rpx; font-weight: 700; color: #1e293b; }
+.summary-card {
+	background: $gradient;
+	border-radius: 24rpx;
+	padding: 32rpx;
+	margin-bottom: 28rpx;
+	box-shadow: 0 12rpx 40rpx rgba(0, 191, 255, 0.2);
+	color: #ffffff;
+	.title { font-size: 24rpx; opacity: 0.9; }
+	.amount { display: block; margin-top: 14rpx; font-size: 56rpx; font-weight: 700; }
 	.meta-row {
-		margin-top: 14rpx;
+		margin-top: 18rpx;
 		display: flex;
 		justify-content: space-between;
 		font-size: 24rpx;
-		color: #64748b;
+		opacity: 0.85;
 	}
 }
 
-.list {
+.list-card {
+	background: $card;
+	border-radius: 24rpx;
+	padding: 8rpx 32rpx;
+	box-shadow: $shadow;
+
 	.item {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 20rpx 0;
-		border-bottom: 2rpx solid #f1f5f9;
-		&:last-child { border-bottom: none; }
+		padding: 24rpx 0;
+		& + .item { border-top: 1rpx solid rgba(0,0,0,0.04); }
 	}
-	.name { display: block; font-size: 28rpx; color: #1e293b; }
-	.time { display: block; margin-top: 6rpx; font-size: 22rpx; color: #94a3b8; }
+	.name { display: block; font-size: 28rpx; color: $text1; font-weight: 500; }
+	.time { display: block; margin-top: 8rpx; font-size: 22rpx; color: $text3; }
 	.value { font-size: 30rpx; font-weight: 700; }
-	.in { color: #10b981; }
-	.out { color: #ef4444; }
+	.in { color: $success; }
+	.out { color: $danger; }
 }
 
-.empty {
-	font-size: 24rpx;
-	color: #94a3b8;
+.empty-card {
+	background: $card;
+	border-radius: 24rpx;
+	padding: 40rpx 32rpx;
+	box-shadow: $shadow;
+	font-size: 28rpx;
+	color: $text3;
+	text-align: center;
 }
 </style>

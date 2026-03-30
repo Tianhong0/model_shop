@@ -13,7 +13,7 @@
         <text class="head-title">物流信息</text>
         <view class="head-right">
           <text class="head-link">查看详情</text>
-          <uni-icons type="right" size="14" color="#94a3b8" />
+          <uni-icons type="right" size="14" color="#8a9aaa" />
         </view>
       </view>
       <view v-if="deliverySummary">
@@ -44,7 +44,7 @@
 
     <view class="card">
       <view class="address-row">
-        <uni-icons type="location-filled" size="18" color="#4f46e5" />
+        <uni-icons type="location-filled" size="18" color="#00bfff" />
         <view class="addr-content">
           <text class="addr-name">{{ parsedAddress.name || '收货人' }} {{ parsedAddress.phone || '' }}</text>
           <text class="addr-detail">{{ parsedAddress.address || '暂无收货地址信息' }}</text>
@@ -701,78 +701,108 @@ onUnload(() => {
 </script>
 
 <style scoped lang="scss">
-.page { min-height: 100vh; background: #f6f7fb; padding-bottom: 130rpx; }
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+.page {
+	min-height: 100vh;
+	background: $bg;
+	padding-bottom: 140rpx;
+}
+
 .status-hero {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  border-bottom-left-radius: 28rpx;
-  border-bottom-right-radius: 28rpx;
-  padding: 40rpx 30rpx 52rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+	background: $gradient;
+	border-bottom-left-radius: 32rpx;
+	border-bottom-right-radius: 32rpx;
+	padding: 48rpx 32rpx 56rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
-.status-title { color: #fff; display: block; font-size: 42rpx; font-weight: 700; }
+
+.status-title { color: #fff; display: block; font-size: 36rpx; font-weight: 700; }
 .status-desc { color: rgba(255, 255, 255, 0.9); display: block; margin-top: 10rpx; font-size: 24rpx; }
+
 .card {
-  margin: 18rpx 20rpx 0;
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 24rpx;
-  box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.04);
+	margin: 20rpx 28rpx 0;
+	background: $card;
+	border-radius: 24rpx;
+	padding: 28rpx;
+	box-shadow: $shadow;
 }
-.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14rpx; }
-.head-title { color: #0f172a; font-size: 30rpx; font-weight: 700; }
+
+.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.head-title { color: $text1; font-size: 30rpx; font-weight: 700; }
 .head-right { display: flex; align-items: center; gap: 6rpx; }
-.head-link { color: #94a3b8; font-size: 22rpx; }
-.log-main { display: block; color: #1e293b; font-size: 26rpx; font-weight: 600; }
-.log-sub { display: block; color: #64748b; font-size: 24rpx; margin-top: 8rpx; line-height: 1.5; }
-.chip { color: #4f46e5; background: #eef2ff; font-size: 22rpx; border-radius: 18rpx; padding: 6rpx 14rpx; }
+.head-link { color: $text3; font-size: 22rpx; }
+.log-main { display: block; color: $text1; font-size: 26rpx; font-weight: 600; }
+.log-sub { display: block; color: $text2; font-size: 24rpx; margin-top: 8rpx; line-height: 1.5; }
+.chip { color: $primary; background: rgba(0, 191, 255, 0.08); font-size: 22rpx; border-radius: 999rpx; padding: 6rpx 16rpx; font-weight: 600; }
 .progress-row { display: flex; align-items: center; gap: 16rpx; }
-.bar { height: 14rpx; flex: 1; border-radius: 999rpx; background: #e2e8f0; overflow: hidden; }
-.bar-inner { height: 100%; background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%); }
-.percent { color: #334155; font-size: 24rpx; font-weight: 600; }
-.meta-grid { display: flex; flex-direction: column; gap: 8rpx; margin-top: 14rpx; color: #64748b; font-size: 23rpx; }
+.bar { height: 16rpx; flex: 1; border-radius: 999rpx; background: $bg; overflow: hidden; }
+.bar-inner { height: 100%; background: $gradient; border-radius: 999rpx; }
+.percent { color: $text1; font-size: 24rpx; font-weight: 600; }
+.meta-grid { display: flex; flex-direction: column; gap: 10rpx; margin-top: 16rpx; color: $text2; font-size: 24rpx; }
 .address-row { display: flex; align-items: flex-start; }
 .addr-content { margin-left: 14rpx; flex: 1; }
-.addr-name { display: block; color: #0f172a; font-size: 26rpx; font-weight: 600; }
-.addr-detail { display: block; color: #64748b; font-size: 24rpx; margin-top: 8rpx; line-height: 1.6; }
+.addr-name { display: block; color: $text1; font-size: 28rpx; font-weight: 600; }
+.addr-detail { display: block; color: $text2; font-size: 24rpx; margin-top: 8rpx; line-height: 1.6; }
 .goods-item { display: flex; margin-bottom: 18rpx; }
-.goods-img { width: 142rpx; height: 142rpx; border-radius: 14rpx; background: #f1f5f9; }
+.goods-img { width: 142rpx; height: 142rpx; border-radius: 16rpx; background: $bg; }
 .goods-info { margin-left: 16rpx; flex: 1; }
-.name { display: block; color: #0f172a; font-size: 28rpx; font-weight: 700; }
-.params { display: block; color: #94a3b8; font-size: 22rpx; margin-top: 8rpx; }
+.name { display: block; color: $text1; font-size: 28rpx; font-weight: 700; }
+.params { display: block; color: $text3; font-size: 22rpx; margin-top: 8rpx; }
 .price-line { display: flex; justify-content: space-between; margin-top: 12rpx; }
-.price { color: #111827; font-size: 30rpx; font-weight: 700; }
-.count { color: #94a3b8; font-size: 24rpx; }
-.sum-row { display: flex; justify-content: space-between; color: #64748b; font-size: 24rpx; margin-top: 10rpx; }
-.sum-row.total { color: #0f172a; margin-top: 14rpx; padding-top: 12rpx; border-top: 1px solid #f1f5f9; }
-.amount { color: #ef4444; font-size: 34rpx; font-weight: 700; }
-.info-row { display: flex; justify-content: space-between; color: #475569; font-size: 24rpx; margin-bottom: 16rpx; }
+.price { color: $text1; font-size: 30rpx; font-weight: 700; }
+.count { color: $text3; font-size: 24rpx; }
+.sum-row { display: flex; justify-content: space-between; color: $text2; font-size: 24rpx; margin-top: 10rpx; }
+.sum-row.total { color: $text1; margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid rgba(0,0,0,0.04); }
+.amount { color: $danger; font-size: 34rpx; font-weight: 700; }
+.info-row { display: flex; justify-content: space-between; color: $text2; font-size: 24rpx; margin-bottom: 16rpx; }
 .info-row:last-child { margin-bottom: 0; }
 .inline { display: flex; align-items: center; gap: 12rpx; }
-.copy { color: #4f46e5; }
+.copy { color: $primary; font-weight: 500; }
+
 .bottom-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
-  padding: 18rpx 20rpx calc(env(safe-area-inset-bottom) + 18rpx);
-  display: flex;
-  justify-content: flex-end;
-  gap: 14rpx;
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(255,255,255,0.72);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
+	padding: 18rpx 28rpx calc(env(safe-area-inset-bottom) + 18rpx);
+	display: flex;
+	justify-content: flex-end;
+	gap: 14rpx;
 }
+
 .btn {
-  margin: 0;
-  height: 68rpx;
-  line-height: 68rpx;
-  border-radius: 999rpx;
-  background: #fff;
-  color: #475569;
-  border: 1px solid #d1d5db;
-  padding: 0 34rpx;
-  font-size: 24rpx;
+	margin: 0;
+	height: 72rpx;
+	line-height: 72rpx;
+	border-radius: 999rpx;
+	background: $card;
+	color: $text2;
+	padding: 0 36rpx;
+	font-size: 26rpx;
+	box-shadow: $shadow;
+	&:active { transform: scale(0.96); }
 }
-.btn.primary { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+
+.btn.primary {
+	background: $gradient;
+	color: #fff;
+	box-shadow: 0 6rpx 20rpx rgba(0, 191, 255, 0.25);
+}
 </style>

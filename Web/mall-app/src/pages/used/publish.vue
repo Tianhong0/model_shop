@@ -1,6 +1,7 @@
 <template>
   <view class="page">
-    <view class="hero-panel">
+    <!-- Hero -->
+    <view class="hero-panel fadeInUp">
       <view class="hero-copy">
         <text class="hero-kicker">FLEA MARKET STUDIO</text>
         <text class="hero-title">像挂闲鱼一样，轻松把闲置发出去</text>
@@ -13,7 +14,8 @@
     </view>
 
     <view class="sheet">
-      <view class="section">
+      <!-- Basic Info Section -->
+      <view class="section fadeInUp">
         <view class="section-head">
           <text class="section-title">基础信息</text>
           <text class="section-tip">先把商品说清楚，后面价格推荐会更准确</text>
@@ -66,7 +68,8 @@
         </view>
       </view>
 
-      <view class="section">
+      <!-- Condition & Price Section -->
+      <view class="section fadeInUp">
         <view class="section-head">
           <text class="section-title">成色与价格</text>
           <text class="section-tip">参考闲鱼常见发布方式，优先选状态，再定入手价和转卖价</text>
@@ -155,7 +158,8 @@
         </view>
       </view>
 
-      <view class="section">
+      <!-- Location & Images Section -->
+      <view class="section fadeInUp">
         <view class="section-head">
           <text class="section-title">发货信息与图片</text>
           <text class="section-tip">让买家快速知道你从哪里发、实物长什么样</text>
@@ -190,6 +194,7 @@
       </view>
     </view>
 
+    <!-- Footer -->
     <view class="footer-bar">
       <view class="footer-summary">
         <text class="summary-label">当前发布价</text>
@@ -380,13 +385,30 @@ const submit = async () => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fadeInUp { animation: fadeInUp 0.4s ease both; }
+
 .page {
   min-height: 100vh;
-  padding: 24rpx 24rpx 180rpx;
-  background:
-    radial-gradient(circle at top right, rgba(255, 208, 145, 0.55), transparent 28%),
-    radial-gradient(circle at left 20%, rgba(255, 236, 196, 0.72), transparent 22%),
-    linear-gradient(180deg, #fff8ed 0%, #fffdf9 30%, #f7f3eb 100%);
+  padding: 28rpx 28rpx 200rpx;
+  background: $bg;
 }
 
 .hero-panel {
@@ -394,50 +416,51 @@ const submit = async () => {
   align-items: stretch;
   justify-content: space-between;
   gap: 20rpx;
-  padding: 22rpx 4rpx 30rpx;
+  padding: 28rpx 8rpx 36rpx;
 }
 
-.hero-copy {
-  flex: 1;
-}
+.hero-copy { flex: 1; }
 
 .hero-kicker {
   display: block;
   font-size: 20rpx;
   letter-spacing: 4rpx;
-  color: #b45309;
+  color: $deep;
   opacity: 0.82;
 }
 
 .hero-title {
   display: block;
   margin-top: 10rpx;
-  color: #2f1b12;
-  font-size: 46rpx;
-  line-height: 1.18;
+  color: $text1;
+  font-size: 36rpx;
+  line-height: 1.2;
   font-weight: 700;
 }
 
 .hero-sub {
   display: block;
   margin-top: 14rpx;
-  color: #7c5a41;
+  color: $text2;
   font-size: 24rpx;
   line-height: 1.7;
 }
 
 .hero-badge {
   width: 174rpx;
-  border-radius: 28rpx;
+  border-radius: 24rpx;
   padding: 22rpx 18rpx;
-  background: linear-gradient(180deg, #fff7df 0%, #fff1cc 100%);
-  border: 1px solid rgba(180, 83, 9, 0.12);
-  box-shadow: 0 16rpx 32rpx rgba(168, 97, 22, 0.12);
+  background: $card;
+  box-shadow: $shadow;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-badge-value {
   display: block;
-  color: #9a3412;
+  color: $deep;
   font-size: 40rpx;
   font-weight: 700;
 }
@@ -445,7 +468,7 @@ const submit = async () => {
 .hero-badge-label {
   display: block;
   margin-top: 8rpx;
-  color: #9a3412;
+  color: $deep;
   font-size: 22rpx;
   line-height: 1.5;
 }
@@ -453,77 +476,68 @@ const submit = async () => {
 .sheet {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 28rpx;
 }
 
 .section {
-  padding: 26rpx;
-  border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(120, 53, 15, 0.08);
-  box-shadow: 0 18rpx 46rpx rgba(78, 39, 8, 0.08);
-  backdrop-filter: blur(16rpx);
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
-.section-head {
-  margin-bottom: 18rpx;
-}
+.section-head { margin-bottom: 20rpx; }
 
 .section-title {
   display: block;
-  color: #2f1b12;
-  font-size: 31rpx;
+  color: $text1;
+  font-size: 30rpx;
   font-weight: 700;
 }
 
 .section-tip {
   display: block;
   margin-top: 8rpx;
-  color: #8a6b54;
+  color: $text2;
   font-size: 22rpx;
   line-height: 1.6;
 }
 
 .field-card {
-  margin-top: 18rpx;
+  margin-top: 20rpx;
   padding: 22rpx;
   border-radius: 24rpx;
-  background: #fffdf9;
-  border: 1px solid #f2e6d8;
+  background: #fafbfc;
 }
 
-.field-card-strong,
-.highlight-card {
-  background: linear-gradient(180deg, #fffdf8 0%, #fff7ee 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+.field-card-strong, .highlight-card {
+  background: linear-gradient(180deg, #ffffff 0%, rgba(0, 191, 255, 0.03) 100%);
 }
 
 .field-label {
   display: block;
-  color: #3b2417;
-  font-size: 27rpx;
+  color: $text1;
+  font-size: 28rpx;
   font-weight: 700;
 }
 
-.field-tip,
-.field-foot {
+.field-tip, .field-foot {
   display: block;
   margin-top: 8rpx;
-  color: #8a6b54;
-  font-size: 21rpx;
+  color: $text2;
+  font-size: 22rpx;
   line-height: 1.6;
 }
 
-.text-input,
-.textarea {
+.text-input, .textarea {
   width: 100%;
   box-sizing: border-box;
   margin-top: 16rpx;
   border-radius: 20rpx;
-  background: #fff;
-  border: 1px solid #eadac8;
-  color: #2f1b12;
-  font-size: 27rpx;
+  background: $card;
+  color: $text1;
+  font-size: 28rpx;
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 
 .text-input {
@@ -531,19 +545,14 @@ const submit = async () => {
   padding: 0 24rpx;
 }
 
-.text-input.compact {
-  height: 82rpx;
-}
+.text-input.compact { height: 82rpx; }
 
 .textarea {
   min-height: 210rpx;
   padding: 22rpx 24rpx;
 }
 
-.chip-group,
-.strategy-group,
-.recommend-grid,
-.condition-grid {
+.chip-group, .strategy-group, .recommend-grid, .condition-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
@@ -553,56 +562,49 @@ const submit = async () => {
 .chip {
   padding: 14rpx 24rpx;
   border-radius: 999rpx;
-  background: #fff6ea;
-  border: 1px solid #efd7bb;
-  color: #7c5a41;
+  background: rgba(0, 191, 255, 0.06);
+  color: $text2;
   font-size: 24rpx;
+  &:active { transform: scale(0.96); }
 }
 
 .chip.active {
-  background: #2f1b12;
-  color: #fff4e7;
-  border-color: #2f1b12;
+  background: $deep;
+  color: #ffffff;
 }
 
-.suggestion-strip {
-  margin-top: 16rpx;
+.suggestion-strip { margin-top: 16rpx; }
+
+.suggestion-label, .smart-sub {
+  color: $text3;
+  font-size: 22rpx;
 }
 
-.suggestion-label,
-.smart-sub {
-  color: #9a7b65;
-  font-size: 21rpx;
-}
-
-.suggestion-scroll,
-.tag-scroll {
+.suggestion-scroll, .tag-scroll {
   white-space: nowrap;
   margin-top: 14rpx;
 }
 
-.suggestion-row,
-.tag-row {
+.suggestion-row, .tag-row {
   display: inline-flex;
   gap: 14rpx;
   padding-right: 20rpx;
 }
 
-.snippet-pill,
-.price-tag {
+.snippet-pill, .price-tag {
   flex-shrink: 0;
   padding: 14rpx 22rpx;
   border-radius: 999rpx;
-  background: #fff;
-  border: 1px solid #eedfcd;
-  color: #7a5b44;
-  font-size: 23rpx;
+  background: $card;
+  color: $text2;
+  font-size: 24rpx;
+  box-shadow: $shadow;
+  &:active { transform: scale(0.96); }
 }
 
 .price-tag.active {
-  background: #fff0d5;
-  color: #9a3412;
-  border-color: #f59e0b;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
 }
 
 .condition-grid {
@@ -610,39 +612,29 @@ const submit = async () => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.condition-card,
-.strategy-card,
-.recommend-card {
+.condition-card, .strategy-card, .recommend-card {
   border-radius: 24rpx;
   padding: 20rpx;
-  border: 1px solid #eedcca;
-  background: #fff;
+  background: $card;
+  box-shadow: $shadow;
 }
 
-.condition-card.active,
-.strategy-card.active,
-.recommend-card.selected {
-  background: linear-gradient(180deg, #fff3db 0%, #fff8ef 100%);
-  border-color: #e78b2f;
-  box-shadow: 0 12rpx 24rpx rgba(231, 139, 47, 0.14);
+.condition-card.active, .strategy-card.active, .recommend-card.selected {
+  background: rgba(0, 191, 255, 0.06);
+  box-shadow: 0 8rpx 28rpx rgba(0, 191, 255, 0.12);
 }
 
-.condition-title,
-.strategy-title,
-.recommend-label,
-.smart-title {
+.condition-title, .strategy-title, .recommend-label, .smart-title {
   display: block;
-  color: #2f1b12;
+  color: $text1;
   font-size: 26rpx;
   font-weight: 700;
 }
 
-.condition-desc,
-.strategy-desc,
-.recommend-note {
+.condition-desc, .strategy-desc, .recommend-note {
   display: block;
   margin-top: 8rpx;
-  color: #8a6b54;
+  color: $text2;
   font-size: 22rpx;
   line-height: 1.6;
 }
@@ -650,20 +642,16 @@ const submit = async () => {
 .condition-rate {
   display: inline-flex;
   margin-top: 12rpx;
-  color: #b45309;
-  font-size: 21rpx;
+  color: $deep;
+  font-size: 22rpx;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: #fff7e7;
+  background: rgba(0, 191, 255, 0.08);
 }
 
-.price-card {
-  overflow: hidden;
-}
+.price-card { overflow: hidden; }
 
-.price-head,
-.media-head,
-.smart-board-head {
+.price-head, .media-head, .smart-board-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -671,30 +659,25 @@ const submit = async () => {
 }
 
 .price-insight {
-  color: #9a7b65;
-  font-size: 21rpx;
+  color: $text3;
+  font-size: 22rpx;
   text-align: right;
 }
 
-.price-insight.emphasis {
-  color: #b45309;
-}
+.price-insight.emphasis { color: $deep; }
 
 .price-input {
   font-size: 34rpx;
   font-weight: 700;
 }
 
-.price-input.prominent {
-  color: #b45309;
-}
+.price-input.prominent { color: $deep; }
 
 .smart-board {
   margin-top: 18rpx;
   padding: 20rpx;
-  border-radius: 22rpx;
-  background: #fffdfa;
-  border: 1px dashed #efd2a9;
+  border-radius: 20rpx;
+  background: rgba(0, 191, 255, 0.03);
 }
 
 .recommend-grid {
@@ -705,26 +688,26 @@ const submit = async () => {
 .recommend-price {
   display: block;
   margin-top: 10rpx;
-  color: #b45309;
+  color: $deep;
   font-size: 30rpx;
   font-weight: 700;
 }
 
 .media-panel {
-  margin-top: 18rpx;
+  margin-top: 20rpx;
   padding: 22rpx;
   border-radius: 24rpx;
-  background: linear-gradient(180deg, #fffefb 0%, #fff8f0 100%);
-  border: 1px solid #f0dfca;
+  background: #fafbfc;
 }
 
 .media-add {
   flex-shrink: 0;
   padding: 12rpx 24rpx;
   border-radius: 999rpx;
-  background: #2f1b12;
-  color: #fff3e3;
-  font-size: 23rpx;
+  background: $deep;
+  color: #ffffff;
+  font-size: 24rpx;
+  &:active { transform: scale(0.96); }
 }
 
 .upload-grid {
@@ -734,21 +717,20 @@ const submit = async () => {
   margin-top: 18rpx;
 }
 
-.upload-item,
-.upload-add {
+.upload-item, .upload-add {
   position: relative;
-  height: 200rpx;
+  aspect-ratio: 1;
   border-radius: 24rpx;
   overflow: hidden;
 }
 
-.upload-item {
-  background: #f3e6d8;
-}
+.upload-item { background: #e0f2fe; }
 
 .upload-img {
   width: 100%;
   height: 100%;
+  opacity: 0;
+  animation: fadeInUp 0.4s ease both;
 }
 
 .upload-add {
@@ -756,24 +738,23 @@ const submit = async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1.5px dashed #d8b48d;
-  background: linear-gradient(180deg, #fff9f1 0%, #fff3df 100%);
+  background: rgba(0, 191, 255, 0.04);
+  box-shadow: inset 0 0 0 2rpx rgba(0, 191, 255, 0.15);
 }
 
 .upload-plus {
-  color: #b45309;
+  color: $deep;
   font-size: 48rpx;
   line-height: 1;
 }
 
 .upload-copy {
   margin-top: 10rpx;
-  color: #8a6b54;
+  color: $text2;
   font-size: 22rpx;
 }
 
-.cover-badge,
-.remove-badge {
+.cover-badge, .remove-badge {
   position: absolute;
   z-index: 2;
   border-radius: 999rpx;
@@ -784,8 +765,8 @@ const submit = async () => {
   left: 10rpx;
   top: 10rpx;
   padding: 8rpx 14rpx;
-  background: rgba(47, 27, 18, 0.76);
-  color: #fff5e8;
+  background: rgba(0, 102, 153, 0.76);
+  color: #ffffff;
 }
 
 .remove-badge {
@@ -795,39 +776,35 @@ const submit = async () => {
   height: 42rpx;
   line-height: 42rpx;
   text-align: center;
-  background: rgba(255, 255, 255, 0.9);
-  color: #b91c1c;
+  background: rgba(255, 255, 255, 0.92);
+  color: $danger;
 }
 
 .footer-bar {
   position: fixed;
-  left: 20rpx;
-  right: 20rpx;
-  bottom: 22rpx;
+  left: 24rpx; right: 24rpx; bottom: 28rpx;
   display: flex;
   align-items: center;
   gap: 18rpx;
-  padding: 18rpx;
-  border-radius: 28rpx;
-  background: rgba(47, 27, 18, 0.92);
-  box-shadow: 0 18rpx 44rpx rgba(47, 27, 18, 0.26);
+  padding: 18rpx 24rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
 }
 
-.footer-summary {
-  flex: 1;
-  min-width: 0;
-}
+.footer-summary { flex: 1; min-width: 0; }
 
 .summary-label {
   display: block;
-  color: rgba(255, 243, 227, 0.72);
-  font-size: 21rpx;
+  color: $text2;
+  font-size: 22rpx;
 }
 
 .summary-price {
   display: block;
   margin-top: 6rpx;
-  color: #fff6ea;
+  color: $deep;
   font-size: 34rpx;
   font-weight: 700;
 }
@@ -838,10 +815,11 @@ const submit = async () => {
   height: 88rpx;
   line-height: 88rpx;
   border-radius: 999rpx;
-  background: linear-gradient(135deg, #ffb347 0%, #ff8c37 48%, #ff6b2c 100%);
+  background: $gradient;
   color: #fff;
   font-size: 28rpx;
   font-weight: 700;
-  box-shadow: 0 14rpx 28rpx rgba(255, 125, 45, 0.24);
+  box-shadow: 0 8rpx 24rpx rgba(0, 191, 255, 0.22);
+  &:active { transform: scale(0.96); }
 }
 </style>

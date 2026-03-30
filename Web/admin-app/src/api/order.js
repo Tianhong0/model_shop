@@ -70,6 +70,14 @@ export const simulateDeliveryTrack = (data) => {
   })
 }
 
+export const retryAutoShip = (data) => {
+  return request({
+    url: '/api/orders/delivery/admin/retry-ship',
+    method: 'post',
+    data
+  })
+}
+
 export const getCommentAdminList = (data) => {
   return request({
     url: '/api/orders/comment/admin/list',

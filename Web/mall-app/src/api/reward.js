@@ -24,6 +24,14 @@ export const createBountyTaskApi = (data) => {
   })
 }
 
+export const resubmitBountyTaskApi = (data) => {
+  return request({
+    url: '/api/bounty/task/resubmit',
+    method: 'POST',
+    data
+  })
+}
+
 export const createBountyBidApi = (data) => {
   return request({
     url: '/api/bounty/bid/create',
@@ -71,6 +79,14 @@ export const acceptBountyDeliveryApi = (data) => {
   })
 }
 
+export const cancelBountyTaskApi = (data) => {
+  return request({
+    url: '/api/bounty/task/cancel-request',
+    method: 'POST',
+    data
+  })
+}
+
 export const sendBountyMessageApi = (data) => {
   return request({
     url: '/api/bounty/message/send',
@@ -85,6 +101,31 @@ export const getBountyMessagePageApi = (taskId, pageNum = 1, pageSize = 20) => {
     method: 'GET'
   })
 }
+
+// ==================== 托管金支付API ====================
+
+export const createBountyEscrowPayApi = (taskId) => {
+  return request({
+    url: `/api/bounty/escrow/pay/create/${taskId}`,
+    method: 'POST'
+  })
+}
+
+export const getBountyEscrowPayStatusApi = (taskId) => {
+  return request({
+    url: `/api/bounty/escrow/pay/status/${taskId}`,
+    method: 'GET'
+  })
+}
+
+export const syncBountyEscrowPayStatusApi = (taskId) => {
+  return request({
+    url: `/api/bounty/escrow/pay/sync/${taskId}`,
+    method: 'POST'
+  })
+}
+
+// ==================== 改价补差支付API ====================
 
 export const createBountyPriceIncreasePayApi = (priceChangeId) => {
   return request({
@@ -168,6 +209,56 @@ export const uploadBountyAttachmentApi = (filePath, type = 'postImg') => {
         reject(new Error(`${errMsg}（statusCode:${statusCode}）`))
       }
     })
+  })
+}
+
+// ==================== 评价相关API ====================
+
+export const createBountyRatingApi = (data) => {
+  return request({
+    url: '/api/bounty/rating/create',
+    method: 'POST',
+    data
+  })
+}
+
+export const getBountyRatingApi = (taskId) => {
+  return request({
+    url: `/api/bounty/rating/task/${taskId}`,
+    method: 'GET'
+  })
+}
+
+export const getDesignerRatingsApi = (designerId, pageNum = 1, pageSize = 10) => {
+  return request({
+    url: `/api/bounty/rating/designer/${designerId}?pageNum=${pageNum}&pageSize=${pageSize}`,
+    method: 'GET'
+  })
+}
+
+// ==================== 申诉相关API ====================
+
+export const createBountyRatingAppealApi = (data) => {
+  return request({
+    url: '/api/bounty/rating/appeal/create',
+    method: 'POST',
+    data
+  })
+}
+
+export const getMyBountyAppealsApi = (pageNum = 1, pageSize = 10) => {
+  return request({
+    url: `/api/bounty/rating/appeal/my?pageNum=${pageNum}&pageSize=${pageSize}`,
+    method: 'GET'
+  })
+}
+
+// ==================== 信誉相关API ====================
+
+export const getDesignerReputationApi = (designerId) => {
+  return request({
+    url: `/api/bounty/reputation/${designerId}`,
+    method: 'GET'
   })
 }
 

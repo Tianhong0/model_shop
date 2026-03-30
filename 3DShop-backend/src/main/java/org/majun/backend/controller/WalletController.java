@@ -17,6 +17,7 @@ import org.majun.backend.security.LoginUser;
 import org.majun.backend.service.impl.WalletService;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.WalletAccountVO;
+import org.majun.backend.vo.WalletFrozenDetailVO;
 import org.majun.backend.vo.WalletLedgerVO;
 import org.majun.backend.vo.WalletRechargePayCreateResponse;
 import org.majun.backend.vo.WalletRechargeStatusVO;
@@ -43,6 +44,12 @@ public class WalletController {
     @Operation(summary = "钱包账户概览")
     public Result<WalletAccountVO> getAccount(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(walletService.getAccount(loginUser.getId()));
+    }
+
+    @GetMapping("/frozen/list")
+    @Operation(summary = "冻结资金记录列表")
+    public Result<java.util.List<WalletFrozenDetailVO>> listFrozenRecords(@AuthenticationPrincipal LoginUser loginUser) {
+        return Result.success(walletService.listFrozenRecords(loginUser.getId()));
     }
 
     @PostMapping("/ledger/page")

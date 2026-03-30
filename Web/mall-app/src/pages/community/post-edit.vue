@@ -1,66 +1,146 @@
 <template>
   <view class="edit-container">
-    <view class="page-hero card">
-      <view class="hero-title">{{ isEdit ? '编辑帖子' : '发布帖子' }}</view>
-      <view class="hero-subtitle">分享你的 3D 打印经验、模型技巧和问题讨论</view>
+    <!-- Hero Header -->
+    <view class="page-hero">
+      <view class="hero-content">
+        <text class="hero-title">{{ isEdit ? '编辑帖子' : '发布帖子' }}</text>
+        <text class="hero-subtitle">分享你的 3D 打印经验与创意</text>
+      </view>
     </view>
 
-    <view class="form-card card">
-      <view class="label-row">
-        <view class="label">分类</view>
+    <!-- Form Card -->
+    <view class="form-card">
+      <!-- Category Section -->
+      <view class="form-section">
+        <view class="section-label">
+          <view class="label-icon">
+            <uni-icons type="bars" size="18" color="#0099cc"></uni-icons>
+          </view>
+          <text class="label-text">选择分类</text>
+        </view>
+        <picker :range="categoryNames" @change="onCategoryChange" :value="categoryIndex">
+          <view class="picker-trigger">
+            <text class="picker-value">{{ selectedCategoryName || '请选择分类' }}</text>
+            <uni-icons type="arrowright" size="18" color="#a8a29e"></uni-icons>
+          </view>
+        </picker>
       </view>
-      <picker :range="categoryNames" @change="onCategoryChange" :value="categoryIndex">
-        <view class="picker-value">{{ selectedCategoryName || '请选择分类' }}</view>
-      </picker>
 
-      <view class="label-row">
-        <view class="label">标题</view>
-        <view class="counter">{{ titleCount }}/200</view>
+      <!-- Title Section -->
+      <view class="form-section">
+        <view class="section-label">
+          <view class="label-icon">
+            <uni-icons type="compose" size="18" color="#00bfff"></uni-icons>
+          </view>
+          <text class="label-text">帖子标题</text>
+          <text class="char-count">{{ titleCount }}/200</text>
+        </view>
+        <input
+          v-model="form.title"
+          maxlength="200"
+          placeholder="输入一个吸引人的标题..."
+          placeholder-class="input-placeholder"
+          class="title-input"
+        />
       </view>
-      <input v-model="form.title" maxlength="200" placeholder="请输入帖子标题" class="input" />
 
-      <view class="label-row">
-        <view class="label">内容</view>
-        <view class="counter">{{ contentCount }}/5000</view>
+      <!-- Content Section -->
+      <view class="form-section">
+        <view class="section-label">
+          <view class="label-icon">
+            <uni-icons type="list" size="18" color="#0099cc"></uni-icons>
+          </view>
+          <text class="label-text">帖子内容</text>
+          <text class="char-count">{{ contentCount }}/5000</text>
+        </view>
+        <textarea
+          v-model="form.content"
+          maxlength="5000"
+          placeholder="详细描述你的想法、经验或问题..."
+          placeholder-class="input-placeholder"
+          class="content-textarea"
+        />
       </view>
-      <textarea v-model="form.content" maxlength="5000" placeholder="请输入帖子内容" class="textarea" />
 
-      <view class="label-row">
-        <view class="label">媒体（图片/视频）</view>
-        <view class="counter">{{ form.mediaList.length }} 个</view>
-      </view>
-      <view class="media-actions">
-        <button class="small-btn" @click="chooseImage">+ 上传图片</button>
-        <button class="small-btn" @click="chooseVideo">+ 上传视频</button>
-      </view>
-      <view class="media-grid" v-if="form.mediaList.length">
-        <view class="media-item" v-for="(item, index) in form.mediaList" :key="index">
-          <image v-if="item.mediaType === 1" :src="item.mediaUrl" mode="aspectFill"></image>
-          <video
-            v-else
-            :src="item.mediaUrl"
-            controls
-            :page-gesture="true"
-            :vslide-gesture="false"
-            object-fit="cover"
-          ></video>
-          <view class="delete-media" @click="removeMedia(index)">×</view>
-          <view class="media-tag">{{ item.mediaType === 1 ? '图片' : '视频' }}</view>
+      <!-- Media Section -->
+      <view class="form-section">
+        <view class="section-label">
+          <view class="label-icon">
+            <uni-icons type="image" size="18" color="#00bfff"></uni-icons>
+          </view>
+          <text class="label-text">添加媒体</text>
+          <text class="media-count-badge">{{ form.mediaList.length }}/9</text>
+        </view>
+
+        <view class="media-actions">
+          <view class="media-btn" @click="chooseImage">
+            <view class="btn-icon image-icon">
+              <uni-icons type="image" size="24" color="#0099cc"></uni-icons>
+            </view>
+            <text>添加图片</text>
+          </view>
+          <view class="media-btn" @click="chooseVideo">
+            <view class="btn-icon video-icon">
+              <uni-icons type="videocam" size="24" color="#00bfff"></uni-icons>
+            </view>
+            <text>添加视频</text>
+          </view>
+        </view>
+
+        <view class="media-grid" v-if="form.mediaList.length">
+          <view
+            class="media-item"
+            v-for="(item, index) in form.mediaList"
+            :key="index"
+            :style="{ animationDelay: `${index * 0.05}s` }"
+          >
+            <image v-if="item.mediaType === 1" :src="item.mediaUrl" mode="aspectFill"></image>
+            <video
+              v-else
+              :src="item.mediaUrl"
+              controls
+              :page-gesture="true"
+              :vslide-gesture="false"
+              object-fit="cover"
+            ></video>
+            <view class="media-overlay">
+              <view class="media-type-tag">{{ item.mediaType === 1 ? '图片' : '视频' }}</view>
+              <view class="delete-btn" @click="removeMedia(index)">
+                <uni-icons type="close" size="16" color="#fff"></uni-icons>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="media-empty" v-else>
+          <view class="empty-visual">
+            <view class="empty-icon-wrap">
+              <uni-icons type="image" size="32" color="#e7e5e4"></uni-icons>
+            </view>
+          </view>
+          <text class="empty-hint">添加图片或视频让内容更生动</text>
         </view>
       </view>
-      <view class="media-empty" v-else>
-        <uni-icons type="image" size="26" color="#94a3b8"></uni-icons>
-        <text>可上传图片或视频，让内容更直观</text>
-      </view>
     </view>
 
-    <view class="bottom-actions">
-      <button class="draft" @click="submit(0)">保存草稿</button>
-      <button class="publish" @click="submit(1)">发布</button>
+    <!-- Bottom Actions -->
+    <view class="bottom-bar">
+      <button class="btn draft-btn" @click="submit(0)">
+        <uni-icons type="paperclip" size="18" color="#57534e"></uni-icons>
+        <text>存草稿</text>
+      </button>
+      <button class="btn publish-btn" @click="submit(1)">
+        <uni-icons type="paperplane" size="18" color="#fff"></uni-icons>
+        <text>发布</text>
+      </button>
     </view>
 
-    <view class="delete-bar" v-if="isEdit">
-      <button class="delete-btn" @click="removePost">删除帖子</button>
+    <!-- Delete Bar for Edit Mode -->
+    <view class="delete-section" v-if="isEdit">
+      <button class="delete-btn-full" @click="removePost">
+        <uni-icons type="trash" size="18" color="#dc2626"></uni-icons>
+        <text>删除帖子</text>
+      </button>
     </view>
   </view>
 </template>
@@ -209,8 +289,8 @@ const submit = async (status) => {
 const removePost = async () => {
   const confirm = await new Promise((resolve) => {
     uni.showModal({
-      title: '提示',
-      content: '确认删除该帖子吗？',
+      title: '确认删除',
+      content: '删除后无法恢复，确定要删除吗？',
       success: (res) => resolve(!!res.confirm)
     })
   })
@@ -241,153 +321,396 @@ onLoad(async (options) => {
 </script>
 
 <style scoped lang="scss">
+/* Design System Tokens */
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+
+$bg: #f8f8f8;
+$card: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #8a9aaa;
+
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$radius-card: 24rpx;
+$radius-capsule: 999rpx;
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes imageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .edit-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 200rpx);
-  padding: 20rpx;
-  padding-bottom: 220rpx;
+  background: $bg;
+  padding-bottom: 200rpx;
 }
+
+/* Hero Header */
 .page-hero {
-  padding: 24rpx;
-  margin-bottom: 16rpx;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  .hero-title {
-    font-size: 34rpx;
-    font-weight: 700;
-    color: #fff;
-  }
-  .hero-subtitle {
-    margin-top: 8rpx;
-    font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.88);
-  }
+  position: relative;
+  padding: 40rpx 36rpx;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
 }
-.form-card {
-  padding: 26rpx;
+
+.hero-content {
+  position: relative;
+  z-index: 1;
 }
-.label-row {
-  margin-top: 18rpx;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.label {
-  font-size: 26rpx;
-  color: #1e293b;
+
+.hero-title {
+  font-size: 36rpx;
   font-weight: 700;
+  color: $text-primary;
+  display: block;
+  margin-bottom: 8rpx;
 }
-.counter {
-  font-size: 22rpx;
-  color: #94a3b8;
+
+.hero-subtitle {
+  font-size: 28rpx;
+  color: $text-secondary;
+  font-weight: 400;
 }
-.picker-value, .input {
-  margin-top: 10rpx;
-  background: #f8fafc;
-  border: 1rpx solid #e2e8f0;
+
+/* Form Card */
+.form-card {
+  margin: 28rpx;
+  background: $card;
+  border-radius: $radius-card;
+  padding: 32rpx;
+  box-shadow: $shadow-card;
+  animation: fadeInUp 0.4s ease;
+}
+
+.form-section {
+  margin-bottom: 36rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.label-icon {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 191, 255, 0.08);
   border-radius: 12rpx;
-  min-height: 78rpx;
-  line-height: 78rpx;
-  padding: 0 20rpx;
-  font-size: 26rpx;
+  margin-right: 12rpx;
 }
-.textarea {
-  margin-top: 10rpx;
-  width: 100%;
-  min-height: 240rpx;
-  background: #f8fafc;
-  border: 1rpx solid #e2e8f0;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  box-sizing: border-box;
-  font-size: 26rpx;
-}
-.media-actions { margin-top: 12rpx; display: flex; gap: 12rpx; }
-.small-btn {
+
+.label-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
   flex: 1;
-  background: #eef2ff;
-  color: #4f46e5;
-  border-radius: 30rpx;
+}
+
+.char-count {
   font-size: 24rpx;
-  padding: 0 24rpx;
-  height: 64rpx;
-  line-height: 64rpx;
-  border: 1rpx solid #c7d2fe;
+  color: $text-muted;
 }
-.media-grid { margin-top: 14rpx; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12rpx; }
-.media-item { position: relative; }
-.media-item image, .media-item video { width: 100%; height: 220rpx; border-radius: 10rpx; }
-.delete-media {
-  position: absolute;
-  right: 8rpx;
-  top: 8rpx;
-  width: 36rpx;
-  height: 36rpx;
-  border-radius: 50%;
-  color: #fff;
-  background: rgba(15, 23, 42, 0.6);
-  text-align: center;
-  line-height: 36rpx;
-}
-.media-tag {
-  position: absolute;
-  left: 8rpx;
-  bottom: 8rpx;
-  padding: 2rpx 10rpx;
-  border-radius: 20rpx;
-  color: #fff;
+
+.media-count-badge {
   font-size: 20rpx;
-  background: rgba(15, 23, 42, 0.6);
+  color: $deep;
+  background: rgba(0, 191, 255, 0.08);
+  padding: 4rpx 16rpx;
+  border-radius: $radius-capsule;
+  font-weight: 500;
 }
-.media-empty {
-  margin-top: 14rpx;
-  min-height: 140rpx;
-  border: 1rpx dashed #cbd5e1;
-  border-radius: 12rpx;
+
+/* Picker */
+.picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $bg;
+  border-radius: $radius-card;
+  padding: 24rpx;
+  box-shadow: $shadow-card;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.picker-value {
+  font-size: 28rpx;
+  color: $text-primary;
+}
+
+/* Inputs */
+.title-input {
+  width: 100%;
+  min-height: 88rpx;
+  background: $bg;
+  border-radius: $radius-card;
+  padding: 24rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+  box-sizing: border-box;
+  box-shadow: $shadow-card;
+}
+
+.content-textarea {
+  width: 100%;
+  min-height: 280rpx;
+  background: $bg;
+  border-radius: $radius-card;
+  padding: 24rpx;
+  font-size: 28rpx;
+  color: $text-primary;
+  line-height: 1.7;
+  box-sizing: border-box;
+  box-shadow: $shadow-card;
+}
+
+.input-placeholder {
+  color: $text-muted;
+}
+
+/* Media Actions */
+.media-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.media-btn {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
+  gap: 12rpx;
+  padding: 28rpx;
+  background: $bg;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+  transition: all 0.25s ease;
+
+  .btn-icon {
+    width: 56rpx;
+    height: 56rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+
+    &.image-icon {
+      background: rgba(0, 191, 255, 0.08);
+    }
+
+    &.video-icon {
+      background: rgba(0, 191, 255, 0.08);
+    }
+  }
+
   text {
-    font-size: 22rpx;
-    color: #94a3b8;
+    font-size: 26rpx;
+    color: $text-secondary;
+    font-weight: 500;
+  }
+
+  &:active {
+    transform: scale(0.96);
   }
 }
-.bottom-actions {
+
+/* Media Grid */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.media-item {
+  position: relative;
+  border-radius: $radius-card;
+  overflow: hidden;
+  animation: fadeInUp 0.3s ease forwards;
+  opacity: 0;
+}
+
+.media-item image,
+.media-item video {
+  width: 100%;
+  height: 200rpx;
+  background: $bg;
+  animation: imageFadeIn 0.5s ease;
+}
+
+.media-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12rpx;
+  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%);
+}
+
+.media-type-tag {
+  font-size: 20rpx;
+  color: $card;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4rpx 14rpx;
+  border-radius: $radius-capsule;
+  align-self: flex-start;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(220, 38, 38, 0.8);
+  border-radius: 50%;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* Empty Media */
+.media-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 24rpx;
+  background: $bg;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+
+  .empty-visual {
+    margin-bottom: 16rpx;
+  }
+
+  .empty-icon-wrap {
+    width: 80rpx;
+    height: 80rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 50%;
+  }
+
+  .empty-hint {
+    font-size: 28rpx;
+    color: $text-muted;
+    font-weight: 400;
+  }
+}
+
+/* Bottom Bar */
+.bottom-bar {
   position: fixed;
-  left: 20rpx;
-  right: 20rpx;
+  left: 28rpx;
+  right: 28rpx;
   bottom: calc(24rpx + env(safe-area-inset-bottom));
   display: flex;
   gap: 16rpx;
-  background: rgba(248, 250, 252, 0.9);
-  backdrop-filter: blur(8rpx);
-  padding: 12rpx;
-  border-radius: 44rpx;
+  padding: 16rpx;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
+  border-radius: $radius-card;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+  z-index: 100;
 }
-.bottom-actions button {
+
+.btn {
   flex: 1;
-  border-radius: 36rpx;
-  font-size: 28rpx;
-  height: 74rpx;
-  line-height: 74rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 88rpx;
+  border-radius: $radius-capsule;
+  font-size: 30rpx;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  margin: 0;
+  padding: 0;
+
+  &:active {
+    transform: scale(0.96);
+  }
 }
-.draft {
-  background: #e2e8f0;
-  color: #334155;
+
+.draft-btn {
+  background: $bg;
+  color: $text-secondary;
+  box-shadow: $shadow-card;
 }
-.publish {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  color: #fff;
+
+.publish-btn {
+  background: $gradient;
+  color: $card;
+  box-shadow: 0 4rpx 20rpx rgba(0, 191, 255, 0.35);
 }
-.delete-bar {
-  margin-top: 24rpx;
-  padding: 0 8rpx;
+
+/* Delete Section */
+.delete-section {
+  margin: 28rpx;
+  padding-top: 24rpx;
 }
-.delete-btn {
-  background: #fee2e2;
-  color: #dc2626;
-  border-radius: 40rpx;
-  font-size: 26rpx;
+
+.delete-btn-full {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 88rpx;
+  background: rgba(255, 77, 109, 0.06);
+  border-radius: $radius-capsule;
+  margin: 0;
+  padding: 0;
+
+  text {
+    font-size: 28rpx;
+    color: $danger;
+    font-weight: 600;
+  }
+
+  &:active {
+    transform: scale(0.96);
+    background: rgba(255, 77, 109, 0.12);
+  }
 }
 </style>

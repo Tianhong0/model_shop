@@ -15,6 +15,7 @@ public class BountyTaskListVO {
     private BigDecimal budgetAmount;
     private BigDecimal finalAmount;
     private Integer status;
+    private Integer cancelRequested;
     private Integer bidCount;
     private LocalDateTime deadlineTime;
     private LocalDateTime createTime;

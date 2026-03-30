@@ -326,7 +326,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
   position: relative;
   overflow: hidden;
 }
@@ -334,42 +334,72 @@ onUnmounted(() => {
 .login-container::before {
   content: '';
   position: absolute;
-  width: 1000px;
-  height: 1000px;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, transparent 70%);
-  top: -400px;
-  right: -400px;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, transparent 70%);
+  top: -300px;
+  right: -200px;
+  animation: pulse 8s ease-in-out infinite;
+}
+
+.login-container::after {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+  bottom: -200px;
+  left: -100px;
+  animation: pulse 10s ease-in-out infinite reverse;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
 }
 
 .login-box {
   width: 900px;
-  height: 550px;
+  height: 560px;
   background: #fff;
   border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(0, 0, 0, 0.02);
   display: flex;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
+}
+
+.login-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 35px 100px -12px rgba(0, 0, 0, 0.2),
+              0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
 .login-left {
   flex: 1;
-  background: #4f46e5;
-  background-image: url('https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800');
-  background-size: cover;
-  background-position: center;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 50%, #818cf8 100%);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.login-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
 }
 
 .login-left::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(79, 70, 229, 0.8), rgba(67, 56, 202, 0.9));
+  background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
 }
 
 .brand {
@@ -377,54 +407,79 @@ onUnmounted(() => {
   z-index: 2;
   text-align: center;
   color: #fff;
+  padding: 40px;
+}
+
+.brand .el-icon {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
 }
 
 .brand h1 {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 800;
-  margin-top: 16px;
-  letter-spacing: 1px;
+  margin-top: 20px;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .brand p {
-  opacity: 0.8;
-  margin-top: 8px;
+  opacity: 0.9;
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .login-right {
   width: 450px;
-  padding: 60px;
+  padding: 60px 50px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background: #fff;
 }
 
 .form-header h2 {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
 .form-header p {
-  color: #64748b;
-  margin-top: 8px;
+  color: var(--text-secondary);
+  margin-top: 10px;
   font-size: 14px;
 }
 
 .login-form {
-  margin-top: 32px;
+  margin-top: 36px;
 }
 
-:deep(.el-input__wrapper) {
-  padding: 8px 16px !important;
+.login-form :deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+.login-form :deep(.el-input__wrapper) {
+  padding: 10px 16px !important;
   border-radius: 12px !important;
-  background-color: #f8fafc !important;
+  background-color: var(--bg-secondary) !important;
   box-shadow: none !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid var(--border-color) !important;
+  transition: all 0.2s ease !important;
 }
 
-:deep(.el-input__wrapper.is-focus) {
-  border-color: #4f46e5 !important;
+.login-form :deep(.el-input__wrapper:hover) {
+  border-color: var(--border-dark) !important;
+}
+
+.login-form :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px var(--primary-lighter) !important;
+  background-color: #fff !important;
+}
+
+.login-form :deep(.el-input__prefix) {
+  color: var(--text-muted);
 }
 
 .form-options {
@@ -436,24 +491,52 @@ onUnmounted(() => {
 
 .submit-btn {
   width: 100%;
-  height: 48px;
-  border-radius: 12px;
+  height: 50px;
+  border-radius: 12px !important;
   font-size: 16px;
   font-weight: 600;
-  background: #4f46e5 !important;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%) !important;
   border: none !important;
-  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.4);
+  transition: all 0.3s ease !important;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -4px rgba(79, 70, 229, 0.5) !important;
+}
+
+.submit-btn:active {
+  transform: translateY(0);
 }
 
 .form-footer {
-  margin-top: 24px;
+  margin-top: 28px;
   text-align: center;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 /* 注册模式调整高度 */
 .is-register {
-  height: 650px;
+  height: 680px;
+}
+
+/* 响应式 */
+@media (max-width: 960px) {
+  .login-box {
+    width: 90%;
+    max-width: 450px;
+    height: auto;
+  }
+
+  .login-left {
+    display: none;
+  }
+
+  .login-right {
+    width: 100%;
+    padding: 40px 30px;
+  }
 }
 </style>

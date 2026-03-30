@@ -225,60 +225,81 @@ onShow(() => {
 </script>
 
 <style scoped lang="scss">
-.page {
-  min-height: 100vh;
-  padding: 24rpx;
-  background:
-    radial-gradient(circle at top right, rgba(224, 231, 255, 0.72), transparent 26%),
-    radial-gradient(circle at left top, rgba(253, 230, 138, 0.35), transparent 20%),
-    linear-gradient(180deg, #f8fafc 0%, #fefefe 34%, #f1f5f9 100%);
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.hero-card,
-.toolbar-card,
-.notice-card,
-.empty-card {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 28rpx;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  box-shadow: 0 16rpx 36rpx rgba(15, 23, 42, 0.06);
+@keyframes breathingGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.4); }
+  50% { box-shadow: 0 0 0 6rpx rgba(255, 77, 109, 0.15); }
+}
+
+.page {
+  min-height: 100vh;
+  padding: 28rpx;
+  background: $bg;
 }
 
 .hero-card {
   display: flex;
   justify-content: space-between;
   gap: 18rpx;
-  padding: 28rpx;
+  padding: 32rpx;
+  background: $card;
+  border-radius: 24rpx;
+  box-shadow: $shadow;
+  animation: fadeInUp 0.4s ease both;
 }
 
 .hero-kicker {
   display: block;
-  color: #6366f1;
+  color: $primary;
   font-size: 20rpx;
   letter-spacing: 4rpx;
+  font-weight: 600;
 }
 
 .hero-title {
   display: block;
   margin-top: 12rpx;
-  font-size: 42rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  color: #0f172a;
+  color: $text1;
 }
 
 .hero-sub {
   display: block;
   margin-top: 12rpx;
-  color: #64748b;
+  color: $text2;
   font-size: 24rpx;
   line-height: 1.7;
 }
 
 .hero-badge {
-  width: 180rpx;
+  width: 160rpx;
+  min-height: 100rpx;
   padding: 20rpx;
   border-radius: 24rpx;
-  background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%);
+  background: $gradient;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .hero-badge-value {
@@ -297,12 +318,13 @@ onShow(() => {
 
 .toolbar-card {
   margin-top: 20rpx;
-  padding: 20rpx;
+  padding: 24rpx;
+  background: $card;
+  border-radius: 24rpx;
+  box-shadow: $shadow;
 }
 
-.tab-scroll {
-  white-space: nowrap;
-}
+.tab-scroll { white-space: nowrap; }
 
 .tab-row {
   display: inline-flex;
@@ -316,31 +338,31 @@ onShow(() => {
   gap: 10rpx;
   padding: 16rpx 24rpx;
   border-radius: 999rpx;
-  background: #f8fafc;
-  color: #64748b;
+  background: $bg;
+  color: $text2;
+  transition: all 0.2s;
+  &:active { transform: scale(0.96); }
 }
 
 .tab-item.active {
-  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  background: $gradient;
   color: #fff;
 }
 
-.tab-label {
-  font-size: 24rpx;
-}
+.tab-label { font-size: 24rpx; }
 
 .tab-badge {
   min-width: 34rpx;
   padding: 4rpx 10rpx;
   border-radius: 999rpx;
-  background: rgba(239, 68, 68, 0.16);
-  color: #ef4444;
+  background: rgba(255, 77, 109, 0.12);
+  color: $danger;
   font-size: 20rpx;
   text-align: center;
 }
 
 .tab-item.active .tab-badge {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
@@ -354,48 +376,53 @@ onShow(() => {
 
 .toggle-chip,
 .mark-btn {
-  padding: 14rpx 22rpx;
+  padding: 14rpx 24rpx;
   border-radius: 999rpx;
   font-size: 24rpx;
+  &:active { transform: scale(0.96); }
 }
 
 .toggle-chip {
-  background: #f8fafc;
-  color: #64748b;
+  background: $bg;
+  color: $text2;
 }
 
 .toggle-chip.active {
-  background: #eef2ff;
-  color: #4338ca;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
+  font-weight: 600;
 }
 
 .mark-btn {
-  background: #111827;
+  background: $gradient;
   color: #fff;
 }
 
 .list-scroll {
-  height: calc(100vh - 310rpx);
+  height: calc(100vh - 320rpx);
   margin-top: 20rpx;
 }
 
 .notice-card {
   display: flex;
   gap: 18rpx;
-  padding: 20rpx;
+  padding: 24rpx;
   margin-bottom: 18rpx;
+  background: $card;
+  border-radius: 24rpx;
+  box-shadow: $shadow;
+  animation: fadeInUp 0.4s ease both;
 }
 
 .notice-card.unread {
-  border-color: rgba(79, 70, 229, 0.2);
-  box-shadow: 0 18rpx 38rpx rgba(79, 70, 229, 0.08);
+  box-shadow: 0 8rpx 40rpx rgba(0, 191, 255, 0.08);
 }
 
 .notice-cover {
   width: 120rpx;
   height: 120rpx;
-  border-radius: 22rpx;
-  background: #e2e8f0;
+  border-radius: 20rpx;
+  background: $bg;
   flex-shrink: 0;
 }
 
@@ -403,9 +430,10 @@ onShow(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4338ca;
+  color: $deep;
   font-size: 34rpx;
   font-weight: 700;
+  background: rgba(0, 191, 255, 0.08);
 }
 
 .notice-main {
@@ -427,9 +455,9 @@ onShow(() => {
 }
 
 .notice-title {
-  color: #0f172a;
+  color: $text1;
   font-size: 28rpx;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
 }
 
@@ -437,8 +465,9 @@ onShow(() => {
   width: 14rpx;
   height: 14rpx;
   border-radius: 50%;
-  background: #ef4444;
+  background: $danger;
   flex-shrink: 0;
+  animation: breathingGlow 2s ease-in-out infinite;
 }
 
 .notice-time,
@@ -447,18 +476,12 @@ onShow(() => {
 .notice-tag,
 .empty-sub,
 .bottom-tip {
-  color: #64748b;
+  color: $text2;
   font-size: 22rpx;
 }
 
-.notice-time {
-  flex-shrink: 0;
-}
-
-.notice-content {
-  margin-top: 12rpx;
-  line-height: 1.7;
-}
+.notice-time { flex-shrink: 0; }
+.notice-content { margin-top: 12rpx; line-height: 1.7; }
 
 .notice-bottom {
   display: flex;
@@ -468,15 +491,19 @@ onShow(() => {
 }
 
 .notice-tag {
-  padding: 8rpx 14rpx;
+  padding: 6rpx 16rpx;
   border-radius: 999rpx;
-  background: #eef2ff;
-  color: #4338ca;
+  background: rgba(0, 191, 255, 0.08);
+  color: $deep;
+  font-weight: 500;
 }
 
 .empty-card {
   padding: 120rpx 40rpx;
   text-align: center;
+  background: $card;
+  border-radius: 24rpx;
+  box-shadow: $shadow;
 }
 
 .empty-dot {
@@ -484,13 +511,13 @@ onShow(() => {
   height: 108rpx;
   margin: 0 auto 24rpx;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #c7d2fe 0%, #818cf8 55%, #4f46e5 100%);
-  box-shadow: 0 16rpx 32rpx rgba(79, 70, 229, 0.24);
+  background: $gradient;
+  box-shadow: 0 16rpx 32rpx rgba(0, 191, 255, 0.24);
 }
 
 .empty-title {
   display: block;
-  color: #0f172a;
+  color: $text1;
   font-size: 30rpx;
   font-weight: 700;
 }
@@ -499,14 +526,14 @@ onShow(() => {
   display: block;
   margin-top: 12rpx;
   line-height: 1.7;
+  color: $text3;
 }
 
 .bottom-tip {
   text-align: center;
   padding: 20rpx 0;
+  color: $text3;
 }
 
-.safe-space {
-  height: 30rpx;
-}
+.safe-space { height: 30rpx; }
 </style>

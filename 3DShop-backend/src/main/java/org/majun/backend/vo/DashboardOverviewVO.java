@@ -40,6 +40,12 @@ public class DashboardOverviewVO {
         @Schema(description = "模型总数")
         private Long totalModels;
 
+        @Schema(description = "清单总数")
+        private Long totalModelLists;
+
+        @Schema(description = "清单互动总数")
+        private Long totalModelListInteractions;
+
         @Schema(description = "待办总数")
         private Long totalTodos;
 
@@ -54,6 +60,9 @@ public class DashboardOverviewVO {
 
         @Schema(description = "模型新增环比(今日vs昨日, %) ")
         private BigDecimal modelsTrendPct;
+
+        @Schema(description = "清单新增环比(今日vs昨日, %) ")
+        private BigDecimal modelListsTrendPct;
 
         @Schema(description = "待办新增环比(今日vs昨日, %) ")
         private BigDecimal todosTrendPct;
@@ -106,6 +115,12 @@ public class DashboardOverviewVO {
 
         @Schema(description = "悬赏争议")
         private Long bountyDisputed;
+
+        @Schema(description = "活动评审中")
+        private Long eventReviewing;
+
+        @Schema(description = "二手举报待处理")
+        private Long usedReportPending;
 
         @Schema(description = "总数")
         private Long total;

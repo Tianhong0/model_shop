@@ -1,41 +1,39 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import JSONBigFactory from 'json-bigint'
+
+const JSONBig = JSONBigFactory({ storeAsString: true })
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://localhost:9999', // 移除基础URL，避免与代理冲突
-  timeout: 10000, // 请求超时时间
+  baseURL: 'http://120.48.50.30:9999',
+  timeout: 600000, // 10分钟，大文件上传需要更长超时
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true, // 允许跨域请求携带cookie
+  withCredentials: true,
   xsrfCookieName: 'XSRF-TOKEN',
-  xsrfHeaderName: 'X-XSRF-TOKEN'
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+  // 使用 json-bigint 解析响应，避免雪花ID精度丢失
+  transformResponse: [(data) => {
+    if (typeof data === 'string') {
+      try {
+        return JSONBig.parse(data)
+      } catch (_) {
+        return data
+      }
+    }
+    return data
+  }]
 })
 
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    console.log('Request URL:', config.url)
-    console.log('Request Method:', config.method)
-    console.log('Request Data:', config.data)
-    console.log('Request Headers:', config.headers)
-
-    // 从 localStorage 获取 token
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-      console.log('Auth Token:', token)
     }
-
-    // 添加额外的调试信息
-    console.log('Request Config:', {
-      url: config.url,
-      method: config.method,
-      headers: config.headers,
-      data: config.data
-    })
-
     return config
   },
   error => {
@@ -48,18 +46,9 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   response => {
     const res = response.data
-    console.log('Response Data:', res)
-    console.log('Response Code:', res.code)
-    console.log('Response Message:', res.message)
-    console.log('Response Data Structure:', res.data)
 
-    // 如果返回的 code 不是 200，则抛出错误
     if (res.code !== 200) {
-      if (typeof ElMessage !== 'undefined') {
-        ElMessage.error(res.message || '请求失败')
-      } else {
-        console.error('ElMessage is not defined, showing error in console:', res.message || '请求失败')
-      }
+      ElMessage.error(res.message || '请求失败')
       return Promise.reject(new Error(res.message || '请求失败'))
     }
 
@@ -72,12 +61,7 @@ request.interceptors.response.use(
   },
   error => {
     console.error('API Error:', error)
-    console.error('Error Response:', error.response?.data)
-    if (typeof ElMessage !== 'undefined') {
-      ElMessage.error(error.response?.data?.message || '请求失败，请检查网络')
-    } else {
-      console.error('ElMessage is not defined, showing error in console:', error.response?.data?.message || '请求失败，请检查网络')
-    }
+    ElMessage.error(error.response?.data?.message || '请求失败，请检查网络')
     return Promise.reject(error)
   }
 )

@@ -2,20 +2,18 @@ spring:
   # MySQL 配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # 注意：在 WSL 中，如果数据库装在 Windows 侧，url 可能需要指向 Windows 的 IP
-    # 如果数据库装在 WSL 内部，直接用 localhost 即可
-    url: jdbc:mysql://localhost:3306/model_shop_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://120.48.50.30:3306/model_shop_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
     username: root
-    password: 123456
+    password: a1900574183
 
   # Redis 配置
   data:
     redis:
-      host: localhost
+      host: 120.48.50.30
       port: 6379
-      password: 123456
+      password: a1900574183
       database: 0
-      timeout: 5000 # 连接超时时间(ms)
+      timeout: 100000 # 连接超时时间(ms)
       lettuce:
         pool:
           max-active: 8 # 连接池最大连接数
@@ -25,7 +23,7 @@ spring:
 
   # RabbitMQ 配置 (3D打印任务异步处理)
   rabbitmq:
-    host: localhost
+    host: 120.48.50.30
     port: 6672
     username: admin
     password: 123456
@@ -41,7 +39,7 @@ payment:
     appCertPath: "classpath:cert/alipay/appPublicCert.crt"
     alipayPublicCertPath: "classpath:cert/alipay/alipayPublicCert.crt"
     alipayRootCertPath: "classpath:cert/alipay/alipayRootCert.crt"
-    gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+    gatewayUrl: "https://openapi-sandbox.dl.alipaydev.com/gateway.do"
     notifyUrl: "https://119.84.246.217:40225/api/orders/pay/alipay/notify"
     returnUrl: ""
     sellerId: ""

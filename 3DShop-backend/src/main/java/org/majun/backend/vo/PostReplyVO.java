@@ -47,4 +47,7 @@ public class PostReplyVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+
+    @Schema(description = "父回复用户昵称")
+    private String parentUserNickname;
 }

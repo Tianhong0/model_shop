@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Schema(description = "After-sale query request")
 public class AfterSaleQueryRequest {
@@ -16,6 +18,9 @@ public class AfterSaleQueryRequest {
 
     @Schema(description = "After-sale status")
     private Integer status;
+
+    @Schema(description = "After-sale status list (for multi-status query)")
+    private List<Integer> statuses;
 
     @Schema(description = "After-sale type")
     private Integer type;

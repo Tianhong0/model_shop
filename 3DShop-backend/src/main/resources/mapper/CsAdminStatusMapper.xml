@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.majun.backend.repository.CsAdminStatusRepository">
+
+    <select id="findOnlineAdminIds" resultType="java.lang.Long">
+        SELECT admin_id FROM cs_admin_status
+        WHERE is_online = 1
+    </select>
+
+    <select id="findByAdminIdIn" resultType="org.majun.backend.entity.CsAdminStatus">
+        SELECT * FROM cs_admin_status
+        WHERE admin_id IN
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="findByAdminId" resultType="org.majun.backend.entity.CsAdminStatus">
+        SELECT * FROM cs_admin_status
+        WHERE admin_id = #{adminId}
+        LIMIT 1
+    </select>
+
+</mapper>

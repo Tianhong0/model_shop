@@ -39,18 +39,33 @@ onLoad((options) => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$light: #5ce1ff;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .video-preview-page {
 	min-height: 100vh;
-	background: #f8fafc;
-	padding: 24rpx;
+	background: $bg;
+	padding: 28rpx 32rpx;
 }
 
 .video-card {
-	background: #fff;
-	border-radius: 20rpx;
+	background: $card;
+	border-radius: 24rpx;
 	overflow: hidden;
-	box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.06);
-	margin-bottom: 20rpx;
+	box-shadow: $shadow-card;
+	margin-bottom: 28rpx;
+	animation: fadeInUp 0.4s ease-out;
 }
 
 .video-player {
@@ -61,14 +76,16 @@ onLoad((options) => {
 }
 
 .info-card {
-	background: #fff;
-	border-radius: 20rpx;
-	padding: 20rpx 24rpx;
+	background: $card;
+	border-radius: 24rpx;
+	padding: 28rpx 32rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.4s ease-out 0.1s both;
 
 	.name {
 		font-size: 30rpx;
-		font-weight: 600;
-		color: #1e293b;
+		font-weight: 700;
+		color: $text-primary;
 	}
-	}
+}
 </style>

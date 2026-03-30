@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.PostAdminQueryRequest;
 import org.majun.backend.dto.PostCategoryAssignRequest;
@@ -15,7 +17,10 @@ import org.majun.backend.dto.PostReplyExcellentRequest;
 import org.majun.backend.dto.PostReplyStatusUpdateRequest;
 import org.majun.backend.dto.PostStatusUpdateRequest;
 import org.majun.backend.dto.PostTopUpdateRequest;
+import org.majun.backend.entity.SysPostMedia;
+import org.majun.backend.repository.SysPostMediaRepository;
 import org.majun.backend.service.CommunityAdminService;
+import org.majun.backend.util.MinioUtil;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.PostCategoryVO;
 import org.majun.backend.vo.PostDetailVO;
@@ -31,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @Tag(name = "Community Admin", description = "社区管理端接口")
 @RestController
 @RequestMapping("/api/community/admin")
@@ -39,6 +45,9 @@ import java.util.List;
 public class CommunityAdminController {
 
     private final CommunityAdminService communityAdminService;
+    private final SysPostMediaRepository postMediaRepository;
+    private final CommunityFileController communityFileController;
+    private final MinioUtil minioUtil;
 
     @Operation(summary = "帖子管理分页")
     @PostMapping("/post/page")
@@ -137,5 +146,27 @@ public class CommunityAdminController {
     public Result<Void> deleteCategory(@PathVariable Long categoryId) {
         communityAdminService.deleteCategory(categoryId);
         return Result.success();
+    }
+
+    @Operation(summary = "批量生成视频封面", description = "为所有缺少封面的视频生成封面（需要服务器安装FFmpeg）")
+    @PostMapping("/video/generate-covers")
+    public Result<String> generateVideoCovers() {
+        List<SysPostMedia> videos = postMediaRepository.selectList(
+                new LambdaQueryWrapper<SysPostMedia>().eq(SysPostMedia::getMediaType, 2));
+        int success = 0, skip = 0, fail = 0;
+        for (SysPostMedia media : videos) {
+            try {
+                String objectName = minioUtil.extractObjectName(media.getMediaUrl());
+                if (objectName == null) { skip++; continue; }
+                String coverObjectName = objectName.replaceAll("\\.[^.]+$", "-cover.jpg");
+                if (minioUtil.objectExists(coverObjectName)) { skip++; continue; }
+                communityFileController.generateCoverFromMinIO(media.getMediaUrl());
+                success++;
+            } catch (Exception e) {
+                log.warn("封面生成失败 mediaId={}: {}", media.getId(), e.getMessage());
+                fail++;
+            }
+        }
+        return Result.success(String.format("完成: 成功%d, 跳过%d, 失败%d", success, skip, fail));
     }
 }

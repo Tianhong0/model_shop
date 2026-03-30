@@ -1,6 +1,7 @@
 <template>
   <view class="page">
-    <view class="hero-panel">
+    <!-- Hero -->
+    <view class="hero-panel fadeInUp">
       <view>
         <text class="hero-kicker">MY SECOND-HAND STUDIO</text>
         <text class="hero-title">我的出售</text>
@@ -11,13 +12,14 @@
           <text class="hero-metric-value">{{ listingRecords.length }}</text>
           <text class="hero-metric-label">商品数</text>
         </view>
-        <view class="hero-metric soft">
+        <view class="hero-metric hero-metric-soft">
           <text class="hero-metric-value">{{ orderRecords.length }}</text>
           <text class="hero-metric-label">订单数</text>
         </view>
       </view>
     </view>
 
+    <!-- Tabs -->
     <view class="tabs-shell">
       <view class="tabs">
         <view class="tab" :class="{ active: activeTab === 'listing' }" @click="switchTab('listing')">我的商品</view>
@@ -25,9 +27,10 @@
       </view>
     </view>
 
+    <!-- List -->
     <scroll-view scroll-y class="scroll">
       <template v-if="activeTab === 'listing'">
-        <view v-for="item in listingRecords" :key="item.id" class="card item-card" @click="goDetail(item.id)">
+        <view v-for="item in listingRecords" :key="item.id" class="card item-card fadeInUp" @click="goDetail(item.id)">
           <view class="thumb-wrap">
             <image :src="item.coverUrl" class="thumb" mode="aspectFill"></image>
             <view class="status-pill">{{ statusText(item.status) }}</view>
@@ -49,14 +52,14 @@
         </view>
       </template>
       <template v-else>
-        <view v-for="item in orderRecords" :key="item.id" class="card order-card" @click="goOrderDetail(item.id, 'sell')">
+        <view v-for="item in orderRecords" :key="item.id" class="card order-card fadeInUp" @click="goOrderDetail(item.id, 'sell')">
           <view class="row-between top-row">
             <text class="sn">{{ item.orderSn }}</text>
-            <text class="status order-status">{{ orderStatusText(item.status) }}</text>
+            <text class="order-status">{{ orderStatusText(item.status) }}</text>
           </view>
           <view class="title u-line-1">{{ item.listingTitle }}</view>
           <view class="meta-row order-meta-row">
-            <text class="meta-chip warm">买家</text>
+            <text class="meta-chip meta-chip-warm">买家</text>
             <text class="meta-text">{{ item.buyerNickname || '平台用户' }}</text>
           </view>
           <view class="row-between action-row">
@@ -74,7 +77,7 @@
         <text class="empty-sub">发布过的闲置商品会集中展示在这里。</text>
       </view>
       <view v-if="activeTab === 'order' && orderRecords.length === 0" class="empty-state">
-        <view class="empty-icon warm">◎</view>
+        <view class="empty-icon empty-icon-warm">◎</view>
         <text class="empty-title">暂无出售订单</text>
         <text class="empty-sub">买家下单后，订单信息会自动出现在这里。</text>
       </view>
@@ -132,26 +135,43 @@ onShow(loadData)
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fadeInUp { animation: fadeInUp 0.4s ease both; }
+
 .page {
   min-height: 100vh;
-  padding: 24rpx 0 132rpx;
-  background:
-    radial-gradient(circle at left top, rgba(255, 223, 183, 0.6), transparent 24%),
-    radial-gradient(circle at 90% 10%, rgba(255, 243, 223, 0.78), transparent 18%),
-    linear-gradient(180deg, #fff7ef 0%, #fffdfa 36%, #f5efe8 100%);
+  padding: 28rpx 0 140rpx;
+  background: $bg;
 }
 
 .hero-panel {
-  margin: 0 20rpx 20rpx;
-  padding: 28rpx;
-  border-radius: 32rpx;
-  background: linear-gradient(145deg, rgba(47, 28, 18, 0.96) 0%, rgba(92, 57, 36, 0.92) 100%);
-  box-shadow: 0 18rpx 40rpx rgba(68, 37, 16, 0.18);
+  margin: 0 28rpx 28rpx;
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(145deg, $deep 0%, $primary 100%);
+  box-shadow: 0 12rpx 40rpx rgba(0, 153, 204, 0.18);
 }
 
 .hero-kicker {
   display: block;
-  color: rgba(255, 232, 208, 0.72);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 20rpx;
   letter-spacing: 4rpx;
 }
@@ -159,15 +179,15 @@ onShow(loadData)
 .hero-title {
   display: block;
   margin-top: 12rpx;
-  color: #fff7ef;
-  font-size: 46rpx;
+  color: #ffffff;
+  font-size: 36rpx;
   font-weight: 700;
 }
 
 .hero-sub {
   display: block;
   margin-top: 14rpx;
-  color: rgba(255, 237, 222, 0.8);
+  color: rgba(255, 255, 255, 0.78);
   font-size: 24rpx;
   line-height: 1.7;
 }
@@ -175,72 +195,69 @@ onShow(loadData)
 .hero-side {
   display: flex;
   gap: 14rpx;
-  margin-top: 22rpx;
+  margin-top: 24rpx;
 }
 
 .hero-metric {
   flex: 1;
   padding: 20rpx;
   border-radius: 24rpx;
-  background: rgba(255, 245, 233, 0.14);
-  border: 1px solid rgba(255, 237, 218, 0.12);
+  background: rgba(255, 255, 255, 0.15);
 }
 
-.hero-metric.soft {
-  background: rgba(255, 227, 184, 0.14);
+.hero-metric-soft {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .hero-metric-value {
   display: block;
-  color: #fff4e6;
-  font-size: 38rpx;
+  color: #ffffff;
+  font-size: 36rpx;
   font-weight: 700;
 }
 
 .hero-metric-label {
   display: block;
   margin-top: 8rpx;
-  color: rgba(255, 236, 219, 0.74);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 22rpx;
 }
 
 .tabs-shell {
-  margin: 0 20rpx 18rpx;
+  margin: 0 28rpx 20rpx;
 }
 
 .tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.86);
+  background: $card;
   border-radius: 999rpx;
   padding: 8rpx;
-  border: 1px solid rgba(182, 128, 86, 0.08);
-  box-shadow: 0 12rpx 28rpx rgba(73, 40, 16, 0.05);
+  box-shadow: $shadow;
 }
 
 .tab {
   flex: 1;
   text-align: center;
   padding: 18rpx 0;
-  font-size: 26rpx;
-  color: #8a6b54;
+  font-size: 28rpx;
+  color: $text2;
   border-radius: 999rpx;
 }
 
 .tab.active {
-  background: linear-gradient(135deg, #352117 0%, #5e3924 100%);
-  color: #fff5ea;
+  background: $gradient;
+  color: #fff;
   font-weight: 600;
 }
 
 .scroll { height: calc(100vh - 310rpx); }
 
 .card {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 28rpx;
-  padding: 20rpx;
-  margin: 0 20rpx 20rpx;
-  border: 1px solid rgba(178, 123, 81, 0.08);
-  box-shadow: 0 14rpx 34rpx rgba(89, 47, 18, 0.06);
+  background: $card;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin: 0 28rpx 20rpx;
+  box-shadow: $shadow;
 }
 
 .item-card { display: flex; gap: 18rpx; }
@@ -253,8 +270,10 @@ onShow(loadData)
 .thumb {
   width: 188rpx;
   height: 188rpx;
-  border-radius: 22rpx;
-  background: #e2e8f0;
+  border-radius: 20rpx;
+  background: #e0f2fe;
+  opacity: 0;
+  animation: fadeInUp 0.45s ease both;
 }
 
 .status-pill {
@@ -263,8 +282,8 @@ onShow(loadData)
   bottom: 10rpx;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(47, 29, 20, 0.72);
-  color: #fff4e8;
+  background: $deep;
+  color: #fff;
   font-size: 20rpx;
 }
 
@@ -275,11 +294,10 @@ onShow(loadData)
   min-width: 0;
 }
 
-.name,
-.title {
-  font-size: 29rpx;
-  font-weight: 700;
-  color: #2f1d14;
+.name, .title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text1;
 }
 
 .meta-row {
@@ -293,36 +311,36 @@ onShow(loadData)
 .meta-chip {
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: #fff2db;
-  color: #a16207;
-  font-size: 21rpx;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
+  font-size: 22rpx;
 }
 
-.meta-chip.warm {
-  background: #ffe9d9;
-  color: #c2410c;
+.meta-chip-warm {
+  background: rgba(0, 153, 204, 0.12);
+  color: $deep;
 }
 
-.meta-text,
-.status,
-.sn,
-.helper {
-  font-size: 23rpx;
-  color: #8a6b54;
+.meta-text, .sn, .helper {
+  font-size: 24rpx;
+  color: $text2;
 }
 
-.top-row {
-  align-items: flex-start;
-}
+.top-row { align-items: flex-start; }
 
 .order-status {
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: #fff4de;
+  background: rgba(0, 191, 255, 0.08);
+  color: $deep;
+  font-size: 24rpx;
 }
 
-.bottom,
-.row-between { display: flex; justify-content: space-between; align-items: center; }
+.bottom, .row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
 .bottom { margin-top: auto; }
 
@@ -330,7 +348,7 @@ onShow(loadData)
 
 .price {
   display: block;
-  color: #c2410c;
+  color: $danger;
   font-weight: 700;
   font-size: 34rpx;
 }
@@ -344,36 +362,35 @@ onShow(loadData)
   padding: 0 28rpx;
   height: 66rpx;
   line-height: 66rpx;
-  background: #2f1d14;
-  color: #fff4e8;
+  background: $gradient;
+  color: #fff;
   border-radius: 999rpx;
   font-size: 24rpx;
+  &:active { transform: scale(0.96); }
 }
 
 .empty-state {
-  margin: 0 20rpx;
+  margin: 0 28rpx;
   padding: 120rpx 36rpx;
   text-align: center;
-  border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(186, 145, 105, 0.12);
+  border-radius: 24rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
 .empty-icon {
   display: block;
-  color: #b45309;
+  color: $primary;
   font-size: 72rpx;
   line-height: 1;
 }
 
-.empty-icon.warm {
-  color: #c2410c;
-}
+.empty-icon-warm { color: $deep; }
 
 .empty-title {
   display: block;
   margin-top: 20rpx;
-  color: #3f2b1f;
+  color: $text1;
   font-size: 30rpx;
   font-weight: 700;
 }
@@ -381,19 +398,18 @@ onShow(loadData)
 .empty-sub {
   display: block;
   margin-top: 12rpx;
-  color: #8a6b54;
+  color: $text3;
   font-size: 24rpx;
   line-height: 1.7;
 }
 
 .fab {
   position: fixed;
-  left: 32rpx;
-  right: 32rpx;
-  bottom: 28rpx;
-  background: linear-gradient(135deg, #ffb55e 0%, #ff8d39 100%);
+  left: 36rpx; right: 36rpx; bottom: 32rpx;
+  background: $gradient;
   color: #fff;
   border-radius: 999rpx;
-  box-shadow: 0 16rpx 30rpx rgba(255, 141, 57, 0.22);
+  box-shadow: 0 12rpx 36rpx rgba(0, 191, 255, 0.22);
+  &:active { transform: scale(0.96); }
 }
 </style>

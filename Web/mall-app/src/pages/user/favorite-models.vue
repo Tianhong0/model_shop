@@ -1,6 +1,6 @@
 <template>
 	<view class="favorite-page">
-		<view class="summary card">
+		<view class="summary">
 			<view class="summary-main">
 				<text class="title">收藏模型</text>
 				<text class="desc">已收藏 {{ total }} 个模型，可查看详情并直接下单</text>
@@ -20,7 +20,7 @@
 		</view>
 
 		<view v-else class="list-wrap">
-			<view class="model-card card" v-for="item in list" :key="item.id" @click="goDetail(item.id)">
+			<view class="model-card" v-for="item in list" :key="item.id" @click="goDetail(item.id)">
 				<view class="fav-btn" @click.stop="cancelFavorite(item)">
 					<uni-icons type="heart-filled" size="18" color="#ef4444"></uni-icons>
 				</view>
@@ -212,44 +212,46 @@ onUnload(() => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .favorite-page {
 	min-height: 100vh;
-	background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 260rpx, #f8fafc 100%);
-	padding: 24rpx;
+	background: $bg;
+	padding: 28rpx;
 }
 
 .summary {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 28rpx;
-	margin-bottom: 24rpx;
+	padding: 32rpx;
+	margin-bottom: 28rpx;
 	border-radius: 24rpx;
-	background: linear-gradient(135deg, #4f46e5 0%, #6366f1 55%, #818cf8 100%);
-	box-shadow: 0 18rpx 40rpx rgba(79, 70, 229, 0.2);
+	background: $gradient;
+	box-shadow: 0 12rpx 40rpx rgba(0, 191, 255, 0.2);
 
-	.summary-main {
-		min-width: 0;
-	}
-
-	.title {
-		font-size: 34rpx;
-		font-weight: 700;
-		color: #ffffff;
-		display: block;
-	}
-	.desc {
-		margin-top: 10rpx;
-		font-size: 24rpx;
-		color: rgba(255, 255, 255, 0.9);
-		display: block;
-		line-height: 1.45;
-	}
-
+	.summary-main { min-width: 0; }
+	.title { font-size: 36rpx; font-weight: 700; color: #ffffff; display: block; }
+	.desc { margin-top: 10rpx; font-size: 24rpx; color: rgba(255, 255, 255, 0.9); display: block; line-height: 1.45; }
 	.summary-badge {
 		width: 128rpx;
 		height: 128rpx;
-		border-radius: 64rpx;
+		border-radius: 50%;
 		background: rgba(255, 255, 255, 0.22);
 		display: flex;
 		flex-direction: column;
@@ -257,27 +259,17 @@ onUnload(() => {
 		justify-content: center;
 		flex-shrink: 0;
 		backdrop-filter: blur(6px);
+		-webkit-backdrop-filter: blur(6px);
 	}
-
-	.summary-num {
-		font-size: 36rpx;
-		font-weight: 700;
-		color: #ffffff;
-		line-height: 1;
-	}
-
-	.summary-label {
-		font-size: 20rpx;
-		margin-top: 6rpx;
-		color: rgba(255, 255, 255, 0.9);
-	}
+	.summary-num { font-size: 36rpx; font-weight: 700; color: #ffffff; line-height: 1; }
+	.summary-label { font-size: 20rpx; margin-top: 6rpx; color: rgba(255, 255, 255, 0.9); }
 }
 
 .state {
 	padding: 120rpx 0;
 	text-align: center;
 	font-size: 26rpx;
-	color: #94a3b8;
+	color: $text3;
 	line-height: 1.6;
 }
 
@@ -288,10 +280,7 @@ onUnload(() => {
 	gap: 16rpx;
 }
 
-.empty-icon {
-	font-size: 56rpx;
-	color: #c7d2fe;
-}
+.empty-icon { font-size: 56rpx; color: #ddd; }
 
 .list-wrap {
 	display: flex;
@@ -302,11 +291,12 @@ onUnload(() => {
 .model-card {
 	position: relative;
 	display: flex;
-	padding: 22rpx;
+	padding: 24rpx;
 	gap: 22rpx;
-	border-radius: 20rpx;
-	background: #ffffff;
-	box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.06);
+	border-radius: 24rpx;
+	background: $card;
+	box-shadow: $shadow;
+	animation: fadeInUp 0.4s ease both;
 }
 
 .fav-btn {
@@ -315,20 +305,21 @@ onUnload(() => {
 	right: 18rpx;
 	width: 56rpx;
 	height: 56rpx;
-	border-radius: 28rpx;
+	border-radius: 50%;
 	background: rgba(255, 255, 255, 0.95);
-	box-shadow: 0 8rpx 18rpx rgba(15, 23, 42, 0.12);
+	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	z-index: 2;
+	&:active { transform: scale(0.92); }
 }
 
 .cover {
 	width: 180rpx;
 	height: 180rpx;
 	border-radius: 16rpx;
-	background: #e2e8f0;
+	background: $bg;
 	flex-shrink: 0;
 }
 
@@ -338,19 +329,8 @@ onUnload(() => {
 	flex-direction: column;
 }
 
-.name {
-	font-size: 30rpx;
-	font-weight: 600;
-	color: #0f172a;
-	line-height: 1.35;
-}
-
-.meta {
-	margin-top: 10rpx;
-	font-size: 22rpx;
-	color: #64748b;
-	line-height: 1.45;
-}
+.name { font-size: 30rpx; font-weight: 600; color: $text1; line-height: 1.35; }
+.meta { margin-top: 10rpx; font-size: 22rpx; color: $text2; line-height: 1.45; }
 
 .price-row {
 	margin-top: 14rpx;
@@ -359,14 +339,6 @@ onUnload(() => {
 	gap: 10rpx;
 }
 
-.price {
-	font-size: 30rpx;
-	font-weight: 700;
-	color: #ef4444;
-}
-
-.price-tip {
-	font-size: 22rpx;
-	color: #94a3b8;
-}
+.price { font-size: 30rpx; font-weight: 700; color: $danger; }
+.price-tip { font-size: 22rpx; color: $text3; }
 </style>

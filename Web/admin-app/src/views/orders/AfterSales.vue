@@ -471,24 +471,149 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
-.table-card { background: #fff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; }
-.header-actions { display: flex; justify-content: space-between; margin-bottom: 20px; }
-.pager-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
-.msg-scroll { margin-bottom: 12px; }
-.msg-list { display: flex; flex-direction: column; gap: 10px; }
-.msg-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
-.msg-meta { color: #64748b; font-size: 12px; margin-bottom: 4px; }
-.msg-content { color: #1e293b; font-size: 14px; white-space: pre-wrap; }
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 14px; }
-.detail-item { color: #334155; font-size: 14px; }
-.detail-item span { color: #64748b; }
-.detail-block { margin-top: 12px; }
-.detail-label { color: #64748b; font-size: 13px; margin-bottom: 6px; }
-.detail-content { color: #1e293b; font-size: 14px; white-space: pre-wrap; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
-.evidence-empty { color: #94a3b8; font-size: 13px; }
-.evidence-list { display: flex; flex-wrap: wrap; gap: 10px; }
-.evidence-item { width: 220px; }
-.evidence-image, .evidence-video { width: 220px; height: 140px; border-radius: 8px; border: 1px solid #e2e8f0; background: #000; display: block; }
-.evidence-link { display: block; margin-top: 6px; color: #4f46e5; font-size: 12px; text-decoration: none; }
+.page-container {
+  padding: 0;
+}
+
+.table-card {
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pager-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.msg-scroll {
+  margin-bottom: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.msg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.msg-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.msg-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.msg-meta {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.msg-content {
+  color: var(--text-primary);
+  font-size: 14px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.detail-item {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.detail-item span {
+  color: var(--text-secondary);
+}
+
+.detail-block {
+  margin-top: 16px;
+}
+
+.detail-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.detail-content {
+  color: var(--text-primary);
+  font-size: 14px;
+  white-space: pre-wrap;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  line-height: 1.6;
+}
+
+.evidence-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.evidence-item {
+  width: 220px;
+}
+
+.evidence-image,
+.evidence-video {
+  width: 220px;
+  height: 140px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: #000;
+  display: block;
+}
+
+.evidence-link {
+  display: block;
+  margin-top: 8px;
+  color: var(--primary-color);
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.evidence-link:hover {
+  color: var(--primary-light);
+}
 </style>

@@ -28,15 +28,18 @@ import org.majun.backend.dto.WalletWithdrawAuditRequest;
 import org.majun.backend.dto.WalletWithdrawPayRequest;
 import org.majun.backend.dto.WalletWithdrawQueryRequest;
 import org.majun.backend.entity.WalletAccount;
+import org.majun.backend.entity.WalletFrozenRecord;
 import org.majun.backend.entity.WalletLedger;
 import org.majun.backend.entity.WalletWithdraw;
 import org.majun.backend.enums.WalletLedgerDirection;
 import org.majun.backend.enums.WalletWithdrawStatus;
 import org.majun.backend.repository.WalletAccountRepository;
+import org.majun.backend.repository.WalletFrozenRecordRepository;
 import org.majun.backend.repository.WalletLedgerRepository;
 import org.majun.backend.repository.WalletWithdrawRepository;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.WalletAccountVO;
+import org.majun.backend.vo.WalletFrozenDetailVO;
 import org.majun.backend.vo.WalletLedgerVO;
 import org.majun.backend.vo.WalletRechargePayCreateResponse;
 import org.majun.backend.vo.WalletRechargeStatusVO;
@@ -71,8 +74,11 @@ public class WalletService {
     private final WalletAccountRepository walletAccountRepository;
     private final WalletLedgerRepository walletLedgerRepository;
     private final WalletWithdrawRepository walletWithdrawRepository;
+    private final WalletFrozenRecordRepository walletFrozenRecordRepository;
     private final PaymentProperties paymentProperties;
     private final ObjectMapper objectMapper;
+
+    private static final int USED_ORDER_FROZEN_DAYS = 7;
 
     public WalletAccountVO getAccount(Long userId) {
         WalletAccount account = getOrCreateWallet(userId);
@@ -875,5 +881,217 @@ public class WalletService {
                 + (int) (Math.random() * 900 + 100)
                 + "U"
                 + userId;
+    }
+
+    // ==================== 冻结资金相关方法 ====================
+
+    /**
+     * 冻结资金（二手交易卖家收入）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Long freezeAmount(Long userId, BigDecimal amount, String bizType, String bizNo, Long refId, Integer frozenDays, String remark) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return null;
+        }
+
+        WalletAccount account = getOrCreateWallet(userId);
+        if (!Objects.equals(account.getStatus(), 1)) {
+            throw new BusinessException("钱包状态异常，无法冻结");
+        }
+
+        BigDecimal beforeAvailable = amount(account.getAvailableBalance());
+        BigDecimal beforeFrozen = amount(account.getFrozenBalance());
+        BigDecimal afterFrozen = beforeFrozen.add(amount);
+
+        // 更新冻结余额
+        int updated = walletAccountRepository.update(null,
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<WalletAccount>()
+                        .eq(WalletAccount::getId, account.getId())
+                        .eq(WalletAccount::getVersion, account.getVersion())
+                        .eq(WalletAccount::getIsDelete, 0)
+                        .set(WalletAccount::getFrozenBalance, afterFrozen)
+                        .set(WalletAccount::getVersion, account.getVersion() + 1)
+        );
+        if (updated <= 0) {
+            throw new BusinessException("冻结余额失败，请重试");
+        }
+
+        // 记录流水
+        WalletLedger ledger = new WalletLedger();
+        ledger.setUserId(userId);
+        ledger.setAccountId(account.getId());
+        ledger.setDirection(WalletLedgerDirection.FREEZE.getCode());
+        ledger.setBizType(bizType);
+        ledger.setBizNo(bizNo);
+        ledger.setRefId(refId);
+        ledger.setAmount(amount);
+        ledger.setBeforeAvailable(beforeAvailable);
+        ledger.setAfterAvailable(beforeAvailable);
+        ledger.setBeforeFrozen(beforeFrozen);
+        ledger.setAfterFrozen(afterFrozen);
+        ledger.setRemark(remark);
+        walletLedgerRepository.insert(ledger);
+
+        // 创建冻结记录
+        LocalDateTime now = LocalDateTime.now();
+        int days = frozenDays != null && frozenDays > 0 ? frozenDays : USED_ORDER_FROZEN_DAYS;
+        WalletFrozenRecord frozenRecord = new WalletFrozenRecord();
+        frozenRecord.setUserId(userId);
+        frozenRecord.setAccountId(account.getId());
+        frozenRecord.setAmount(amount);
+        frozenRecord.setBizType(bizType);
+        frozenRecord.setBizNo(bizNo);
+        frozenRecord.setRefId(refId);
+        frozenRecord.setFrozenDays(days);
+        frozenRecord.setFrozenStartTime(now);
+        frozenRecord.setFrozenEndTime(now.plusDays(days));
+        frozenRecord.setStatus(0);
+        frozenRecord.setRemark(remark);
+        frozenRecord.setIsDelete(0);
+        walletFrozenRecordRepository.insert(frozenRecord);
+
+        return frozenRecord.getId();
+    }
+
+    /**
+     * 解冻到期资金
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int unfreezeExpiredRecords() {
+        LocalDateTime now = LocalDateTime.now();
+        List<WalletFrozenRecord> expiredRecords = walletFrozenRecordRepository.selectList(
+                new LambdaQueryWrapper<WalletFrozenRecord>()
+                        .eq(WalletFrozenRecord::getStatus, 0)
+                        .le(WalletFrozenRecord::getFrozenEndTime, now)
+                        .eq(WalletFrozenRecord::getIsDelete, 0)
+        );
+
+        int count = 0;
+        for (WalletFrozenRecord record : expiredRecords) {
+            try {
+                unfreezeRecord(record);
+                count++;
+            } catch (Exception e) {
+                // 记录错误但继续处理其他记录
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 解冻单条记录
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void unfreezeRecord(WalletFrozenRecord record) {
+        if (record == null || !Objects.equals(record.getStatus(), 0)) {
+            return;
+        }
+
+        WalletAccount account = walletAccountRepository.selectById(record.getAccountId());
+        if (account == null || Objects.equals(account.getIsDelete(), 1)) {
+            throw new BusinessException("钱包账户不存在");
+        }
+
+        BigDecimal beforeAvailable = amount(account.getAvailableBalance());
+        BigDecimal beforeFrozen = amount(account.getFrozenBalance());
+        BigDecimal afterAvailable = beforeAvailable.add(record.getAmount());
+        BigDecimal afterFrozen = beforeFrozen.subtract(record.getAmount());
+
+        if (afterFrozen.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("冻结余额不足");
+        }
+
+        // 更新账户余额
+        int updated = walletAccountRepository.update(null,
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<WalletAccount>()
+                        .eq(WalletAccount::getId, account.getId())
+                        .eq(WalletAccount::getVersion, account.getVersion())
+                        .eq(WalletAccount::getIsDelete, 0)
+                        .set(WalletAccount::getAvailableBalance, afterAvailable)
+                        .set(WalletAccount::getFrozenBalance, afterFrozen)
+                        .set(WalletAccount::getVersion, account.getVersion() + 1)
+        );
+        if (updated <= 0) {
+            throw new BusinessException("解冻失败，请重试");
+        }
+
+        // 记录流水
+        WalletLedger ledger = new WalletLedger();
+        ledger.setUserId(record.getUserId());
+        ledger.setAccountId(account.getId());
+        ledger.setDirection(WalletLedgerDirection.UNFREEZE.getCode());
+        ledger.setBizType(record.getBizType() + "_UNFREEZE");
+        ledger.setBizNo(record.getBizNo());
+        ledger.setRefId(record.getRefId());
+        ledger.setAmount(record.getAmount());
+        ledger.setBeforeAvailable(beforeAvailable);
+        ledger.setAfterAvailable(afterAvailable);
+        ledger.setBeforeFrozen(beforeFrozen);
+        ledger.setAfterFrozen(afterFrozen);
+        ledger.setRemark("冻结资金到期自动解冻");
+        walletLedgerRepository.insert(ledger);
+
+        // 更新冻结记录状态
+        record.setStatus(1);
+        record.setUnfreezeTime(LocalDateTime.now());
+        walletFrozenRecordRepository.updateById(record);
+    }
+
+    /**
+     * 获取用户冻结记录列表
+     */
+    public List<WalletFrozenDetailVO> listFrozenRecords(Long userId) {
+        List<WalletFrozenRecord> records = walletFrozenRecordRepository.selectList(
+                new LambdaQueryWrapper<WalletFrozenRecord>()
+                        .eq(WalletFrozenRecord::getUserId, userId)
+                        .eq(WalletFrozenRecord::getStatus, 0)
+                        .eq(WalletFrozenRecord::getIsDelete, 0)
+                        .orderByAsc(WalletFrozenRecord::getFrozenEndTime)
+        );
+
+        LocalDateTime now = LocalDateTime.now();
+        return records.stream().map(record -> {
+            WalletFrozenDetailVO vo = new WalletFrozenDetailVO();
+            vo.setId(String.valueOf(record.getId()));
+            vo.setAmount(amount(record.getAmount()));
+            vo.setBizType(record.getBizType());
+            vo.setBizNo(record.getBizNo());
+            vo.setFrozenDays(record.getFrozenDays());
+            vo.setFrozenStartTime(record.getFrozenStartTime());
+            vo.setFrozenEndTime(record.getFrozenEndTime());
+            vo.setStatus(record.getStatus());
+            vo.setRemark(record.getRemark());
+            vo.setCreateTime(record.getCreateTime());
+
+            // 计算剩余时间
+            if (record.getFrozenEndTime() != null) {
+                long remainingSeconds = java.time.Duration.between(now, record.getFrozenEndTime()).getSeconds();
+                if (remainingSeconds > 0) {
+                    vo.setRemainingDays(remainingSeconds / (24 * 3600));
+                    vo.setRemainingHours((remainingSeconds % (24 * 3600)) / 3600);
+                } else {
+                    vo.setRemainingDays(0L);
+                    vo.setRemainingHours(0L);
+                }
+            }
+
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 获取用户冻结总额
+     */
+    public BigDecimal getFrozenAmount(Long userId) {
+        List<WalletFrozenRecord> records = walletFrozenRecordRepository.selectList(
+                new LambdaQueryWrapper<WalletFrozenRecord>()
+                        .eq(WalletFrozenRecord::getUserId, userId)
+                        .eq(WalletFrozenRecord::getStatus, 0)
+                        .eq(WalletFrozenRecord::getIsDelete, 0)
+        );
+        return records.stream()
+                .map(WalletFrozenRecord::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 }

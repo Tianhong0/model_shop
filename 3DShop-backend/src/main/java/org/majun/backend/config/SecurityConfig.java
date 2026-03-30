@@ -97,6 +97,8 @@ public class SecurityConfig {
                        .requestMatchers("/ws/bounty/message").permitAll()
                           // 二手私聊 WebSocket 握手放行（连接内再做token鉴权）
                           .requestMatchers("/ws/used/message").permitAll()
+                          // 客服 WebSocket 握手放行（连接内再做token鉴权）
+                          .requestMatchers("/ws/cs/message").permitAll()
                     // Spring Boot 错误端点放行，避免真实异常被二次401掩盖
                     .requestMatchers("/error").permitAll()
                         // Swagger UI 放行

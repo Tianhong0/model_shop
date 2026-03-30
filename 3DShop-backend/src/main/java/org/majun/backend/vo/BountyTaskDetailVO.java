@@ -24,9 +24,32 @@ public class BountyTaskDetailVO {
     private Long winnerBidId;
     private Long winnerDesignerId;
     private String closeReason;
+    private Integer cancelRequested;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private List<String> attachments;
     private Long pendingDeliveryId;
     private List<BountyBidVO> bids;
+    private DeliveryInfo deliveryInfo;
+
+    @Data
+    public static class DeliveryInfo {
+        private Long id;
+        private Integer deliveryRound;
+        private String description;
+        private Integer status;
+        private Integer isFinal;
+        private Integer allowCommercialUse;
+        private Integer allowModification;
+        private String licenseType;
+        private List<DeliveryFileItem> files;
+        private LocalDateTime createTime;
+    }
+
+    @Data
+    public static class DeliveryFileItem {
+        private String url;
+        private String name;
+        private String type;
+    }
 }

@@ -21,12 +21,11 @@
 		</view>
 
 		<view class="main-body">
-			<!-- 左侧分类导航 -->
 			<scroll-view scroll-y class="sidebar">
-				<view 
-					v-for="(cat, index) in categories" 
-					:key="cat.id || index" 
-					class="side-item" 
+				<view
+					v-for="(cat, index) in categories"
+					:key="cat.id || index"
+					class="side-item"
 					:class="{ active: activeCat === index }"
 					@click="switchCategory(index)"
 				>
@@ -34,13 +33,16 @@
 				</view>
 			</scroll-view>
 
-			<!-- 右侧模型列表 -->
 			<scroll-view scroll-y class="model-content">
 				<view class="grid-list">
-					<view class="grid-item" v-for="(item, idx) in models" :key="item.id || idx" @click="goDetail(item.id)">
-						<image :src="item.mainImageUrl || defaultBanner" mode="aspectFill"></image>
-						<text class="name">{{item.modelName}}</text>
-						<text class="price">￥{{item.basePrice || '0.00'}} 起</text>
+					<view class="grid-item" v-for="(item, idx) in models" :key="item.id || idx" @click="goDetail(item.id)" :style="{ animationDelay: `${idx * 0.05}s` }">
+						<view class="grid-img-wrap">
+							<image :src="item.mainImageUrl || defaultBanner" mode="aspectFill"></image>
+						</view>
+						<view class="grid-info">
+							<text class="name">{{item.modelName}}</text>
+							<text class="price">￥{{item.basePrice || '0.00'}} 起</text>
+						</view>
 					</view>
 				</view>
 				<view v-if="!models.length" class="empty-tip">暂无模型数据</view>
@@ -55,7 +57,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
+import { onLoad, onShow, onUnload, onPullDownRefresh } from '@dcloudio/uni-app'
 import { getCategoryTreeApi, getModelListApi } from '../../api/model'
 import { ensureLoginOrRedirect } from '../../utils/auth'
 // #ifdef APP-PLUS
@@ -87,13 +89,13 @@ const flattenCategories = (tree = []) => {
 	return result
 }
 
-const fetchCategories = async () => {
-	const tree = await getCategoryTreeApi()
+const fetchCategories = async (force = false) => {
+	const tree = await getCategoryTreeApi(force)
 	const flattened = flattenCategories(Array.isArray(tree) ? tree : [])
 	categories.value = [{ id: 0, name: '全部模型', banner: defaultBanner }, ...flattened]
 }
 
-const fetchModels = async () => {
+const fetchModels = async (force = false) => {
 	const current = currentCategory.value
 	const payload = {
 		pageNum: 1,
@@ -103,9 +105,17 @@ const fetchModels = async () => {
 		orderBy: 'create_time',
 		status: 1
 	}
-	const res = await getModelListApi(payload)
+	const res = await getModelListApi(payload, force)
 	models.value = Array.isArray(res?.records) ? res.records : []
 }
+
+onPullDownRefresh(async () => {
+	await Promise.all([
+		fetchCategories(true),
+		fetchModels(true)
+	])
+	uni.stopPullDownRefresh()
+})
 
 const applyTargetCategory = async (targetId) => {
 	const categoryId = Number(targetId || 0)
@@ -182,122 +192,237 @@ onUnload(() => {
 </script>
 
 <style scoped lang="scss">
+$sky-blue: #00bfff;
+$sky-light: #5ce1ff;
+$sky-deep: #0099cc;
+
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
+
 .mall-container {
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background-color: #ffffff;
+	background-color: $surface;
 }
 
+/* —— 搜索头部 —— */
 .search-sticky {
-	padding: 20rpx 30rpx;
+	padding: 20rpx 32rpx;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
+	animation: fadeInDown 0.4s ease forwards;
+
 	.search-bar {
-		height: 72rpx;
-		background-color: #f1f5f9;
-		border-radius: 36rpx;
+		height: 76rpx;
+		background-color: $surface;
+		border-radius: 999rpx;
 		display: flex;
 		align-items: center;
-		padding: 0 30rpx;
+		padding: 0 28rpx;
+		transition: box-shadow 0.3s ease;
+
+		&:focus-within {
+			box-shadow: 0 0 0 3rpx rgba(0, 191, 255, 0.18);
+		}
+
 		input {
 			flex: 1;
-			margin-left: 12rpx;
-			font-size: 26rpx;
+			margin-left: 14rpx;
+			font-size: 28rpx;
+			color: $text-primary;
 		}
+
 		.search-btn {
-			font-size: 24rpx;
-			color: #4f46e5;
-			font-weight: 700;
-		}
-		.placeholder {
 			font-size: 26rpx;
-			color: #94a3b8;
+			color: $sky-blue;
+			font-weight: 700;
+			padding: 8rpx 20rpx;
+			border-radius: 999rpx;
+			transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+			&:active {
+				transform: scale(0.92);
+			}
+		}
+
+		.placeholder {
+			font-size: 28rpx;
+			color: $text-muted;
 		}
 	}
+
 	.reward-entry {
 		margin-top: 20rpx;
 		background-color: #fffbeb;
-		border: 2rpx solid #fef3c7;
-		padding: 20rpx 30rpx;
-		border-radius: 16rpx;
+		padding: 22rpx 28rpx;
+		border-radius: 24rpx;
 		display: flex;
 		align-items: center;
-		text { flex: 1; margin-left: 16rpx; font-size: 26rpx; color: #92400e; font-weight: 700; }
+		box-shadow: $shadow-card;
+		transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+		&:active {
+			transform: scale(0.97);
+		}
+
+		text {
+			flex: 1;
+			margin-left: 16rpx;
+			font-size: 28rpx;
+			color: #92400e;
+			font-weight: 600;
+		}
 	}
 }
 
+@keyframes fadeInDown {
+	from { opacity: 0; transform: translateY(-16rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+/* —— 主体布局 —— */
 .main-body {
 	flex: 1;
 	display: flex;
 	overflow: hidden;
+	animation: fadeIn 0.5s ease 0.15s forwards;
+	opacity: 0;
 }
 
+@keyframes fadeIn {
+	to { opacity: 1; }
+}
+
+/* —— 左侧分类 —— */
 .sidebar {
 	width: 180rpx;
-	background-color: #f8fafc;
+	background-color: $surface-raised;
+	box-shadow: 4rpx 0 20rpx rgba(0, 0, 0, 0.02);
+
 	.side-item {
-		height: 100rpx;
+		height: 108rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-size: 26rpx;
-		color: #64748b;
+		color: $text-secondary;
 		position: relative;
+		transition: all 0.25s ease;
+
+		&:active {
+			background-color: rgba(0, 191, 255, 0.06);
+		}
+
 		&.active {
-			background-color: #ffffff;
-			color: #4f46e5;
+			background-color: $surface;
+			color: $sky-blue;
 			font-weight: 700;
+
 			&::before {
 				content: '';
 				position: absolute;
 				left: 0;
 				width: 6rpx;
-				height: 32rpx;
-				background-color: #4f46e5;
-				border-radius: 0 4rpx 4rpx 0;
+				height: 36rpx;
+				background: $gradient-primary;
+				border-radius: 0 6rpx 6rpx 0;
+				animation: indicatorIn 0.3s ease;
 			}
 		}
 	}
 }
 
+@keyframes indicatorIn {
+	from { height: 0; opacity: 0; }
+	to { height: 36rpx; opacity: 1; }
+}
+
+/* —— 右侧模型网格 —— */
 .model-content {
 	flex: 1;
-	padding: 30rpx;
+	padding: 24rpx;
 }
 
 .grid-list {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 20rpx;
+
 	.grid-item {
 		width: calc(50% - 10rpx);
-		margin-bottom: 20rpx;
-		image {
-			width: 100%;
-			height: 220rpx;
-			border-radius: 16rpx;
-			background-color: #f1f5f9;
-		}
-		.name {
-			font-size: 24rpx;
-			color: #1e293b;
-			margin-top: 10rpx;
-			display: block;
-		}
-		.price {
-			font-size: 24rpx;
-			color: #ef4444;
-			font-weight: 700;
-			margin-top: 4rpx;
-			display: block;
+		background: $surface-raised;
+		border-radius: 24rpx;
+		overflow: hidden;
+		box-shadow: $shadow-card;
+		animation: fadeInUp 0.5s ease forwards;
+		opacity: 0;
+		transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+
+		&:active {
+			transform: scale(0.96);
+			box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 		}
 	}
+}
+
+.grid-img-wrap {
+	aspect-ratio: 1 / 1;
+	background: #f0f2f5;
+	overflow: hidden;
+
+	image {
+		width: 100%;
+		height: 100%;
+		animation: imgFadeIn 0.5s ease forwards;
+		opacity: 0;
+	}
+}
+
+@keyframes imgFadeIn {
+	from { opacity: 0; transform: scale(0.97); }
+	to { opacity: 1; transform: scale(1); }
+}
+
+.grid-info {
+	padding: 16rpx 18rpx 18rpx;
+
+	.name {
+		font-size: 26rpx;
+		color: $text-primary;
+		font-weight: 600;
+		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.price {
+		font-size: 28rpx;
+		color: $sky-deep;
+		font-weight: 800;
+		margin-top: 8rpx;
+		display: block;
+	}
+}
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
 }
 
 .empty-tip {
 	width: 100%;
 	text-align: center;
-	color: #94a3b8;
-	font-size: 24rpx;
-	padding: 40rpx 0;
+	color: $text-muted;
+	font-size: 26rpx;
+	padding: 80rpx 0;
 }
 </style>

@@ -7,7 +7,9 @@
 			:class="{ active: selected === index, pulse: pulseIndex === index }"
 			@tap="switchTab(item, index)"
 		>
-			<u-icon :name="item.icon" size="20" :color="selected === index ? '#111318' : '#94a3b8'"></u-icon>
+			<view class="tab-icon-wrap">
+				<u-icon :name="item.icon" size="20" :color="selected === index ? '#00bfff' : '#94a3b8'"></u-icon>
+			</view>
 			<text class="tab-text">{{ item.text }}</text>
 		</view>
 		<view class="safe-bottom"></view>
@@ -42,7 +44,7 @@ const switchTab = (item, index) => {
 	pulseIndex.value = index
 	setTimeout(() => {
 		pulseIndex.value = -1
-	}, 220)
+	}, 280)
 
 	if (selected.value === index) {
 		syncSelected()
@@ -84,14 +86,16 @@ onMounted(() => {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	height: calc(108rpx + env(safe-area-inset-bottom));
-	padding-top: 12rpx;
-	background: #ffffff;
-	border-top: 1rpx solid #f0f2f4;
+	height: calc(116rpx + env(safe-area-inset-bottom));
+	padding-top: 14rpx;
+	background: rgba(255, 255, 255, 0.82);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
 	display: flex;
 	justify-content: space-around;
 	align-items: flex-start;
 	z-index: 999;
+	box-shadow: 0 -4rpx 32rpx rgba(0, 0, 0, 0.04);
 }
 
 .tab-item {
@@ -101,10 +105,25 @@ onMounted(() => {
 	align-items: center;
 	gap: 6rpx;
 	color: #94a3b8;
+	transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tab-icon-wrap {
+	width: 56rpx;
+	height: 56rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 18rpx;
+	transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tab-item.active .tab-icon-wrap {
+	background: rgba(0, 191, 255, 0.10);
 }
 
 .tab-item.active {
-	color: #111318;
+	color: #00bfff;
 }
 
 .tab-text {
@@ -114,11 +133,12 @@ onMounted(() => {
 }
 
 .tab-item.active .tab-text {
-	font-weight: 500;
+	font-weight: 600;
+	color: #00bfff;
 }
 
 .pulse {
-	animation: pulse 0.22s ease-out;
+	animation: tabPulse 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .safe-bottom {
@@ -127,13 +147,13 @@ onMounted(() => {
 	right: 0;
 	bottom: 0;
 	height: env(safe-area-inset-bottom);
-	background: #ffffff;
+	background: rgba(255, 255, 255, 0.82);
 	pointer-events: none;
 }
 
-@keyframes pulse {
+@keyframes tabPulse {
 	0% { transform: scale(1); }
-	50% { transform: scale(1.08); }
+	40% { transform: scale(1.12); }
 	100% { transform: scale(1); }
 }
 </style>

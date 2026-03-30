@@ -1,7 +1,7 @@
 <template>
 	<view class="upload-container" v-if="canAccess">
 		<view class="upload-list" v-if="models.length > 0">
-			<view class="model-card card" v-for="(model, index) in models" :key="index">
+			<view class="model-card" v-for="(model, index) in models" :key="index">
 				<image :src="model.preview" class="preview" mode="aspectFill"></image>
 				<view class="info">
 					<view class="name-row">
@@ -29,7 +29,7 @@
 			<button class="add-btn" @click="handleUpload">上传新模型 (.stl / .obj)</button>
 		</view>
 	</view>
-	<view class="blocked card" v-else>
+	<view class="blocked" v-else>
 		<text class="blocked-title">当前角色无权限查看模型上传记录</text>
 		<text class="blocked-desc">该功能仅对设计者开放。</text>
 		<button class="back-btn" @click="uni.navigateBack()">返回</button>
@@ -74,23 +74,44 @@ const handleUpload = () => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .upload-container {
 	min-height: 100vh;
-	background-color: #f8fafc;
-	padding: 20rpx;
-	padding-bottom: 140rpx;
+	background: $bg;
+	padding: 28rpx;
+	padding-bottom: 160rpx;
 }
 
 .model-card {
 	display: flex;
-	padding: 20rpx;
+	padding: 24rpx;
 	margin-bottom: 20rpx;
 	align-items: center;
+	background: $card;
+	border-radius: 24rpx;
+	box-shadow: $shadow;
+	animation: fadeInUp 0.4s ease both;
 	.preview {
 		width: 140rpx;
 		height: 140rpx;
-		border-radius: 12rpx;
-		background-color: #f1f5f9;
+		border-radius: 16rpx;
+		background-color: $bg;
 	}
 	.info {
 		flex: 1;
@@ -99,58 +120,78 @@ const handleUpload = () => {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			.name { font-size: 28rpx; font-weight: 700; color: #1e293b; }
+			.name { font-size: 28rpx; font-weight: 700; color: $text1; }
 			.status {
 				font-size: 20rpx;
-				padding: 2rpx 12rpx;
-				border-radius: 4rpx;
+				padding: 4rpx 16rpx;
+				border-radius: 999rpx;
+				font-weight: 600;
 				&.pending { background-color: #fef3c7; color: #d97706; }
 				&.approved { background-color: #dcfce7; color: #16a34a; }
 				&.rejected { background-color: #fee2e2; color: #dc2626; }
 			}
 		}
-		.time { font-size: 22rpx; color: #94a3b8; margin-top: 8rpx; display: block; }
+		.time { font-size: 22rpx; color: $text3; margin-top: 8rpx; display: block; }
 		.stats {
 			display: flex;
 			gap: 20rpx;
 			margin-top: 10rpx;
 			font-size: 22rpx;
-			color: #64748b;
+			color: $text2;
 		}
 	}
 }
 
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 240rpx;
+	color: $text3;
+	text { margin-top: 24rpx; font-size: 28rpx; }
+}
+
 .bottom-btn {
 	position: fixed;
-	bottom: 40rpx;
-	left: 40rpx;
-	right: 40rpx;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 24rpx 40rpx calc(env(safe-area-inset-bottom) + 24rpx);
+	background: rgba(255,255,255,0.72);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
 	.add-btn {
-		background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+		background: $gradient;
 		color: #ffffff;
-		border-radius: 50rpx;
+		border-radius: 999rpx;
 		font-size: 30rpx;
 		font-weight: 600;
+		box-shadow: 0 8rpx 30rpx rgba(0, 191, 255, 0.25);
+		&:active { transform: scale(0.96); }
 	}
 }
 
 .blocked {
-	margin: 40rpx 30rpx;
-	padding: 40rpx 30rpx;
+	margin: 40rpx 28rpx;
+	padding: 48rpx 32rpx;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	text-align: center;
-	.blocked-title { font-size: 30rpx; font-weight: 700; color: #1e293b; }
-	.blocked-desc { font-size: 24rpx; color: #64748b; margin-top: 16rpx; line-height: 1.6; }
+	background: $card;
+	border-radius: 24rpx;
+	box-shadow: $shadow;
+	.blocked-title { font-size: 30rpx; font-weight: 700; color: $text1; }
+	.blocked-desc { font-size: 24rpx; color: $text2; margin-top: 16rpx; line-height: 1.6; }
 	.back-btn {
-		margin-top: 30rpx;
+		margin-top: 32rpx;
 		height: 80rpx;
-		padding: 0 40rpx;
-		background-color: #4f46e5;
+		padding: 0 48rpx;
+		background: $gradient;
 		color: #ffffff;
-		border-radius: 40rpx;
-		font-size: 26rpx;
+		border-radius: 999rpx;
+		font-size: 28rpx;
+		&:active { transform: scale(0.96); }
 	}
 }
 </style>

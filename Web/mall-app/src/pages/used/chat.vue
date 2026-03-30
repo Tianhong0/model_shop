@@ -1,6 +1,7 @@
 <template>
   <view class="page" v-if="detail">
-    <view class="hero-card">
+    <!-- Hero Product Card -->
+    <view class="hero-card fadeInUp">
       <image :src="detail.coverUrl || (detail.imageUrls || [])[0]" class="hero-cover" mode="aspectFill" />
       <view class="hero-main">
         <view class="hero-topline">
@@ -19,7 +20,8 @@
       </view>
     </view>
 
-    <view class="offer-panel">
+    <!-- Offer Panel -->
+    <view class="offer-panel fadeInUp">
       <view class="panel-head offer-panel-head" @click="toggleOfferCollapse">
         <view>
           <text class="panel-title">议价区</text>
@@ -37,7 +39,7 @@
             <text class="quick-label">按标价聊</text>
             <text class="quick-value">￥{{ Number(detail.price || 0).toFixed(2) }}</text>
           </view>
-          <view class="quick-card warm" @click="fillOfferPrice(suggestedOfferPrice)">
+          <view class="quick-card quick-card-warm" @click="fillOfferPrice(suggestedOfferPrice)">
             <text class="quick-label">参考出价</text>
             <text class="quick-value">￥{{ Number(suggestedOfferPrice || 0).toFixed(2) }}</text>
           </view>
@@ -73,7 +75,8 @@
       <view v-else-if="!offerCollapsed" class="offer-empty">还没有议价记录，先发一句问候或直接出价吧。</view>
     </view>
 
-    <view v-if="detail.owner" class="session-panel">
+    <!-- Session Panel (Seller Only) -->
+    <view v-if="detail.owner" class="session-panel fadeInUp">
       <view class="panel-head">
         <view>
           <text class="panel-title">联系过的买家</text>
@@ -101,7 +104,8 @@
       </scroll-view>
     </view>
 
-    <view class="chat-panel">
+    <!-- Chat Panel -->
+    <view class="chat-panel fadeInUp">
       <view class="panel-head chat-head">
         <view>
           <text class="panel-title">聊天记录</text>
@@ -146,10 +150,11 @@
             </view>
           </view>
         </view>
-        <view v-else class="msg-empty">{{ counterpartId ? '先聊两句吧，成交通常从一句“还在吗”开始。' : '先在上方选中一条议价记录，再进入对应买家的沟通。' }}</view>
+        <view v-else class="msg-empty">{{ counterpartId ? '先聊两句吧，成交通常从一句"还在吗"开始。' : '先在上方选中一条议价记录，再进入对应买家的沟通。' }}</view>
       </scroll-view>
     </view>
 
+    <!-- Input Bar -->
     <view class="input-bar">
       <view class="media-actions">
         <button class="media-btn media-btn-plus" :disabled="!counterpartId || mediaUploading" @click="openMediaPicker">+</button>
@@ -581,50 +586,62 @@ onUnload(() => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fadeInUp { animation: fadeInUp 0.4s ease both; }
+
 .page {
   min-height: 100vh;
-  padding: 20rpx 20rpx 180rpx;
-  background:
-    radial-gradient(circle at top left, rgba(255, 226, 184, 0.78), transparent 28%),
-    radial-gradient(circle at right top, rgba(255, 245, 226, 0.88), transparent 18%),
-    linear-gradient(180deg, #fff8f1 0%, #fffdf9 34%, #f4eee8 100%);
+  padding: 28rpx 28rpx 200rpx;
+  background: $bg;
 }
 
 .hero-card,
 .offer-panel,
 .session-panel,
 .chat-panel {
-  border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(176, 120, 74, 0.09);
-  box-shadow: 0 16rpx 36rpx rgba(94, 52, 22, 0.08);
+  border-radius: 24rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
 .hero-card {
   display: flex;
   gap: 20rpx;
-  padding: 20rpx;
+  padding: 24rpx;
 }
 
 .hero-cover {
   width: 190rpx;
   height: 190rpx;
-  border-radius: 24rpx;
-  background: #f5f5f4;
+  border-radius: 20rpx;
+  background: #e0f2fe;
   flex-shrink: 0;
+  opacity: 0;
+  animation: fadeInUp 0.4s ease both;
 }
 
-.hero-main {
-  flex: 1;
-  min-width: 0;
-}
+.hero-main { flex: 1; min-width: 0; }
 
-.hero-topline,
-.hero-bottom,
-.panel-head,
-.offer-card-top,
-.offer-card-bottom,
-.offer-actions,
+.hero-topline, .hero-bottom,
+.panel-head, .offer-card-top,
+.offer-card-bottom, .offer-actions,
 .popup-actions {
   display: flex;
   align-items: center;
@@ -632,71 +649,50 @@ onUnload(() => {
   gap: 16rpx;
 }
 
-.hero-tag,
-.hero-status,
-.count-badge,
-.online-pill {
+.hero-tag, .hero-status,
+.count-badge, .online-pill {
   padding: 8rpx 16rpx;
   border-radius: 999rpx;
   font-size: 22rpx;
 }
 
-.hero-tag {
-  background: #fff1d9;
-  color: #b45309;
-}
-
-.hero-status {
-  background: #f8efe6;
-  color: #8b5e3c;
-}
+.hero-tag { background: rgba(0, 191, 255, 0.1); color: $deep; }
+.hero-status { background: rgba(0, 191, 255, 0.06); color: $text2; }
 
 .hero-title {
   margin-top: 14rpx;
-  font-size: 34rpx;
+  font-size: 30rpx;
   font-weight: 700;
-  color: #2f1d14;
+  color: $text1;
   line-height: 1.35;
 }
 
-.hero-meta,
-.panel-sub,
-.offer-time,
-.msg-meta,
-.offer-empty,
-.msg-empty {
-  color: #8c6f5a;
+.hero-meta, .panel-sub, .offer-time,
+.msg-meta, .offer-empty, .msg-empty {
+  color: $text2;
   font-size: 22rpx;
 }
 
-.hero-meta {
-  margin-top: 10rpx;
-}
-
-.hero-bottom {
-  margin-top: 20rpx;
-  align-items: flex-end;
-}
+.hero-meta { margin-top: 10rpx; }
+.hero-bottom { margin-top: 20rpx; align-items: flex-end; }
 
 .hero-price {
-  font-size: 44rpx;
+  font-size: 36rpx;
   line-height: 1;
-  color: #c2410c;
+  color: $deep;
   font-weight: 700;
 }
 
 .hero-origin {
   margin-left: 12rpx;
   font-size: 22rpx;
-  color: #a8a29e;
+  color: $text3;
   text-decoration: line-through;
 }
 
-.hero-order-btn,
-.offer-submit,
-.send-btn,
-.mini-btn {
+.hero-order-btn, .offer-submit, .send-btn, .mini-btn {
   border-radius: 999rpx;
+  &:active { transform: scale(0.96); }
 }
 
 .hero-order-btn {
@@ -705,49 +701,42 @@ onUnload(() => {
   height: 72rpx;
   line-height: 72rpx;
   font-size: 24rpx;
-  background: linear-gradient(135deg, #ff8a4c 0%, #ff6b2c 100%);
+  background: $gradient;
   color: #fff;
+  box-shadow: 0 8rpx 20rpx rgba(0, 191, 255, 0.2);
 }
 
-.offer-panel,
-.session-panel,
-.chat-panel {
+.offer-panel, .session-panel, .chat-panel {
   margin-top: 20rpx;
-  padding: 24rpx;
+  padding: 28rpx;
 }
 
-.session-scroll {
-  margin-top: 18rpx;
-  white-space: nowrap;
-}
+.session-scroll { margin-top: 18rpx; white-space: nowrap; }
 
-.session-list {
-  display: inline-flex;
-  gap: 14rpx;
-}
+.session-list { display: inline-flex; gap: 14rpx; }
 
 .session-card {
   width: 280rpx;
   padding: 18rpx;
   border-radius: 24rpx;
-  background: #fff9f2;
-  border: 1px solid rgba(241, 195, 149, 0.45);
+  background: rgba(0, 191, 255, 0.04);
   display: flex;
   gap: 14rpx;
   align-items: center;
   box-sizing: border-box;
+  box-shadow: $shadow;
 }
 
 .session-card.active {
-  border-color: rgba(255, 107, 44, 0.72);
-  box-shadow: 0 14rpx 28rpx rgba(255, 107, 44, 0.12);
+  box-shadow: 0 8rpx 28rpx rgba(0, 191, 255, 0.12);
+  background: rgba(0, 191, 255, 0.08);
 }
 
 .session-avatar {
   width: 68rpx;
   height: 68rpx;
   border-radius: 50%;
-  background: #eadfd3;
+  background: #e0f2fe;
   flex-shrink: 0;
 }
 
@@ -755,19 +744,16 @@ onUnload(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c4a26;
+  color: $deep;
   font-size: 28rpx;
   font-weight: 700;
 }
 
-.session-main {
-  min-width: 0;
-  flex: 1;
-}
+.session-main { min-width: 0; flex: 1; }
 
 .session-name {
   display: block;
-  color: #2f1d14;
+  color: $text1;
   font-size: 26rpx;
   font-weight: 700;
 }
@@ -775,7 +761,7 @@ onUnload(() => {
 .session-preview {
   display: block;
   margin-top: 8rpx;
-  color: #8b6b58;
+  color: $text2;
   font-size: 22rpx;
   white-space: nowrap;
   overflow: hidden;
@@ -785,7 +771,7 @@ onUnload(() => {
 .panel-title {
   display: block;
   font-size: 30rpx;
-  color: #2f1d14;
+  color: $text1;
   font-weight: 700;
 }
 
@@ -795,15 +781,12 @@ onUnload(() => {
   line-height: 1.5;
 }
 
-.count-badge,
-.online-pill {
-  background: #fff4e8;
-  color: #b45309;
+.count-badge, .online-pill {
+  background: rgba(0, 191, 255, 0.08);
+  color: $deep;
 }
 
-.offer-panel-head {
-  cursor: pointer;
-}
+.offer-panel-head { cursor: pointer; }
 
 .offer-head-right {
   display: flex;
@@ -812,22 +795,20 @@ onUnload(() => {
 }
 
 .offer-collapse-icon {
-  color: #8b5e3c;
+  color: $text2;
   font-size: 30rpx;
   line-height: 1;
   transform: rotate(-90deg);
   transition: transform 0.2s ease;
 }
 
-.offer-collapse-icon.expanded {
-  transform: rotate(0deg);
-}
+.offer-collapse-icon.expanded { transform: rotate(0deg); }
 
 .offer-composer {
   margin-top: 22rpx;
-  padding: 22rpx;
-  border-radius: 26rpx;
-  background: linear-gradient(180deg, #fff9f2 0%, #fff6ed 100%);
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: #fafbfc;
 }
 
 .quick-offers {
@@ -838,25 +819,21 @@ onUnload(() => {
 
 .quick-card {
   padding: 20rpx;
-  border-radius: 22rpx;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(247, 194, 129, 0.55);
+  border-radius: 20rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
-.quick-card.warm {
-  background: linear-gradient(135deg, #fff1dc 0%, #ffe1c0 100%);
+.quick-card-warm {
+  background: rgba(0, 191, 255, 0.06);
 }
 
-.quick-label {
-  display: block;
-  color: #8b5e3c;
-  font-size: 22rpx;
-}
+.quick-label { display: block; color: $text2; font-size: 22rpx; }
 
 .quick-value {
   display: block;
   margin-top: 10rpx;
-  color: #c2410c;
+  color: $deep;
   font-size: 34rpx;
   font-weight: 700;
 }
@@ -868,19 +845,18 @@ onUnload(() => {
   padding: 0 24rpx;
   height: 92rpx;
   border-radius: 24rpx;
-  background: #fff;
+  background: $card;
+  box-shadow: $shadow;
 }
 
 .offer-currency {
-  color: #c2410c;
+  color: $deep;
   font-size: 36rpx;
   font-weight: 700;
   margin-right: 14rpx;
 }
 
-.offer-input,
-.offer-remark-input,
-.msg-textarea {
+.offer-input, .offer-remark-input, .msg-textarea {
   width: 100%;
   box-sizing: border-box;
 }
@@ -889,7 +865,7 @@ onUnload(() => {
   flex: 1;
   height: 92rpx;
   font-size: 30rpx;
-  color: #2f1d14;
+  color: $text1;
 }
 
 .offer-remark-input {
@@ -897,96 +873,76 @@ onUnload(() => {
   margin-top: 16rpx;
   padding: 20rpx 22rpx;
   border-radius: 24rpx;
-  background: #fff;
-  font-size: 26rpx;
-  color: #2f1d14;
+  background: $card;
+  font-size: 28rpx;
+  color: $text1;
+  box-shadow: $shadow;
 }
 
 .offer-submit {
   margin-top: 18rpx;
-  background: linear-gradient(135deg, #ff8a4c 0%, #ff6b2c 100%);
+  background: $gradient;
   color: #fff;
   font-size: 28rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0, 191, 255, 0.2);
 }
 
-.offer-list {
-  margin-top: 18rpx;
-}
+.offer-list { margin-top: 18rpx; }
 
 .offer-card {
   margin-top: 14rpx;
-  padding: 22rpx;
+  padding: 24rpx;
   border-radius: 24rpx;
-  background: #fffaf5;
-  border: 1px solid rgba(245, 184, 119, 0.36);
+  background: #fafbfc;
 }
 
-.offer-card.mine {
-  background: #fff;
-}
+.offer-card.mine { background: $card; }
 
 .offer-card.accepted {
-  background: linear-gradient(180deg, #fff8ef 0%, #fff1e2 100%);
+  background: rgba(0, 191, 255, 0.04);
 }
 
 .offer-card.active {
-  border-color: rgba(255, 107, 44, 0.7);
-  box-shadow: 0 14rpx 28rpx rgba(255, 107, 44, 0.14);
+  box-shadow: 0 8rpx 28rpx rgba(0, 191, 255, 0.12);
 }
 
 .offer-user {
   display: block;
   font-size: 28rpx;
-  color: #2f1d14;
+  color: $text1;
   font-weight: 700;
 }
 
-.offer-time {
-  display: block;
-  margin-top: 6rpx;
-}
+.offer-time { display: block; margin-top: 6rpx; }
 
 .offer-price {
-  color: #c2410c;
+  color: $deep;
   font-size: 36rpx;
   font-weight: 700;
 }
 
 .offer-card-remark {
   margin-top: 16rpx;
-  color: #6b4f3d;
-  font-size: 25rpx;
+  color: $text2;
+  font-size: 24rpx;
   line-height: 1.6;
 }
 
-.offer-card-bottom {
-  margin-top: 18rpx;
-}
+.offer-card-bottom { margin-top: 18rpx; }
 
 .offer-status {
   display: inline-flex;
   align-items: center;
   padding: 8rpx 16rpx;
   border-radius: 999rpx;
-  background: #f6ede6;
-  color: #8b5e3c;
+  background: rgba(0, 191, 255, 0.06);
+  color: $text2;
   font-size: 22rpx;
 }
 
-.offer-status.pending {
-  background: #fff4d8;
-  color: #b45309;
-}
-
-.offer-status.success {
-  background: #eafbf1;
-  color: #15803d;
-}
-
-.offer-status.reject {
-  background: #fef2f2;
-  color: #dc2626;
-}
+.offer-status.pending { background: rgba(0, 191, 255, 0.1); color: $deep; }
+.offer-status.success { background: rgba(16, 185, 129, 0.1); color: $success; }
+.offer-status.reject { background: rgba(255, 77, 109, 0.08); color: $danger; }
 
 .mini-btn {
   margin: 0;
@@ -998,30 +954,25 @@ onUnload(() => {
 }
 
 .mini-btn.ghost {
-  background: #fff;
-  color: #9a3412;
-  border: 1px solid #f2c7a6;
+  background: $card;
+  color: $deep;
+  box-shadow: $shadow;
 }
 
 .mini-btn.primary {
-  background: #1f2937;
+  background: $deep;
   color: #fff;
 }
 
-.offer-empty,
-.msg-empty {
+.offer-empty, .msg-empty {
   padding: 40rpx 0 18rpx;
   text-align: center;
   line-height: 1.7;
 }
 
-.chat-head {
-  margin-bottom: 18rpx;
-}
+.chat-head { margin-bottom: 18rpx; }
 
-.msg-list {
-  max-height: 780rpx;
-}
+.msg-list { max-height: 780rpx; }
 
 .msg-row {
   display: flex;
@@ -1030,20 +981,15 @@ onUnload(() => {
   align-items: flex-start;
 }
 
-.msg-row.self {
-  flex-direction: row-reverse;
-}
-
-.msg-row.system {
-  justify-content: center;
-}
+.msg-row.self { flex-direction: row-reverse; }
+.msg-row.system { justify-content: center; }
 
 .msg-avatar {
   width: 68rpx;
   height: 68rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffe5c7 0%, #ffd1a0 100%);
-  color: #9a3412;
+  background: linear-gradient(135deg, #e0f2fe 0%, #b8e4f0 100%);
+  color: $deep;
   font-size: 28rpx;
   font-weight: 700;
   display: flex;
@@ -1052,9 +998,7 @@ onUnload(() => {
   flex-shrink: 0;
 }
 
-.msg-body {
-  max-width: calc(100% - 90rpx);
-}
+.msg-body { max-width: calc(100% - 90rpx); }
 
 .msg-meta {
   margin-bottom: 10rpx;
@@ -1064,9 +1008,9 @@ onUnload(() => {
 .msg-bubble {
   padding: 20rpx 22rpx;
   border-radius: 24rpx;
-  background: #fff8f0;
-  color: #2f1d14;
-  font-size: 26rpx;
+  background: #fafbfc;
+  color: $text1;
+  font-size: 28rpx;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
@@ -1083,6 +1027,8 @@ onUnload(() => {
   max-width: 100%;
   border-radius: 18rpx;
   background: #f3f4f6;
+  opacity: 0;
+  animation: fadeInUp 0.4s ease both;
 }
 
 .msg-video {
@@ -1095,17 +1041,15 @@ onUnload(() => {
 }
 
 .msg-row.self .msg-bubble {
-  background: linear-gradient(135deg, #ffead5 0%, #ffd4ab 100%);
+  background: rgba(0, 191, 255, 0.08);
 }
 
-.msg-row.system .msg-body {
-  max-width: 100%;
-}
+.msg-row.system .msg-body { max-width: 100%; }
 
 .msg-row.system .msg-bubble {
-  background: #f8efe7;
-  color: #8b5e3c;
-  font-size: 23rpx;
+  background: rgba(0, 191, 255, 0.06);
+  color: $text2;
+  font-size: 24rpx;
   padding: 14rpx 18rpx;
   border-radius: 999rpx;
   text-align: center;
@@ -1113,16 +1057,15 @@ onUnload(() => {
 
 .input-bar {
   position: fixed;
-  left: 20rpx;
-  right: 20rpx;
-  bottom: 20rpx;
+  left: 24rpx; right: 24rpx; bottom: 24rpx;
   display: flex;
   align-items: flex-end;
   gap: 14rpx;
-  padding: 16rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 18rpx 38rpx rgba(89, 47, 18, 0.12);
+  padding: 16rpx 20rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.06);
 }
 
 .media-actions {
@@ -1139,8 +1082,8 @@ onUnload(() => {
   line-height: 72rpx;
   padding: 0;
   border-radius: 20rpx;
-  background: #fff4e8;
-  color: #b45309;
+  background: rgba(0, 191, 255, 0.08);
+  color: $deep;
   font-size: 24rpx;
 }
 
@@ -1151,8 +1094,8 @@ onUnload(() => {
 }
 
 .media-btn[disabled] {
-  background: #e2e8f0;
-  color: #94a3b8;
+  background: #f0f0f0;
+  color: $text3;
 }
 
 .msg-textarea {
@@ -1160,10 +1103,10 @@ onUnload(() => {
   min-height: 84rpx;
   max-height: 220rpx;
   padding: 18rpx 20rpx;
-  border-radius: 22rpx;
-  background: #f8fafc;
-  font-size: 26rpx;
-  color: #0f172a;
+  border-radius: 20rpx;
+  background: #fafbfc;
+  font-size: 28rpx;
+  color: $text1;
 }
 
 .send-btn {
@@ -1172,13 +1115,14 @@ onUnload(() => {
   width: 144rpx;
   height: 84rpx;
   line-height: 84rpx;
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  background: $gradient;
   color: #fff;
-  font-size: 26rpx;
+  font-size: 28rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0, 191, 255, 0.2);
 }
 
 .send-btn[disabled] {
-  background: #cbd5e1;
+  background: #e0f2fe;
   color: #fff;
 }
 </style>

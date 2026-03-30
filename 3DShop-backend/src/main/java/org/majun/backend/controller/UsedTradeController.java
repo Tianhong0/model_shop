@@ -190,6 +190,14 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    @Operation(summary = "修改收货地址")
+    @PostMapping("/order/address/update")
+    public Result<Void> updateOrderAddress(@AuthenticationPrincipal LoginUser loginUser,
+                                           @Valid @RequestBody UsedOrderAddressUpdateRequest request) {
+        usedTradeService.updateOrderAddress(request, loginUser.getId());
+        return Result.success();
+    }
+
     @Operation(summary = "发送二手消息")
     @PostMapping("/message/send")
     public Result<Long> sendMessage(@AuthenticationPrincipal LoginUser loginUser,

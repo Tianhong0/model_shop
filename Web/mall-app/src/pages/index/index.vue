@@ -1,32 +1,29 @@
 <template>
 	<view class="home-page">
-		<view class="top-header" :style="{ paddingTop: statusBarHeight + 'px' }">
+		<view class="top-header glass-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
 			<view class="brand-wrap">
 				<view class="brand-logo">
-					<u-icon name="grid" size="18" color="#2563eb"></u-icon>
+					<u-icon name="grid" size="18" color="#00bfff"></u-icon>
 				</view>
 				<text class="brand-title">3D模型商城</text>
 			</view>
-			<view class="header-actions">
-				<view class="action-btn">
-					<u-icon name="shopping-cart" size="20" color="#1f2937"></u-icon>
-				</view>
-			</view>
+	
 		</view>
 
-		<view class="search-panel">
-			<view class="search-box" @tap="handleSearch">
-				<u-icon name="search" size="18" color="#64748b"></u-icon>
+		<view class="search-panel glass-nav">
+			<view class="search-box">
+				<view class="search-icon-wrap" @tap="handleSearch">
+					<u-icon name="search" size="18" color="#94a3b8"></u-icon>
+				</view>
 				<input
 					v-model="searchKeyword"
 					class="search-input"
 					type="text"
 					placeholder="搜索模型、零件、创作者..."
-					placeholder-style="color:#64748b"
+					placeholder-style="color:#94a3b8"
 					confirm-type="search"
 					@confirm="handleSearch"
 				/>
-				<u-icon name="mic" size="18" color="#2563eb"></u-icon>
 			</view>
 		</view>
 
@@ -53,10 +50,21 @@
 				</swiper>
 			</view>
 
-			<view class="notice-wrap" v-if="noticeText">
+			<view class="notice-wrap" v-if="notices.length">
 				<view class="notice-inline">
-					<u-icon name="volume" size="13" color="#2563eb"></u-icon>
-					<text class="notice-inline-text">最新公告：{{ noticeText }}</text>
+					<u-icon name="volume" size="13" color="#00bfff"></u-icon>
+					<swiper
+						class="notice-swiper"
+						:autoplay="true"
+						:circular="true"
+						:interval="3000"
+						:duration="500"
+						vertical
+					>
+						<swiper-item v-for="(item, index) in notices" :key="index">
+							<text class="notice-inline-text">{{ item.title || item.content }}</text>
+						</swiper-item>
+					</swiper>
 				</view>
 			</view>
 
@@ -69,7 +77,8 @@
 				<u-grid :border="false" :col="4" align="center">
 					<u-grid-item v-for="(cat, index) in quickCats" :key="index" @tap="goMall(cat)">
 						<view class="cat-icon-wrap" :style="{ background: cat.iconBg }">
-							<u-icon :name="cat.icon" size="22" :color="cat.iconColor"></u-icon>
+							<image v-if="isImageUrl(cat.icon)" :src="cat.icon" class="cat-icon-img" mode="aspectFit" />
+							<u-icon v-else :name="cat.icon" size="22" :color="cat.iconColor"></u-icon>
 						</view>
 						<text class="cat-name">{{ cat.name }}</text>
 					</u-grid-item>
@@ -79,7 +88,7 @@
 			<view class="section-head product-head">
 				<text class="section-title">精选模型</text>
 				<view class="filter-btn">
-					<u-icon name="list" size="18" color="#64748b"></u-icon>
+					<u-icon name="list" size="18" color="#94a3b8"></u-icon>
 				</view>
 			</view>
 
@@ -93,11 +102,12 @@
 					v-for="(model, index) in visibleModels"
 					:key="model.id || index"
 					@click="goDetail(model.id)"
+					:style="{ animationDelay: `${index * 0.08}s` }"
 				>
 					<view class="product-media">
 						<image :src="model.mainImageUrl || defaultBanner" mode="aspectFill" class="product-image" lazy-load></image>
 						<view class="fav-btn" :class="{ active: !!model.favorited }" @click.stop="toggleFavorite(model)">
-							<u-icon :name="model.favorited ? 'heart-fill' : 'heart'" size="15" :color="model.favorited ? '#ef4444' : '#a6a6a6'"></u-icon>
+							<u-icon :name="model.favorited ? 'heart-fill' : 'heart'" size="15" :color="model.favorited ? '#ef4444' : '#c0c0c0'"></u-icon>
 						</view>
 					</view>
 					<view class="product-info">
@@ -135,7 +145,7 @@
 
 <script setup>
 import { computed, nextTick, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import { getHomeConfigApi, getHotModelsApi } from '../../api/home'
 import { getCategoryTreeApi, getMyFavoriteModelIdsApi, toggleModelFavoriteApi } from '../../api/model'
 import { getModelOrderCommentStatsApi } from '../../api/order'
@@ -144,8 +154,6 @@ import { ensureLoginOrRedirect } from '../../utils/auth'
 import AppTabbar from '../../components/AppTabbar.vue'
 // #endif
 
-const CACHE_KEY = 'home_page_cache_v2'
-const CACHE_TTL = 2 * 60 * 1000
 const MALL_TARGET_CATEGORY_KEY = 'mall_target_category_id'
 const statusBarHeight = ref(0)
 const searchKeyword = ref('')
@@ -171,7 +179,8 @@ const flattenCategories = (tree = []) => {
 		nodes.forEach((node) => {
 			result.push({
 				id: node.id,
-				name: node.categoryName || node.name || '未命名分类'
+				name: node.categoryName || node.name || '未命名分类',
+				icon: node.icon || ''
 			})
 			if (Array.isArray(node.children) && node.children.length) {
 				walk(node.children)
@@ -195,25 +204,32 @@ const resolveCategoryIcon = (categoryName = '') => {
 	return 'grid'
 }
 
+const isImageUrl = (url) => {
+	if (!url) return false
+	return url.startsWith('http://') || url.startsWith('https://')
+}
+
 const fetchQuickCategories = async () => {
 	try {
-		const tree = await getCategoryTreeApi()
+		// 强制刷新获取最新分类数据（包括 icon）
+		const tree = await getCategoryTreeApi(true)
+		console.log('分类树数据:', JSON.stringify(tree))
 		const flattened = flattenCategories(Array.isArray(tree) ? tree : [])
 		if (!flattened.length) return
 
 		quickCats.value = flattened.slice(0, 8).map((cat, index) => ({
 			id: cat.id,
 			name: cat.name,
-			icon: resolveCategoryIcon(cat.name),
+			icon: cat.icon || resolveCategoryIcon(cat.name),
 			iconColor: '#333333',
 			iconBg: '#f4f4f4'
 		}))
+		console.log('quickCats:', JSON.stringify(quickCats.value))
 	} catch (error) {
 		// ignore category fetch error and keep fallback
 	}
 }
 
-const noticeText = computed(() => notices.value.map(item => item.title || item.content).filter(Boolean).join('  —  '))
 const visibleModels = computed(() => hotModels.value.slice(0, renderCount.value))
 
 const favoriteMap = ref({})
@@ -240,28 +256,6 @@ const initSystemInfo = () => {
 }
 
 initSystemInfo()
-
-const applyHomeData = (configData, modelData) => {
-	if (Array.isArray(configData?.banners) && configData.banners.length) {
-		banners.value = configData.banners
-	}
-	notices.value = Array.isArray(configData?.notices) ? configData.notices : []
-	hotModels.value = Array.isArray(modelData?.records)
-		? modelData.records.map(item => ({
-			id: item.id,
-			modelName: item.modelName,
-			designerName: item.designerName || item.designer || '',
-			basePrice: item.basePrice,
-			mainImageUrl: item.mainImageUrl,
-			baseSize: item.baseSize || item.base_size || '',
-			baseVolume: item.baseVolume || item.base_volume || '',
-			baseSizeDisplay: formatBaseSize(item.baseSize || item.base_size || ''),
-			baseVolumeDisplay: formatBaseVolume(item.baseVolume || item.base_volume || ''),
-			avgOverallScore: Number(item.avgOverallScore || item.avgScore || 0),
-			favorited: !!favoriteMap.value[String(item.id)]
-		}))
-		: []
-}
 
 const formatBaseSize = (value) => {
 	const raw = String(value || '').trim()
@@ -341,56 +335,45 @@ const enrichHomeModels = async () => {
 	hotModels.value = await Promise.all(tasks)
 }
 
-const readCache = () => {
-	try {
-		const cached = uni.getStorageSync(CACHE_KEY)
-		if (!cached || !cached.timestamp) {
-			return null
-		}
-		return cached
-	} catch (error) {
-		return null
-	}
-}
-
-const saveCache = (configData, modelData) => {
-	uni.setStorageSync(CACHE_KEY, {
-		timestamp: Date.now(),
-		configData,
-		modelData
-	})
-}
-
 const fetchHomeData = async (force = false) => {
 	if (!ensureLoginOrRedirect()) return
 	if (fetching.value) return
 	await loadFavoriteMap()
 	await fetchQuickCategories()
 
-	const cached = readCache()
-	if (cached?.configData && cached?.modelData) {
-		applyHomeData(cached.configData, cached.modelData)
-		enrichHomeModels()
-		pageLoading.value = false
-	}
-
-	if (!force && cached?.timestamp && Date.now() - cached.timestamp < CACHE_TTL) {
-		return
-	}
-
 	fetching.value = true
 	try {
 		const [configRes, modelRes] = await Promise.allSettled([
-			getHomeConfigApi(),
-			getHotModelsApi(1)
+			getHomeConfigApi(force),
+			getHotModelsApi(1, force)
 		])
 
-		const configData = configRes.status === 'fulfilled' ? configRes.value : { banners: banners.value, notices: [] }
-		const modelData = modelRes.status === 'fulfilled' ? modelRes.value : { records: hotModels.value }
+		const configData = configRes.status === 'fulfilled' ? configRes.value : null
+		const modelData = modelRes.status === 'fulfilled' ? modelRes.value : null
 
-		applyHomeData(configData, modelData)
+		if (configData) {
+			banners.value = Array.isArray(configData.banners) && configData.banners.length
+				? configData.banners
+				: banners.value
+			notices.value = Array.isArray(configData.notices) ? configData.notices : []
+		}
+
+		if (modelData?.records) {
+			hotModels.value = modelData.records.map(item => ({
+				id: item.id,
+				modelName: item.modelName,
+				designerName: item.designerName || item.designer || '',
+				basePrice: item.basePrice,
+				mainImageUrl: item.mainImageUrl,
+				baseSize: item.baseSize || item.base_size || '',
+				baseVolume: item.baseVolume || item.base_volume || '',
+				avgOverallScore: Number(item.avgOverallScore || item.avgScore || 0),
+				favorited: !!favoriteMap.value[String(item.id)]
+			}))
+		}
+
 		await enrichHomeModels()
-		saveCache(configData, modelData)
+
 		renderCount.value = 4
 		await nextTick()
 		setTimeout(() => {
@@ -413,6 +396,10 @@ onShow(() => {
 	fetchHomeData(false)
 })
 
+onPullDownRefresh(async () => {
+	await fetchHomeData(true)
+	uni.stopPullDownRefresh()
+})
 
 const loadMoreCards = () => {
 	if (renderCount.value < hotModels.value.length) {
@@ -506,33 +493,44 @@ const toggleFavorite = (model) => {
 </script>
 
 <style scoped lang="scss">
-@import "uview-plus/index.scss";
+/* ============================================
+   首页 — 果冻质感极简设计
+   ============================================ */
 
-$bg: #ffffff;
-$white: #ffffff;
-$text-main: #111318;
-$text-sub: #62708c;
-$line: #e5ebf4;
-$primary: #135bec;
+$sky-blue: #00bfff;
+$sky-light: #5ce1ff;
+$sky-deep: #0099cc;
+
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 
 .home-page {
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background: $bg;
+	background: $surface;
 	max-width: 750rpx;
 	margin: 0 auto;
 }
 
+/* —— 毛玻璃顶栏 —— */
 .top-header {
 	position: sticky;
 	top: 0;
 	z-index: 20;
-	background: $white;
-	padding: 20rpx 28rpx 16rpx;
+	padding: 20rpx 32rpx 16rpx;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
 }
 
 .brand-wrap {
@@ -544,60 +542,76 @@ $primary: #135bec;
 .brand-logo {
 	width: 52rpx;
 	height: 52rpx;
-	border-radius: 14rpx;
-	background: #eff6ff;
+	border-radius: 16rpx;
+	background: rgba(0, 191, 255, 0.08);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .brand-title {
-	font-size: 42rpx;
+	font-size: 40rpx;
 	font-weight: 800;
-	color: $text-main;
+	color: $text-primary;
 }
 
 .header-actions {
 	display: flex;
 	align-items: center;
-	gap: 8rpx;
 }
 
 .action-btn {
 	width: 64rpx;
 	height: 64rpx;
-	border-radius: 32rpx;
-	background: transparent;
+	border-radius: 999rpx;
+	background: rgba(0, 0, 0, 0.03);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	&:active {
+		transform: scale(0.92);
+	}
+}
+
+/* —— 搜索栏 —— */
+.search-panel {
+	padding: 0 32rpx;
+	height: 92rpx;
+	display: flex;
+	align-items: center;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
+}
+
+.search-box {
+	width: 100%;
+	height: 72rpx;
+	background: $surface;
+	border-radius: 999rpx;
+	padding: 0 24rpx;
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	transition: box-shadow 0.3s ease;
+
+	&:focus-within {
+		box-shadow: 0 0 0 3rpx rgba(0, 191, 255, 0.18);
+	}
+}
+
+.search-icon-wrap {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
-.search-panel {
-	background: $white;
-	padding: 0 28rpx;
-	height: 92rpx;
-	display: flex;
-	align-items: center;
-	position: relative;
-	z-index: 1;
-}
-
-.search-box {
-	width: 100%;
-	height: 68rpx;
-	background: #f1f5f9;
-	border-radius: 18rpx;
-	padding: 0 20rpx;
-	display: flex;
-	align-items: center;
-	gap: 12rpx;
-}
-
 .search-input {
 	flex: 1;
-	font-size: 30rpx;
-	color: #1f2937;
+	font-size: 28rpx;
+	color: $text-primary;
 }
 
 .content-scroll {
@@ -605,22 +619,29 @@ $primary: #135bec;
 	padding-bottom: 132rpx;
 }
 
+/* —— 轮播图 —— */
 .banner-swiper-wrap {
-	padding: 16rpx 28rpx 0;
+	padding: 20rpx 32rpx 0;
+	animation: fadeInUp 0.6s ease forwards;
+	opacity: 0;
 }
 
 .banner-swiper {
-	height: 330rpx;
+	height: 340rpx;
 }
 
 .banner-card {
 	width: 100%;
-	height: 330rpx;
-	border-radius: 26rpx;
+	height: 340rpx;
+	border-radius: 28rpx;
 	overflow: hidden;
 	position: relative;
-	flex-shrink: 0;
-	background: #e5e7eb;
+	background: #e8ecf0;
+	transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	&:active {
+		transform: scale(0.98);
+	}
 }
 
 .banner-image {
@@ -631,14 +652,14 @@ $primary: #135bec;
 .banner-mask {
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 20%, rgba(0, 0, 0, 0.72) 100%);
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 30%, rgba(0, 0, 0, 0.65) 100%);
 }
 
 .banner-meta {
 	position: absolute;
-	left: 24rpx;
-	right: 24rpx;
-	bottom: 20rpx;
+	left: 28rpx;
+	right: 28rpx;
+	bottom: 24rpx;
 	display: flex;
 	flex-direction: column;
 	gap: 8rpx;
@@ -646,179 +667,217 @@ $primary: #135bec;
 
 .banner-tag {
 	align-self: flex-start;
-	padding: 6rpx 16rpx;
+	padding: 6rpx 18rpx;
 	border-radius: 999rpx;
 	font-size: 18rpx;
 	font-weight: 600;
-	background: rgba(37, 99, 235, 0.95);
+	background: $gradient-primary;
 	color: #fff;
 }
 
 .banner-title {
-	font-size: 44rpx;
+	font-size: 40rpx;
 	font-weight: 700;
 	color: #fff;
 	line-height: 1.25;
 }
 
 .banner-sub {
-	font-size: 34rpx;
-	color: rgba(255, 255, 255, 0.88);
+	font-size: 28rpx;
+	color: rgba(255, 255, 255, 0.85);
 }
 
+/* —— 公告条 —— */
 .notice-wrap {
-	margin-top: 14rpx;
-	padding: 0 0;
+	margin-top: 20rpx;
+	padding: 0 32rpx;
+	animation: fadeInUp 0.5s ease 0.15s forwards;
+	opacity: 0;
 }
 
 .notice-inline {
-	height: 54rpx;
-	padding: 0 28rpx;
-	background: #eff6ff;
+	height: 64rpx;
+	padding: 0 24rpx;
+	background: rgba(0, 191, 255, 0.06);
+	border-radius: 999rpx;
 	display: flex;
 	align-items: center;
-	gap: 10rpx;
+	gap: 12rpx;
+}
+
+.notice-swiper {
+	flex: 1;
+	height: 64rpx;
 }
 
 .notice-inline-text {
-	font-size: 25rpx;
-	color: #1d4ed8;
+	font-size: 24rpx;
+	color: $sky-deep;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	line-height: 64rpx;
 }
 
+/* —— 区块标题 —— */
 .section-head {
-	margin-top: 24rpx;
-	padding: 0 28rpx;
+	margin-top: 36rpx;
+	padding: 0 32rpx;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	animation: fadeInUp 0.5s ease forwards;
+	opacity: 0;
+
+	&:nth-of-type(2) {
+		animation-delay: 0.1s;
+	}
 }
 
 .section-title {
-	font-size: 44rpx;
-	font-weight: 800;
-	color: $text-main;
+	font-size: 36rpx;
+	font-weight: 700;
+	color: $text-primary;
 }
 
 .section-link {
-	font-size: 32rpx;
+	font-size: 26rpx;
 	font-weight: 500;
-	color: $primary;
+	color: $sky-deep;
 }
 
+/* —— 分类网格 —— */
 .category-panel {
-	margin: 18rpx 28rpx 0;
-	padding: 4rpx 0 0;
+	margin: 24rpx 32rpx 0;
 }
 
 :deep(.category-panel .u-grid-item) {
-	padding-bottom: 16rpx;
+	padding-bottom: 20rpx;
 }
 
 .cat-icon-wrap {
-	width: 86rpx;
-	height: 86rpx;
-	border-radius: 22rpx;
-	background: #eef2f7;
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 24rpx;
+	background: rgba(0, 191, 255, 0.06);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	margin: 0 auto 10rpx;
+	transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+	animation: jellyPop 0.45s ease forwards;
+	opacity: 0;
+}
+
+.cat-icon-img {
+	width: 48rpx;
+	height: 48rpx;
+}
+
+:deep(.category-panel .u-grid-item) {
+	&:active .cat-icon-wrap {
+		transform: scale(0.92);
+	}
 }
 
 .cat-name {
 	font-size: 24rpx;
-	color: #334155;
+	color: $text-secondary;
 	line-height: 1.3;
 	font-weight: 500;
 }
 
+/* —— 产品区块 —— */
 .product-head {
-	margin-top: 22rpx;
+	margin-top: 32rpx;
 }
 
 .filter-btn {
 	width: 48rpx;
 	height: 48rpx;
 	border-radius: 50%;
-	background: transparent;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .skeleton-wrap {
-	margin: 24rpx 28rpx 0;
-	background: #fafbfc;
-	border-radius: 20rpx;
-	padding: 26rpx;
+	margin: 28rpx 32rpx 0;
+	background: #fff;
+	border-radius: 24rpx;
+	padding: 28rpx;
+	box-shadow: $shadow-card;
 }
 
+/* —— 产品双列网格 —— */
 .product-grid {
-	margin-top: 20rpx;
-	padding: 0 28rpx;
+	margin-top: 24rpx;
+	padding: 0 32rpx;
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 18rpx;
+	gap: 20rpx;
 }
 
 .product-card {
-	background: #fff;
-	border-radius: 18rpx;
+	background: $surface-raised;
+	border-radius: 24rpx;
 	overflow: hidden;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.5s ease forwards;
+	opacity: 0;
+	transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+
+	&:active {
+		transform: scale(0.97);
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+	}
 }
 
 .product-media {
 	position: relative;
-	aspect-ratio: 1 / 1.25;
-	background: #edf2f8;
+	aspect-ratio: 1 / 1;
+	background: #f0f2f5;
 	overflow: hidden;
 }
 
 .fav-btn {
 	position: absolute;
-	top: 12rpx;
-	right: 12rpx;
+	top: 14rpx;
+	right: 14rpx;
 	width: 52rpx;
 	height: 52rpx;
-	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.92);
-	border: 1rpx solid #e5e7eb;
+	border-radius: 999rpx;
+	background: rgba(255, 255, 255, 0.85);
+	backdrop-filter: blur(8px);
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	&:active {
+		transform: scale(0.88);
+	}
 }
 
 .fav-btn.active {
-	background: rgba(255, 255, 255, 0.95);
-	border-color: #fecaca;
+	background: #fff1f2;
 }
 
 .product-image {
 	width: 100%;
 	height: 100%;
+	animation: imgFadeIn 0.5s ease forwards;
+	opacity: 0;
 }
 
-.product-media::after {
-	content: '';
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	height: 42rpx;
-	background: linear-gradient(180deg, rgba(250, 251, 252, 0) 0%, rgba(250, 251, 252, 0.92) 100%);
-	pointer-events: none;
+@keyframes imgFadeIn {
+	from { opacity: 0; transform: scale(0.97); }
+	to { opacity: 1; transform: scale(1); }
 }
 
 .product-info {
-	padding: 12rpx 0 8rpx;
-	margin-top: -6rpx;
-	position: relative;
-	background: #fff;
-	border-top-left-radius: 14rpx;
-	border-top-right-radius: 14rpx;
+	padding: 16rpx 18rpx 14rpx;
+	background: $surface-raised;
 }
 
 .title-row {
@@ -829,22 +888,22 @@ $primary: #135bec;
 }
 
 .product-name {
-	font-size: 37rpx;
-	color: $text-main;
-	line-height: 1.34;
-	font-weight: 500;
+	font-size: 28rpx;
+	color: $text-primary;
+	line-height: 1.38;
+	font-weight: 600;
 	flex: 1;
 }
 
 .product-spec {
-	margin-top: 6rpx;
+	margin-top: 8rpx;
 	font-size: 22rpx;
-	color: #94a3b8;
+	color: $text-muted;
 	line-height: 1.3;
 }
 
 .product-bottom {
-	margin-top: 4rpx;
+	margin-top: 10rpx;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -858,15 +917,15 @@ $primary: #135bec;
 
 .price-symbol {
 	font-size: 22rpx;
-	font-weight: 400;
-	color: $text-main;
+	font-weight: 500;
+	color: $sky-deep;
 	line-height: 1;
 }
 
 .product-price {
-	font-size: 44rpx;
+	font-size: 38rpx;
 	font-weight: 800;
-	color: $text-main;
+	color: $sky-deep;
 	line-height: 1;
 }
 
@@ -885,10 +944,22 @@ $primary: #135bec;
 
 .loading-wrap {
 	margin-top: 32rpx;
-	padding: 0 24rpx 10rpx;
+	padding: 0 32rpx 10rpx;
 }
 
 .safe-area-bottom {
-	height: calc(env(safe-area-inset-bottom) + 40rpx);
+	height: calc(env(safe-area-inset-bottom) + 50rpx);
+}
+
+/* —— 全局动画复用 —— */
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes jellyPop {
+	0% { opacity: 0; transform: scale(0.88); }
+	60% { transform: scale(1.05); }
+	100% { opacity: 1; transform: scale(1); }
 }
 </style>

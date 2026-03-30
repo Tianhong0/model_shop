@@ -97,6 +97,13 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    @Operation(summary = "删除任务")
+    @DeleteMapping("/jobs/{jobId}")
+    public Result<Void> delete(@PathVariable Long jobId) {
+        printJobService.deleteJob(jobId);
+        return Result.success();
+    }
+
     @Operation(summary = "任务事件日志")
     @GetMapping("/jobs/{jobId}/events")
     public Result<List<PrintJobEventVO>> events(@PathVariable Long jobId,

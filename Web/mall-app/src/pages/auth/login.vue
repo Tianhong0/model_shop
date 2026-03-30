@@ -1,72 +1,86 @@
 <template>
-	<view class="login-container">
+	<view class="login-page">
+		<!-- Decorative background orbs -->
+		<view class="bg-orb bg-orb--top"></view>
+		<view class="bg-orb bg-orb--bottom"></view>
+
+		<!-- Header area -->
 		<view class="login-header">
-			<image src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=200" class="logo"></image>
-			<text class="title">3D打印小物件定制商城</text>
-			<text class="subtitle">您的个性化3D打印定制专家</text>
+			<view class="logo-wrapper">
+				<image src="../../static/logo.png" class="logo" mode="aspectFill"></image>
+			</view>
+			<text class="header-subtitle">您的个性化3D打印定制专家</text>
 		</view>
 
-		<view class="form-box">
-			<view class="input-item">
-				<uni-icons type="person" size="20" color="#94a3b8"></uni-icons>
-				<input type="text" v-model="username" placeholder="请输入登录账号或邮箱" />
+		<!-- Login form card -->
+		<view class="form-card">
+			<view class="input-group">
+				<view class="input-row">
+					<uni-icons type="person" size="20" color="#8a9aaa"></uni-icons>
+					<input type="text" v-model="username" placeholder="请输入登录账号或邮箱" />
+				</view>
+				<view class="input-row">
+					<uni-icons type="lock" size="20" color="#8a9aaa"></uni-icons>
+					<input type="password" v-model="password" placeholder="请输入密码" />
+				</view>
 			</view>
-			<view class="input-item">
-				<uni-icons type="lock" size="20" color="#94a3b8"></uni-icons>
-				<input type="password" v-model="password" placeholder="请输入密码" />
-			</view>
-			
-			<view class="options">
-				<view class="left-options">
-					<view class="opt-item">
-						<switch :checked="rememberPassword" color="#4f46e5" @change="onRememberChange" />
+
+			<view class="options-row">
+				<view class="options-left">
+					<view class="switch-item">
+						<switch :checked="rememberPassword" color="#00bfff" @change="onRememberChange" />
 						<text>记住密码</text>
 					</view>
-					<view class="opt-item">
-						<switch :checked="autoLogin" color="#4f46e5" @change="onAutoLoginChange" />
+					<view class="switch-item">
+						<switch :checked="autoLogin" color="#00bfff" @change="onAutoLoginChange" />
 						<text>自动登录</text>
 					</view>
 				</view>
-				<text class="forgot" @click="openForgotPanel">忘记密码?</text>
+				<text class="forgot-link" @click="openForgotPanel">忘记密码?</text>
 			</view>
 
-			<button class="login-btn" @click="handleLogin">登录</button>
-			
+			<button class="btn-primary" @click="handleLogin">登录</button>
+
 			<view class="register-link">
 				<text>没有账号? </text>
 				<text class="link" @click="goRegister">立即注册</text>
 			</view>
 		</view>
 
-		<view class="editor-mask" v-if="forgotVisible" @click="closeForgotPanel"></view>
-		<view class="editor-panel" v-if="forgotVisible">
-			<view class="editor-title">邮箱找回密码</view>
-			<view class="form-item">
-				<text class="label">账号</text>
-				<input class="input" type="text" v-model="forgotForm.userName" placeholder="请输入登录账号或邮箱" />
+		<!-- Forgot password overlay -->
+		<view class="overlay-mask" v-if="forgotVisible" @click="closeForgotPanel"></view>
+		<view class="forgot-panel" v-if="forgotVisible">
+			<view class="forgot-panel__header">
+				<text class="forgot-panel__title">邮箱找回密码</text>
 			</view>
-			<view class="form-item">
-				<text class="label">邮箱</text>
-				<input class="input" type="text" v-model="forgotForm.email" placeholder="请输入绑定邮箱" />
+			<view class="forgot-panel__body">
+				<view class="panel-field">
+					<text class="panel-field__label">账号</text>
+					<input class="panel-field__input" type="text" v-model="forgotForm.userName" placeholder="请输入登录账号或邮箱" />
+				</view>
+				<view class="panel-field">
+					<text class="panel-field__label">邮箱</text>
+					<input class="panel-field__input" type="text" v-model="forgotForm.email" placeholder="请输入绑定邮箱" />
+				</view>
+				<view class="panel-field panel-field--code">
+					<text class="panel-field__label">验证码</text>
+					<input class="panel-field__input" type="text" v-model="forgotForm.emailCode" maxlength="6" placeholder="请输入邮箱验证码" />
+					<button class="code-btn" :disabled="forgotCodeSending || forgotCountDown > 0" @click="sendForgotCode">
+						{{ forgotCountDown > 0 ? `${forgotCountDown}s` : '发送验证码' }}
+					</button>
+				</view>
+				<view class="panel-field">
+					<text class="panel-field__label">新密码</text>
+					<input class="panel-field__input" type="password" v-model="forgotForm.newPassword" placeholder="8-20位，含大小写字母和数字" />
+				</view>
+				<view class="panel-field">
+					<text class="panel-field__label">确认</text>
+					<input class="panel-field__input" type="password" v-model="forgotForm.confirmNewPassword" placeholder="请再次输入新密码" />
+				</view>
 			</view>
-			<view class="form-item code-row">
-				<text class="label">验证码</text>
-				<input class="input" type="text" v-model="forgotForm.emailCode" maxlength="6" placeholder="请输入邮箱验证码" />
-				<button class="mini-btn" :disabled="forgotCodeSending || forgotCountDown > 0" @click="sendForgotCode">
-					{{ forgotCountDown > 0 ? `${forgotCountDown}s` : '发送验证码' }}
-				</button>
-			</view>
-			<view class="form-item">
-				<text class="label">新密码</text>
-				<input class="input" type="password" v-model="forgotForm.newPassword" placeholder="8-20位，含大小写字母和数字" />
-			</view>
-			<view class="form-item">
-				<text class="label">确认</text>
-				<input class="input" type="password" v-model="forgotForm.confirmNewPassword" placeholder="请再次输入新密码" />
-			</view>
-			<view class="editor-actions">
-				<button class="action-btn cancel" @click="closeForgotPanel">取消</button>
-				<button class="action-btn save" @click="submitForgotReset">重置密码</button>
+			<view class="forgot-panel__actions">
+				<button class="btn-cancel" @click="closeForgotPanel">取消</button>
+				<button class="btn-confirm" @click="submitForgotReset">重置密码</button>
 			</view>
 		</view>
 	</view>
@@ -339,185 +353,351 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-.login-container {
-	padding: 60rpx;
-	background-color: #ffffff;
-	min-height: 100vh;
+/* ============================================
+   3D Print Shop – Login
+   Design System: Airy / Glass / Capsule
+   ============================================ */
+
+/* --- Tokens --- */
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+
+$bg: #f8f8f8;
+$card: #ffffff;
+$text-1: #1a2030;
+$text-2: #5a6a7a;
+$text-3: #8a9aaa;
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$radius-card: 32rpx;
+$radius-pill: 999rpx;
+
+/* --- Animations --- */
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes jellyPop {
+	0%   { transform: scale(0.7); opacity: 0; }
+	60%  { transform: scale(1.08); }
+	100% { transform: scale(1); opacity: 1; }
+}
+@keyframes floatOrb {
+	0%, 100% { transform: translate(0, 0) scale(1); }
+	50%      { transform: translate(10rpx, -18rpx) scale(1.06); }
 }
 
+/* --- Page --- */
+.login-page {
+	min-height: 100vh;
+	background-color: $bg;
+	padding: 0 48rpx;
+	padding-bottom: env(safe-area-inset-bottom);
+	position: relative;
+	overflow: hidden;
+}
+
+/* Decorative orbs */
+.bg-orb {
+	position: fixed;
+	border-radius: 50%;
+	pointer-events: none;
+	z-index: 0;
+	animation: floatOrb 8s ease-in-out infinite;
+
+	&--top {
+		width: 520rpx;
+		height: 520rpx;
+		top: -160rpx;
+		right: -120rpx;
+		background: radial-gradient(circle, rgba(0, 191, 255, 0.08) 0%, transparent 70%);
+	}
+	&--bottom {
+		width: 400rpx;
+		height: 400rpx;
+		bottom: -100rpx;
+		left: -100rpx;
+		background: radial-gradient(circle, rgba(92, 225, 255, 0.06) 0%, transparent 70%);
+		animation-delay: 3s;
+	}
+}
+
+/* --- Header --- */
 .login-header {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding-top: 100rpx;
-	.logo {
+	padding-top: 120rpx;
+	position: relative;
+	z-index: 1;
+	animation: fadeInUp 0.6s ease-out both;
+
+	.logo-wrapper {
 		width: 160rpx;
 		height: 160rpx;
 		border-radius: 40rpx;
-		box-shadow: 0 10rpx 20rpx rgba(79, 70, 229, 0.2);
+		overflow: hidden;
+		box-shadow: 0 12rpx 36rpx rgba(0, 191, 255, 0.18);
+		animation: jellyPop 0.7s ease-out both;
 	}
-	.title {
-		font-size: 44rpx;
-		font-weight: 800;
-		color: #1e293b;
-		margin-top: 40rpx;
+
+	.logo {
+		width: 160rpx;
+		height: 160rpx;
+		display: block;
 	}
-	.subtitle {
+
+	.header-title {
+		font-size: 36rpx;
+		font-weight: 700;
+		color: $text-1;
+		margin-top: 36rpx;
+	}
+
+	.header-subtitle {
 		font-size: 24rpx;
-		color: #94a3b8;
-		margin-top: 10rpx;
+		color: $text-3;
+		margin-top: 12rpx;
 	}
 }
 
-.form-box {
-	margin-top: 100rpx;
-	.input-item {
-		height: 100rpx;
-		background-color: #f8fafc;
-		border-radius: 20rpx;
-		display: flex;
-		align-items: center;
-		padding: 0 30rpx;
-		margin-bottom: 30rpx;
-		input {
-			flex: 1;
-			margin-left: 20rpx;
-			font-size: 28rpx;
-		}
+/* --- Form Card --- */
+.form-card {
+	margin-top: 72rpx;
+	background: $card;
+	border-radius: $radius-card;
+	box-shadow: $shadow-card;
+	padding: 40rpx 36rpx;
+	position: relative;
+	z-index: 1;
+	animation: fadeInUp 0.65s ease-out 0.15s both;
+}
+
+.input-group {
+	display: flex;
+	flex-direction: column;
+	gap: 28rpx;
+}
+
+.input-row {
+	display: flex;
+	align-items: center;
+	height: 100rpx;
+	background: $bg;
+	border-radius: 24rpx;
+	padding: 0 32rpx;
+	transition: box-shadow 0.3s ease;
+
+	&:focus-within {
+		box-shadow: 0 0 0 3rpx rgba(0, 191, 255, 0.18);
+	}
+
+	input {
+		flex: 1;
+		margin-left: 20rpx;
+		font-size: 28rpx;
+		color: $text-1;
 	}
 }
 
-.options {
+/* --- Options row --- */
+.options-row {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	.left-options {
-		display: flex;
-		gap: 20rpx;
-	}
-	.opt-item {
-		display: flex;
-		align-items: center;
-		font-size: 24rpx;
-		color: #64748b;
-		switch {
-			transform: scale(0.8);
-			margin-right: 6rpx;
-		}
-	}
-	.forgot { font-size: 24rpx; color: #4f46e5; }
+	margin-top: 28rpx;
 }
 
-.editor-mask {
-	position: fixed;
-	inset: 0;
-	background-color: rgba(15, 23, 42, 0.45);
-	z-index: 1000;
+.options-left {
+	display: flex;
+	gap: 16rpx;
 }
 
-.editor-panel {
-	position: fixed;
-	left: 24rpx;
-	right: 24rpx;
-	bottom: 24rpx;
-	background-color: #ffffff;
-	border-radius: 20rpx;
-	padding: 24rpx;
-	z-index: 1001;
-	.editor-title {
-		font-size: 30rpx;
-		font-weight: 700;
-		color: #1e293b;
-		margin-bottom: 14rpx;
-	}
-	.form-item {
-		display: flex;
-		align-items: center;
-		min-height: 76rpx;
-		border-bottom: 2rpx solid #f1f5f9;
-		.label {
-			width: 100rpx;
-			font-size: 26rpx;
-			color: #64748b;
-		}
-		.input {
-			flex: 1;
-			font-size: 26rpx;
-			color: #1e293b;
-		}
-	}
-	.code-row {
-		.mini-btn {
-			width: 180rpx;
-			height: 60rpx;
-			line-height: 60rpx;
-			font-size: 22rpx;
-			border-radius: 30rpx;
-			background-color: #4f46e5;
-			color: #ffffff;
-			padding: 0;
-			margin: 0;
-		}
-		.mini-btn[disabled] {
-			background-color: #a5b4fc;
-		}
-	}
-	.editor-actions {
-		display: flex;
-		gap: 20rpx;
-		margin-top: 20rpx;
-		.action-btn {
-			flex: 1;
-			height: 76rpx;
-			border-radius: 38rpx;
-			font-size: 28rpx;
-			&.cancel {
-				background-color: #f1f5f9;
-				color: #475569;
-			}
-			&.save {
-				background-color: #4f46e5;
-				color: #ffffff;
-			}
-		}
+.switch-item {
+	display: flex;
+	align-items: center;
+	font-size: 24rpx;
+	color: $text-2;
+
+	switch {
+		transform: scale(0.75);
+		margin-right: 4rpx;
 	}
 }
 
-.login-btn {
-	margin-top: 60rpx;
+.forgot-link {
+	font-size: 24rpx;
+	color: $deep;
+	font-weight: 600;
+
+	&:active {
+		opacity: 0.7;
+	}
+}
+
+/* --- Primary button --- */
+.btn-primary {
+	margin-top: 48rpx;
+	width: 100%;
 	height: 100rpx;
-	background-color: #4f46e5;
+	background: $gradient;
 	color: #ffffff;
-	border-radius: 50rpx;
+	border-radius: $radius-pill;
 	font-size: 32rpx;
 	font-weight: 700;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 10rpx 20rpx rgba(79, 70, 229, 0.3);
-}
+	box-shadow: 0 12rpx 32rpx rgba(0, 191, 255, 0.28);
+	letter-spacing: 4rpx;
 
-.register-link {
-	margin-top: 40rpx;
-	text-align: center;
-	font-size: 26rpx;
-	color: #64748b;
-	.link { color: #4f46e5; font-weight: 600; margin-left: 10rpx; }
-}
-
-.third-party {
-	margin-top: 150rpx;
-	.line-wrap {
-		display: flex;
-		align-items: center;
-		.line { flex: 1; height: 2rpx; background-color: #f1f5f9; }
-		text { font-size: 22rpx; color: #cbd5e1; margin: 0 30rpx; }
+	&:active {
+		transform: scale(0.96);
 	}
-	.icons {
-		margin-top: 40rpx;
+}
+
+/* --- Register link --- */
+.register-link {
+	margin-top: 36rpx;
+	text-align: center;
+	font-size: 28rpx;
+	color: $text-2;
+
+	.link {
+		color: $deep;
+		font-weight: 600;
+		margin-left: 8rpx;
+
+		&:active {
+			opacity: 0.7;
+		}
+	}
+}
+
+/* ========== Forgot-password overlay ========== */
+.overlay-mask {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.35);
+	z-index: 1000;
+	backdrop-filter: blur(6px);
+}
+
+.forgot-panel {
+	position: fixed;
+	left: 32rpx;
+	right: 32rpx;
+	bottom: 32rpx;
+	background: $card;
+	border-radius: $radius-card;
+	box-shadow: 0 -8rpx 60rpx rgba(0, 0, 0, 0.1);
+	padding: 0;
+	z-index: 1001;
+	animation: fadeInUp 0.35s ease-out both;
+	overflow: hidden;
+
+	&__header {
+		padding: 36rpx 36rpx 0 36rpx;
+	}
+
+	&__title {
+		font-size: 30rpx;
+		font-weight: 700;
+		color: $text-1;
+	}
+
+	&__body {
+		padding: 20rpx 36rpx 0 36rpx;
+	}
+
+	&__actions {
 		display: flex;
-		justify-content: center;
-		gap: 60rpx;
+		gap: 24rpx;
+		padding: 28rpx 36rpx 36rpx 36rpx;
+	}
+}
+
+/* Panel field rows */
+.panel-field {
+	display: flex;
+	align-items: center;
+	min-height: 84rpx;
+	padding: 8rpx 0;
+
+	& + .panel-field {
+		box-shadow: inset 0 1rpx 0 0 rgba(0, 0, 0, 0.04);
+	}
+
+	&__label {
+		width: 100rpx;
+		font-size: 26rpx;
+		font-weight: 600;
+		color: $text-2;
+		flex-shrink: 0;
+	}
+
+	&__input {
+		flex: 1;
+		font-size: 26rpx;
+		color: $text-1;
+	}
+}
+
+.panel-field--code {
+	.code-btn {
+		width: 190rpx;
+		height: 60rpx;
+		line-height: 60rpx;
+		font-size: 22rpx;
+		border-radius: $radius-pill;
+		background: $gradient;
+		color: #ffffff;
+		padding: 0;
+		margin: 0;
+		box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.22);
+		flex-shrink: 0;
+
+		&:active {
+			transform: scale(0.96);
+		}
+	}
+	.code-btn[disabled] {
+		background: $bg;
+		color: $text-3;
+		box-shadow: none;
+	}
+}
+
+/* Panel action buttons */
+.btn-cancel {
+	flex: 1;
+	height: 84rpx;
+	border-radius: $radius-pill;
+	font-size: 28rpx;
+	font-weight: 600;
+	background: $bg;
+	color: $text-2;
+
+	&:active {
+		transform: scale(0.96);
+	}
+}
+
+.btn-confirm {
+	flex: 1;
+	height: 84rpx;
+	border-radius: $radius-pill;
+	font-size: 28rpx;
+	font-weight: 600;
+	background: $gradient;
+	color: #ffffff;
+	box-shadow: 0 6rpx 20rpx rgba(0, 191, 255, 0.25);
+
+	&:active {
+		transform: scale(0.96);
 	}
 }
 </style>

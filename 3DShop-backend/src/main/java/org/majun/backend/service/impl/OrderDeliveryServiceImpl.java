@@ -14,6 +14,7 @@ import org.majun.backend.dto.DeliveryShipRequest;
 import org.majun.backend.dto.DeliveryStatusUpdateRequest;
 import org.majun.backend.dto.DeliveryTrackAddRequest;
 import org.majun.backend.dto.DeliveryTrackSimulateRequest;
+import org.majun.backend.dto.RetryAutoShipRequest;
 import org.majun.backend.dto.UserNotificationCreateCommand;
 import org.majun.backend.entity.SysOrder;
 import org.majun.backend.entity.SysOrderDelivery;
@@ -323,8 +324,91 @@ public class OrderDeliveryServiceImpl implements OrderDeliveryService {
         if (printJobId != null) {
             insertTrackIfAbsent(delivery.getId(), "3D打印任务已完成，系统自动发货", now.plusMinutes(1), "auto-ship");
         }
+        notifyMallDelivery(order, delivery);
 
         log.info("自动发货成功, orderId: {}, jobId: {}, deliveryId: {}", orderId, printJobId, delivery.getId());
+        return delivery.getId();
+    }
+
+    @Override
+    public Long retryAutoShip(RetryAutoShipRequest request) {
+        Long orderId = request.getOrderId();
+        if (orderId == null) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "订单ID不能为空");
+        }
+
+        SysOrder order = orderRepository.selectOne(new LambdaQueryWrapper<SysOrder>()
+                .eq(SysOrder::getId, orderId)
+                .eq(SysOrder::getIsDelete, 0)
+                .last("limit 1"));
+        if (order == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "订单不存在");
+        }
+
+        SysOrderDelivery existed = deliveryRepository.selectOne(new LambdaQueryWrapper<SysOrderDelivery>()
+                .eq(SysOrderDelivery::getOrderId, order.getId())
+                .eq(SysOrderDelivery::getIsDelete, 0)
+                .last("limit 1"));
+        if (existed != null) {
+            throw new BusinessException("该订单已存在物流单，无法重复发货");
+        }
+
+        validateOrderShippable(order);
+
+        String receiverName = request.getReceiverName();
+        String receiverPhone = request.getReceiverPhone();
+        String receiverAddress = request.getReceiverAddress();
+
+        // 如果没有提供收件信息，尝试从订单中提取
+        if (!StringUtils.hasText(receiverName) || !StringUtils.hasText(receiverPhone) || !StringUtils.hasText(receiverAddress)) {
+            try {
+                ReceiverInfo extracted = extractReceiverInfo(order.getCustomParams());
+                if (!StringUtils.hasText(receiverName)) {
+                    receiverName = extracted.name();
+                }
+                if (!StringUtils.hasText(receiverPhone)) {
+                    receiverPhone = extracted.phone();
+                }
+                if (!StringUtils.hasText(receiverAddress)) {
+                    receiverAddress = extracted.address();
+                }
+            } catch (BusinessException e) {
+                // 提取失败，继续检查是否手动提供了完整信息
+            }
+        }
+
+        // 验证收件信息是否完整
+        if (!StringUtils.hasText(receiverName)) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "缺少收件人姓名，请手动填写");
+        }
+        if (!StringUtils.hasText(receiverPhone)) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "缺少收件人电话，请手动填写");
+        }
+        if (!StringUtils.hasText(receiverAddress)) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "缺少收件人地址，请手动填写");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        SysOrderDelivery delivery = new SysOrderDelivery();
+        delivery.setOrderId(order.getId());
+        delivery.setOrderSn(order.getOrderSn());
+        delivery.setDeliveryCompany(randomDomesticCompany());
+        delivery.setDeliverySn(generateAutoDeliverySn(order.getId()));
+        delivery.setReceiverName(receiverName);
+        delivery.setReceiverPhone(receiverPhone);
+        delivery.setReceiverAddress(receiverAddress);
+        delivery.setStatus(DeliveryStatus.SHIPPED.getCode());
+        delivery.setDeliveryTime(now);
+        delivery.setIsDelete(0);
+        deliveryRepository.insert(delivery);
+
+        syncOrderStatus(order, DeliveryStatus.SHIPPED.getCode());
+        insertTrack(delivery.getId(), "包裹已由" + delivery.getDeliveryCompany() + "揽收", now, "admin-retry");
+        insertTrack(delivery.getId(), "管理员手动触发自动发货", now.plusMinutes(1), "admin-retry");
+
+        notifyMallDelivery(order, delivery);
+
+        log.info("手动重新发货成功, orderId: {}, deliveryId: {}", orderId, delivery.getId());
         return delivery.getId();
     }
 

@@ -53,6 +53,22 @@
               <span class="todo-label">悬赏争议</span>
               <span class="todo-value">{{ Number(overview.todo.bountyDisputed || 0) }}</span>
             </div>
+            <div class="todo-item" @click="goTo('/models/model-lists')">
+              <span class="todo-label">清单总数</span>
+              <span class="todo-value">{{ Number(overview.kpi.totalModelLists || 0) }}</span>
+            </div>
+            <div class="todo-item" @click="goTo('/models/model-lists')">
+              <span class="todo-label">清单互动</span>
+              <span class="todo-value">{{ Number(overview.kpi.totalModelListInteractions || 0) }}</span>
+            </div>
+            <div class="todo-item" @click="goTo('/events')">
+              <span class="todo-label">活动评审中</span>
+              <span class="todo-value">{{ Number(overview.todo.eventReviewing || 0) }}</span>
+            </div>
+            <div class="todo-item" @click="goTo('/used/reports')">
+              <span class="todo-label">二手举报待处理</span>
+              <span class="todo-value">{{ Number(overview.todo.usedReportPending || 0) }}</span>
+            </div>
           </div>
         </div>
       </el-col>
@@ -108,8 +124,8 @@
     <el-row :gutter="24">
       <el-col :span="12">
         <div class="chart-box">
-          <div class="chart-title">待办构成分布</div>
-          <div ref="todoPieRef" class="chart-instance"></div>
+          <div class="chart-title">近7天订单量分布</div>
+          <div ref="orderBarRef" class="chart-instance"></div>
         </div>
       </el-col>
       <el-col :span="12">
@@ -144,7 +160,7 @@ import { useRouter } from 'vue-router'
 import { getDashboardOverview } from '../../api/dashboard'
 
 const mainRef = ref(null)
-const todoPieRef = ref(null)
+const orderBarRef = ref(null)
 const statusPieRef = ref(null)
 const avgAmountRef = ref(null)
 const cumAmountRef = ref(null)
@@ -156,6 +172,8 @@ const overview = ref({
     totalUsers: 0,
     totalOrders: 0,
     totalModels: 0,
+    totalModelLists: 0,
+    totalModelListInteractions: 0,
     totalTodos: 0,
     orderAmount7d: 0
   },
@@ -168,7 +186,9 @@ const overview = ref({
     adminRegisterPending: 0,
     designerApplyPending: 0,
     printException: 0,
-    bountyDisputed: 0
+    bountyDisputed: 0,
+    eventReviewing: 0,
+    usedReportPending: 0
   },
   trend7d: [],
   recentOrders: [],
@@ -176,7 +196,7 @@ const overview = ref({
 })
 
 let mainChart = null
-let todoPieChart = null
+let orderBarChart = null
 let statusPieChart = null
 let avgAmountChart = null
 let cumAmountChart = null
@@ -203,6 +223,18 @@ const kpiCards = computed(() => {
       ...buildTrendMeta(kpi.modelsTrendPct, '较昨日新增')
     },
     {
+      label: '清单总数',
+      value: formatInteger(kpi.totalModelLists),
+      desc: '已发布清单',
+      ...buildTrendMeta(kpi.modelListsTrendPct, '较昨日新增')
+    },
+    {
+      label: '清单互动数',
+      value: formatInteger(kpi.totalModelListInteractions),
+      desc: '点赞+收藏总计',
+      ...buildTrendMeta(null, '')
+    },
+    {
       label: '待办总数',
       value: formatInteger(kpi.totalTodos),
       desc: '待处理业务事项',
@@ -219,7 +251,7 @@ const kpiCards = computed(() => {
 
 onMounted(() => {
   initMainChart()
-  initTodoPieChart()
+  initOrderBarChart()
   initStatusPieChart()
   initAvgAmountChart()
   initCumAmountChart()
@@ -233,9 +265,9 @@ onUnmounted(() => {
     mainChart.dispose()
     mainChart = null
   }
-  if (todoPieChart) {
-    todoPieChart.dispose()
-    todoPieChart = null
+  if (orderBarChart) {
+    orderBarChart.dispose()
+    orderBarChart = null
   }
   if (statusPieChart) {
     statusPieChart.dispose()
@@ -264,7 +296,7 @@ const fetchOverview = async () => {
       recentOrders: Array.isArray(data?.recentOrders) ? data.recentOrders : []
     }
     renderTrendChart()
-    renderTodoPieChart()
+    renderOrderBarChart()
     renderStatusPieChart()
     renderAvgAmountChart()
     renderCumAmountChart()
@@ -279,10 +311,10 @@ const initMainChart = () => {
   renderTrendChart()
 }
 
-const initTodoPieChart = () => {
-  if (!todoPieRef.value) return
-  todoPieChart = echarts.init(todoPieRef.value)
-  renderTodoPieChart()
+const initOrderBarChart = () => {
+  if (!orderBarRef.value) return
+  orderBarChart = echarts.init(orderBarRef.value)
+  renderOrderBarChart()
 }
 
 const initStatusPieChart = () => {
@@ -346,32 +378,61 @@ const renderTrendChart = () => {
   })
 }
 
-const renderTodoPieChart = () => {
-  if (!todoPieChart) return
-  const todo = overview.value.todo || {}
-  const data = [
-    { name: '售后待处理', value: Number(todo.afterSalePending || 0) },
-    { name: '提现待审核', value: Number(todo.withdrawPending || 0) },
-    { name: '注销申请待审核', value: Number(todo.deletionPending || 0) },
-    { name: '模型待审核', value: Number(todo.modelReviewPending || 0) },
-    { name: '悬赏待审核', value: Number(todo.bountyReviewPending || 0) },
-    { name: '管理员注册待审核', value: Number(todo.adminRegisterPending || 0) },
-    { name: '设计者申请待审核', value: Number(todo.designerApplyPending || 0) },
-    { name: '打印异常', value: Number(todo.printException || 0) },
-    { name: '悬赏争议', value: Number(todo.bountyDisputed || 0) }
-  ]
+const renderOrderBarChart = () => {
+  if (!orderBarChart) return
+  const trend = Array.isArray(overview.value.trend7d) ? overview.value.trend7d : []
+  const yAxis = trend.map(item => item.date || '-').reverse()
+  const orderCountData = trend.map(item => Number(item.orderCount || 0)).reverse()
 
-  todoPieChart.setOption({
-    tooltip: { trigger: 'item' },
-    legend: { bottom: 0 },
+  orderBarChart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' }
+    },
+    grid: {
+      left: '3%',
+      right: '8%',
+      bottom: '3%',
+      top: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      name: '订单量'
+    },
+    yAxis: {
+      type: 'category',
+      data: yAxis,
+      axisLabel: {
+        formatter: (value) => value.slice(5) // 只显示 MM-DD
+      }
+    },
     series: [
       {
-        name: '待办构成',
-        type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['50%', '45%'],
-        label: { formatter: '{b}: {c}' },
-        data
+        name: '订单量',
+        type: 'bar',
+        data: orderCountData,
+        barWidth: '60%',
+        itemStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 1,
+            y2: 0,
+            colorStops: [
+              { offset: 0, color: '#4f46e5' },
+              { offset: 1, color: '#818cf8' }
+            ]
+          },
+          borderRadius: [0, 4, 4, 0]
+        },
+        label: {
+          show: true,
+          position: 'right',
+          color: '#4f46e5',
+          fontWeight: 600
+        }
       }
     ]
   })
@@ -478,8 +539,8 @@ const handleResize = () => {
   if (mainChart) {
     mainChart.resize()
   }
-  if (todoPieChart) {
-    todoPieChart.resize()
+  if (orderBarChart) {
+    orderBarChart.resize()
   }
   if (statusPieChart) {
     statusPieChart.resize()
@@ -564,77 +625,132 @@ const buildTrendMeta = (trendValue, suffix) => {
   gap: 24px;
 }
 
+/* 统计卡片网格 */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
+/* 现代卡片样式 */
 .modern-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modern-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.modern-card:hover::before {
+  opacity: 1;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .stat-value {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 700;
-  color: #1e293b;
-  margin-top: 6px;
+  color: var(--text-primary);
+  margin-top: 8px;
+  letter-spacing: -1px;
 }
 
 .stat-trend {
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 12px;
   font-weight: 600;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
 }
 
 .trend-arrow {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .stat-trend.up {
-  color: #10b981;
+  color: var(--success-color);
+  background: var(--success-light);
 }
 
 .stat-trend.down {
-  color: #ef4444;
+  color: var(--danger-color);
+  background: var(--danger-light);
 }
 
 .stat-trend.flat {
-  color: #64748b;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
 }
 
 .stat-desc {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
+/* 图表卡片 */
 .chart-box {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
   padding: 24px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   height: 400px;
   display: flex;
   flex-direction: column;
+  transition: box-shadow 0.3s ease;
+}
+
+.chart-box:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .chart-title {
-  font-weight: 700;
-  margin-bottom: 14px;
-  color: #1e293b;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: var(--primary-color);
+  border-radius: 2px;
 }
 
 .chart-instance {
@@ -643,46 +759,52 @@ const buildTrendMeta = (trendValue, suffix) => {
 }
 
 .large {
-  height: 420px;
+  height: 440px;
 }
 
+/* 待办事项 */
 .todo-box {
   height: auto;
-  min-height: 240px;
+  min-height: 280px;
 }
 
 .todo-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
 .todo-item {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: all 0.2s ease;
+  background: var(--bg-secondary);
 }
 
 .todo-item:hover {
-  border-color: #c7d2fe;
-  background: #f8faff;
+  border-color: var(--primary-light);
+  background: var(--primary-lighter);
+  transform: translateX(4px);
 }
 
 .todo-label {
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 13px;
+  font-weight: 500;
 }
 
 .todo-value {
-  color: #1e293b;
-  font-size: 20px;
+  color: var(--text-primary);
+  font-size: 24px;
   font-weight: 700;
 }
 
+/* 元信息 */
 .meta-wrap {
   display: flex;
   flex-direction: column;
@@ -690,27 +812,43 @@ const buildTrendMeta = (trendValue, suffix) => {
 }
 
 .meta-item {
-  padding: 12px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.meta-item:hover {
+  background: var(--bg-tertiary);
 }
 
 .meta-k {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 13px;
+  font-weight: 500;
 }
 
 .meta-v {
-  color: #1e293b;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
 }
 
+/* 响应式布局 */
 @media (max-width: 1600px) {
+  .stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .todo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1400px) {
   .stat-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -719,6 +857,18 @@ const buildTrendMeta = (trendValue, suffix) => {
 @media (max-width: 1200px) {
   .stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .todo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+  .todo-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -27,6 +27,7 @@
 
   mybatis-plus:
     type-aliases-package: org.majun.backend.entity
+    mapper-locations: classpath:mapper/*.xml
     configuration:
       map-underscore-to-camel-case: true
       log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
@@ -43,9 +44,11 @@
     prefix: "Bearer "
 
   minio:
-    endpoint: http://192.168.1.22:9000
+#    endpoint: http://127.0.0.1:9000
+    endpoint: http://120.48.50.30:9000
+    public-endpoint: http://120.48.50.30:9000
     accessKey: admin
-    secretKey: password123
+    secretKey: a1900574183
     bucketName: shop
 
   # 自定义切片工具配置
@@ -55,12 +58,12 @@
     # 非原生切片格式(如glb/gltf/fbx等)转换工具路径(推荐 assimp)
     converterPath: /usr/bin/assimp
     # 切片工作目录
-    workDir: /home/tianhong/slicer/
+    workDir: /home/admin/slicer/
 
   octoprint:
     authHeaderKey: X-Api-Key
-    authHeaderValue: "Rk_Nq4z1hQuUklUf5EB2WMWyweAV446Csw3zSyZlVK0"
-    connectTimeoutMs: 5000
+    authHeaderValue: "L0SPFG6iweVjbP1MhBHbFUCYHQykacRMf6Oe0Wl76jc"
+    connectTimeoutMs: 50000
     readTimeoutMs: 15000
     pollIntervalMs: 5000
 
@@ -68,3 +71,17 @@
     auto-ship-enabled: true
     auto-track-enabled: true
     auto-track-interval-ms: 60000
+
+  # 支付配置
+  payment:
+    alipay:
+      app-id: ${ALIPAY_APP_ID:}
+      private-key: ${ALIPAY_PRIVATE_KEY:}
+      app-cert-path: ${ALIPAY_APP_CERT_PATH:classpath:cert/alipay/appCertPublicKey.crt}
+      alipay-public-cert-path: ${ALIPAY_PUBLIC_CERT_PATH:classpath:cert/alipay/alipayCertPublicKey_RSA2.crt}
+      alipay-root-cert-path: ${ALIPAY_ROOT_CERT_PATH:classpath:cert/alipay/alipayRootCert.crt}
+      gateway-url: ${ALIPAY_GATEWAY_URL:https://openapi.alipay.com/gateway.do}
+      notify-url: ${ALIPAY_NOTIFY_URL:}
+      return-url: ${ALIPAY_RETURN_URL:}
+      seller-id: ${ALIPAY_SELLER_ID:}
+      timeout-minutes: 30

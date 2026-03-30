@@ -7,6 +7,13 @@ export const getWalletAccountApi = () => {
   })
 }
 
+export const getWalletFrozenListApi = () => {
+  return request({
+    url: '/api/wallet/frozen/list',
+    method: 'GET'
+  })
+}
+
 export const getWalletLedgerPageApi = (data = {}) => {
   return request({
     url: '/api/wallet/ledger/page',

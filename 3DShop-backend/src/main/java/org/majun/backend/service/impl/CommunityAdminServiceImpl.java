@@ -355,10 +355,12 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
         Set<Long> postIds = posts.stream().map(SysPost::getId).collect(Collectors.toSet());
         Set<Long> userIds = posts.stream().map(SysPost::getUserId).collect(Collectors.toSet());
         Set<Long> categoryIds = posts.stream().map(SysPost::getCategoryId).collect(Collectors.toSet());
-        Map<Long, SysUser> userMap = userRepository.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(SysUser::getId, Function.identity()));
-        Map<Long, SysPostCategory> categoryMap = postCategoryRepository.selectBatchIds(categoryIds).stream()
-                .collect(Collectors.toMap(SysPostCategory::getId, Function.identity()));
+        Map<Long, SysUser> userMap = userIds.isEmpty() ? Map.of() :
+                userRepository.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(SysUser::getId, Function.identity()));
+        Map<Long, SysPostCategory> categoryMap = categoryIds.isEmpty() ? Map.of() :
+                postCategoryRepository.selectBatchIds(categoryIds).stream()
+                        .collect(Collectors.toMap(SysPostCategory::getId, Function.identity()));
         Map<Long, List<SysPostMedia>> mediaMap = postMediaRepository.selectList(new LambdaQueryWrapper<SysPostMedia>()
                 .in(SysPostMedia::getPostId, postIds)
                 .orderByAsc(SysPostMedia::getSortOrder)
@@ -411,8 +413,9 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
             return List.of();
         }
         Set<Long> userIds = replies.stream().map(SysPostReply::getUserId).collect(Collectors.toSet());
-        Map<Long, SysUser> userMap = userRepository.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(SysUser::getId, Function.identity()));
+        Map<Long, SysUser> userMap = userIds.isEmpty() ? Map.of() :
+                userRepository.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(SysUser::getId, Function.identity()));
 
         return replies.stream().map(reply -> {
             PostReplyVO vo = new PostReplyVO();

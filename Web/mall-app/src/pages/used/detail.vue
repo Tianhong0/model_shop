@@ -1,6 +1,7 @@
 <template>
   <view class="page" v-if="detail">
-    <view class="hero-stage">
+    <!-- Image Swiper -->
+    <view class="hero-stage fadeInUp">
       <swiper class="swiper" circular autoplay>
         <swiper-item v-for="(item, index) in detail.imageUrls || []" :key="index">
           <image :src="item" class="banner" mode="aspectFill"></image>
@@ -15,7 +16,8 @@
       </view>
     </view>
 
-    <view class="headline-card">
+    <!-- Headline Card -->
+    <view class="headline-card fadeInUp">
       <text class="eyebrow">SECOND LIFE DETAIL</text>
       <view class="title-row">
         <view class="title-block">
@@ -58,7 +60,8 @@
       </view>
     </view>
 
-    <view class="content-card story-card">
+    <!-- Description -->
+    <view class="content-card fadeInUp">
       <view class="section-head">
         <text class="section-title">商品描述</text>
         <text class="section-kicker">REAL SELLER NOTES</text>
@@ -66,7 +69,8 @@
       <view class="desc">{{ detail.description || '卖家暂未补充描述' }}</view>
     </view>
 
-    <view class="content-card seller-card">
+    <!-- Seller Info -->
+    <view class="content-card fadeInUp">
       <view class="section-head">
         <text class="section-title">卖家信息</text>
         <text class="section-kicker">TRUST SNAPSHOT</text>
@@ -81,13 +85,14 @@
       </view>
     </view>
 
-    <view class="content-card bargain-card">
+    <!-- Communication -->
+    <view class="content-card fadeInUp">
       <view class="section-head">
         <text class="section-title">商品沟通</text>
         <text class="section-kicker">CHAT & NEGOTIATE</text>
       </view>
       <view class="comm-grid">
-        <view class="comm-card warm">
+        <view class="comm-card comm-card-warm">
           <text class="comm-label">{{ detail.owner ? '收到的议价' : '我的议价' }}</text>
           <text class="comm-value">{{ (detail.offers || []).length }} 条</text>
         </view>
@@ -100,6 +105,7 @@
       <button class="submit-btn" @click="goChat">进入商品沟通</button>
     </view>
 
+    <!-- Bottom Bar -->
     <view class="bottom-bar">
       <button class="ghost-btn" @click="goChat">{{ detail.owner ? '查看沟通' : '商品沟通' }}</button>
       <button v-if="detail.owner" class="primary-btn" @click="toggleStatus">{{ detail.status === 1 ? '下架商品' : '重新上架' }}</button>
@@ -172,82 +178,92 @@ onLoad(async (options) => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fadeInUp {
+  animation: fadeInUp 0.4s ease both;
+}
+
 .page {
   min-height: 100vh;
   padding-bottom: 150rpx;
-  background:
-    radial-gradient(circle at top left, rgba(255, 224, 181, 0.62), transparent 26%),
-    radial-gradient(circle at 90% 10%, rgba(255, 243, 223, 0.74), transparent 18%),
-    linear-gradient(180deg, #fff7ef 0%, #fffdfa 36%, #f5efe8 100%);
+  background: $bg;
 }
 
 .hero-stage {
   position: relative;
-  margin: 20rpx 20rpx 0;
-  border-radius: 34rpx;
+  margin: 28rpx 28rpx 0;
+  border-radius: 28rpx;
   overflow: hidden;
-  box-shadow: 0 24rpx 46rpx rgba(68, 37, 16, 0.16);
+  box-shadow: 0 16rpx 40rpx rgba(0, 0, 0, 0.08);
 }
 
 .swiper { width: 100%; height: 700rpx; }
-.banner { width: 100%; height: 100%; }
+.banner {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease both;
+}
 
 .hero-overlay {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 0; right: 0; bottom: 0;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: 16rpx;
-  padding: 24rpx;
-  background: linear-gradient(180deg, transparent 0%, rgba(28, 17, 11, 0.72) 100%);
+  padding: 28rpx;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
 }
 
-.hero-badges {
-  display: flex;
-  gap: 10rpx;
-  flex-wrap: wrap;
-}
+.hero-badges { display: flex; gap: 10rpx; flex-wrap: wrap; }
 
-.hero-chip,
-.hero-count {
-  padding: 10rpx 16rpx;
+.hero-chip, .hero-count {
+  padding: 10rpx 18rpx;
   border-radius: 999rpx;
   font-size: 22rpx;
-  color: #fff7ef;
-  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8rpx);
 }
 
 .hero-chip.warm {
-  background: rgba(255, 171, 90, 0.26);
+  background: rgba(0, 191, 255, 0.4);
 }
 
-.headline-card,
-.content-card {
-  margin: 20rpx;
-  padding: 26rpx;
-  border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(178, 123, 81, 0.08);
-  box-shadow: 0 14rpx 34rpx rgba(89, 47, 18, 0.06);
+.headline-card, .content-card {
+  margin: 28rpx;
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
 .eyebrow {
   display: block;
-  color: #a16207;
+  color: $deep;
   font-size: 20rpx;
   letter-spacing: 4rpx;
 }
 
-.title-row,
-.price-panel,
-.section-head,
-.seller-panel,
-.offer-top,
-.suggest-price-row {
+.title-row, .price-panel, .section-head, .seller-panel {
   display: flex;
   justify-content: space-between;
   gap: 16rpx;
@@ -265,22 +281,19 @@ onLoad(async (options) => {
   flex-shrink: 0;
 }
 
-.title-block {
-  flex: 1;
-  min-width: 0;
-}
+.title-block { flex: 1; min-width: 0; }
 
 .title {
-  font-size: 38rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  color: #2f1d14;
+  color: $text1;
   line-height: 1.4;
 }
 
 .seller-line {
   display: block;
   margin-top: 12rpx;
-  color: #8a6b54;
+  color: $text2;
   font-size: 24rpx;
 }
 
@@ -288,8 +301,8 @@ onLoad(async (options) => {
   flex-shrink: 0;
   padding: 12rpx 18rpx;
   border-radius: 999rpx;
-  background: #fff2dc;
-  color: #b45309;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
   font-size: 22rpx;
 }
 
@@ -300,13 +313,12 @@ onLoad(async (options) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #fff7ef 0%, #ffe9d9 100%);
-  border: 1px solid #f2d3bc;
-  box-shadow: 0 10rpx 20rpx rgba(194, 65, 12, 0.1);
+  background: rgba(0, 191, 255, 0.08);
+  box-shadow: $shadow;
 }
 
 .report-icon-mark {
-  color: #c2410c;
+  color: $deep;
   font-size: 32rpx;
   font-weight: 700;
   line-height: 1;
@@ -314,15 +326,15 @@ onLoad(async (options) => {
 
 .price-panel {
   align-items: flex-end;
-  margin-top: 20rpx;
+  margin-top: 24rpx;
 }
 
-.price { font-size: 50rpx; font-weight: 700; color: #c2410c; }
+.price { font-size: 50rpx; font-weight: 700; color: $deep; }
 
 .origin {
   margin-top: 10rpx;
   font-size: 24rpx;
-  color: #a8a29e;
+  color: $text3;
   text-decoration: line-through;
 }
 
@@ -330,36 +342,17 @@ onLoad(async (options) => {
   min-width: 150rpx;
   padding: 18rpx;
   border-radius: 24rpx;
-  background: linear-gradient(180deg, #fff8ee 0%, #fff2de 100%);
+  background: rgba(0, 191, 255, 0.06);
   text-align: right;
 }
 
-.insight-label,
-.insight-sub,
-.meta-label,
-.section-kicker,
-.offer-time,
-.seller-tip,
-.desc,
-.offer-remark,
-.helper {
-  color: #8a6b54;
+.insight-label, .insight-sub, .meta-label, .section-kicker {
+  color: $text2;
+  font-size: 22rpx;
 }
 
-.insight-label,
-.insight-sub,
-.meta-label,
-.section-kicker,
-.offer-time,
-.helper {
-  font-size: 21rpx;
-}
-
-.insight-value,
-.meta-value,
-.seller-name,
-.offer-buyer {
-  color: #2f1d14;
+.insight-value, .meta-value, .seller-name {
+  color: $text1;
 }
 
 .insight-value {
@@ -379,18 +372,13 @@ onLoad(async (options) => {
 .meta-pill {
   min-width: 0;
   padding: 18rpx;
-  border-radius: 22rpx;
-  background: #fff9f1;
-  border: 1px solid #f3e2cf;
+  border-radius: 20rpx;
+  background: rgba(0, 191, 255, 0.04);
 }
 
-.meta-pill-code {
-  grid-column: span 2;
-}
+.meta-pill-code { grid-column: span 2; }
 
-.meta-label {
-  display: block;
-}
+.meta-label { display: block; }
 
 .meta-value {
   display: block;
@@ -413,51 +401,47 @@ onLoad(async (options) => {
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2f1d14;
+  color: $text1;
 }
 
 .desc {
-  font-size: 26rpx;
+  font-size: 28rpx;
   line-height: 1.8;
+  color: $text2;
 }
 
-.seller-panel {
-  align-items: center;
-}
+.seller-panel { align-items: center; }
 
 .seller-avatar {
   width: 94rpx;
   height: 94rpx;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #eadfd3;
+  background: #e0f2fe;
+  opacity: 0;
+  animation: fadeInUp 0.4s ease both;
 }
 
 .seller-avatar.placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c4a26;
+  color: $deep;
   font-size: 34rpx;
   font-weight: 700;
+  opacity: 1;
+  animation: none;
 }
 
-.seller-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
+.seller-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
-.seller-name {
-  font-size: 28rpx;
-  font-weight: 700;
-}
+.seller-name { font-size: 28rpx; font-weight: 700; }
 
 .seller-tip {
   margin-top: 10rpx;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.6;
+  color: $text2;
 }
 
 .comm-grid {
@@ -468,178 +452,59 @@ onLoad(async (options) => {
 
 .comm-card {
   padding: 22rpx 20rpx;
-  border-radius: 22rpx;
-  background: #fffaf4;
-  border: 1px solid #f1e1cf;
+  border-radius: 20rpx;
+  background: rgba(0, 191, 255, 0.04);
 }
 
-.comm-card.warm {
-  background: linear-gradient(135deg, #fff2df 0%, #ffe5c7 100%);
+.comm-card-warm {
+  background: rgba(0, 191, 255, 0.08);
 }
 
 .comm-label {
   display: block;
-  color: #8a6b54;
+  color: $text2;
   font-size: 22rpx;
 }
 
 .comm-value {
   display: block;
   margin-top: 10rpx;
-  color: #2f1d14;
+  color: $text1;
   font-size: 32rpx;
   font-weight: 700;
 }
 
 .comm-tip {
   margin-top: 18rpx;
-  color: #8a6b54;
+  color: $text2;
   font-size: 24rpx;
   line-height: 1.7;
-}
-
-.suggest-price-card {
-  flex: 1;
-  padding: 18rpx;
-  border-radius: 22rpx;
-  background: #fff7ee;
-  border: 1px solid #f0dcc7;
-}
-
-.suggest-label {
-  display: block;
-  color: #8a6b54;
-  font-size: 22rpx;
-}
-
-.suggest-value {
-  display: block;
-  margin-top: 10rpx;
-  color: #c2410c;
-  font-size: 30rpx;
-  font-weight: 700;
-}
-
-.input,
-.textarea {
-  width: 100%;
-  box-sizing: border-box;
-  background: #fffdf9;
-  border-radius: 20rpx;
-  border: 1px solid #eadac8;
-  padding: 20rpx;
-  font-size: 26rpx;
-  color: #2f1d14;
-}
-
-.input { margin-top: 18rpx; }
-
-.textarea {
-  min-height: 180rpx;
-  margin-top: 16rpx;
 }
 
 .submit-btn,
 .ghost-btn,
-.primary-btn,
-.mini {
+.primary-btn {
   border-radius: 999rpx;
+  &:active { transform: scale(0.96); }
 }
 
 .submit-btn {
   margin-top: 20rpx;
-  background: linear-gradient(135deg, #ffb55e 0%, #ff8d39 100%);
+  background: $gradient;
   color: #fff;
-}
-
-.offer-item {
-  background: #fff9f1;
-  border-radius: 24rpx;
-  padding: 20rpx;
-  margin-bottom: 16rpx;
-  border: 1px solid #f2e2cf;
-}
-
-.offer-item.mine {
-  background: #fffdf8;
-}
-
-.offer-top {
-  align-items: flex-start;
-}
-
-.offer-buyer {
-  display: block;
-  font-size: 26rpx;
-  font-weight: 700;
-}
-
-.offer-time {
-  display: block;
-  margin-top: 6rpx;
-}
-
-.offer-price {
-  color: #c2410c;
-  font-weight: 700;
-  font-size: 30rpx;
-}
-
-.offer-remark {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-}
-
-.offer-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12rpx;
-  margin-top: 16rpx;
-}
-
-.mini {
-  height: 64rpx;
-  line-height: 64rpx;
-  padding: 0 28rpx;
-  font-size: 24rpx;
-}
-
-.mini.primary {
-  background: #2f1d14;
-  color: #fff5ea;
-}
-
-.mini.ghost {
-  background: #f3e6d8;
-  color: #6b4d38;
-}
-
-.offer-status {
-  margin-top: 14rpx;
-  display: inline-block;
-  padding: 10rpx 16rpx;
-  border-radius: 999rpx;
-  color: #a16207;
-  background: #fff3dd;
-  font-size: 22rpx;
-}
-
-.offer-status.inline {
-  margin-top: 16rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 191, 255, 0.2);
 }
 
 .bottom-bar {
   position: fixed;
-  left: 24rpx;
-  right: 24rpx;
-  bottom: 22rpx;
-  padding: 12rpx;
+  left: 28rpx; right: 28rpx; bottom: 28rpx;
+  padding: 16rpx;
   display: flex;
   gap: 12rpx;
-  background: rgba(47, 29, 20, 0.94);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
   border-radius: 999rpx;
-  box-shadow: 0 18rpx 36rpx rgba(47, 29, 20, 0.18);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
 }
 
 .ghost-btn {
@@ -648,9 +513,9 @@ onLoad(async (options) => {
   height: 76rpx;
   line-height: 76rpx;
   padding: 0 20rpx;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff1df;
-  font-size: 25rpx;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
+  font-size: 28rpx;
 }
 
 .primary-btn {
@@ -659,8 +524,9 @@ onLoad(async (options) => {
   height: 76rpx;
   line-height: 76rpx;
   padding: 0 22rpx;
-  background: linear-gradient(135deg, #ffb55e 0%, #ff8d39 100%);
+  background: $gradient;
   color: #fff;
-  font-size: 25rpx;
+  font-size: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 191, 255, 0.22);
 }
 </style>

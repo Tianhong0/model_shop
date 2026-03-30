@@ -47,6 +47,23 @@ export const createAlipayBatchPayApi = (data) => {
   })
 }
 
+// 抖音支付
+export const createDouyinAppPayApi = (data) => {
+  return request({
+    url: '/api/orders/pay/douyin/create',
+    method: 'POST',
+    data
+  })
+}
+
+export const createDouyinBatchPayApi = (data) => {
+  return request({
+    url: '/api/orders/pay/douyin/create-batch',
+    method: 'POST',
+    data
+  })
+}
+
 export const payOrderByWalletApi = (data) => {
   return request({
     url: '/api/orders/pay/wallet/pay',

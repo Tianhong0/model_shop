@@ -84,25 +84,54 @@ onLoad((options) => {
 </script>
 
 <style scoped lang="scss">
-.page { min-height: 100vh; background: #f6f7fb; padding: 20rpx; }
-.card { background: #fff; border-radius: 24rpx; padding: 24rpx; margin-bottom: 18rpx; box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.04); }
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page {
+  min-height: 100vh;
+  background: $bg;
+  padding: 28rpx;
+}
+
+.card {
+  background: $card;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: $shadow;
+  animation: fadeInUp 0.4s ease both;
+}
+
 .express-top { display: flex; justify-content: space-between; align-items: flex-start; }
-.company { display: block; color: #111827; font-size: 32rpx; font-weight: 700; }
-.sn { display: block; color: #94a3b8; font-size: 24rpx; margin-top: 8rpx; }
-.status { color: #4f46e5; font-size: 24rpx; background: #eef2ff; border-radius: 22rpx; padding: 8rpx 16rpx; }
-.receiver { margin-top: 18rpx; border-top: 1px solid #f1f5f9; padding-top: 18rpx; }
-.name { display: block; color: #1e293b; font-size: 26rpx; font-weight: 600; }
-.addr { display: block; color: #64748b; font-size: 24rpx; margin-top: 8rpx; line-height: 1.5; }
-.time-row { margin-top: 14rpx; display: flex; flex-direction: column; gap: 8rpx; color: #94a3b8; font-size: 22rpx; }
-.title { color: #0f172a; font-size: 30rpx; font-weight: 700; margin-bottom: 16rpx; }
+.company { display: block; color: $text1; font-size: 32rpx; font-weight: 700; }
+.sn { display: block; color: $text3; font-size: 24rpx; margin-top: 8rpx; }
+.status { color: $primary; font-size: 24rpx; background: rgba(0, 191, 255, 0.08); border-radius: 999rpx; padding: 8rpx 20rpx; font-weight: 600; }
+.receiver { margin-top: 20rpx; padding-top: 20rpx; border-top: 1rpx solid rgba(0,0,0,0.04); }
+.name { display: block; color: $text1; font-size: 28rpx; font-weight: 600; }
+.addr { display: block; color: $text2; font-size: 24rpx; margin-top: 8rpx; line-height: 1.5; }
+.time-row { margin-top: 16rpx; display: flex; flex-direction: column; gap: 8rpx; color: $text3; font-size: 22rpx; }
+.title { color: $text1; font-size: 30rpx; font-weight: 700; margin-bottom: 20rpx; }
 .timeline-item { display: flex; }
-.dot-wrap { width: 40rpx; display: flex; flex-direction: column; align-items: center; }
-.dot { width: 14rpx; height: 14rpx; border-radius: 50%; background: #cbd5e1; margin-top: 8rpx; }
-.dot.active { background: #4f46e5; }
-.line { width: 2rpx; flex: 1; background: #e2e8f0; margin-top: 6rpx; }
-.timeline-content { flex: 1; padding-bottom: 22rpx; }
-.content { display: block; color: #334155; font-size: 26rpx; line-height: 1.5; }
-.content.active { color: #0f172a; font-weight: 600; }
-.time { display: block; color: #94a3b8; font-size: 22rpx; margin-top: 8rpx; }
-.empty-card { text-align: center; color: #94a3b8; font-size: 24rpx; }
+.dot-wrap { width: 44rpx; display: flex; flex-direction: column; align-items: center; }
+.dot { width: 16rpx; height: 16rpx; border-radius: 50%; background: #ddd; margin-top: 8rpx; }
+.dot.active { background: $primary; box-shadow: 0 0 0 6rpx rgba(0, 191, 255, 0.15); }
+.line { width: 2rpx; flex: 1; background: rgba(0,0,0,0.06); margin-top: 8rpx; }
+.timeline-content { flex: 1; padding-bottom: 24rpx; }
+.content { display: block; color: $text1; font-size: 26rpx; line-height: 1.5; }
+.content.active { color: $text1; font-weight: 600; }
+.time { display: block; color: $text3; font-size: 22rpx; margin-top: 8rpx; }
+.empty-card { text-align: center; color: $text3; font-size: 28rpx; padding: 60rpx 0; }
 </style>

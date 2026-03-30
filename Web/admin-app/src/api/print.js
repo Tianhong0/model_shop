@@ -76,3 +76,10 @@ export const getPrintJobEvents = (jobId, limit = 100) => {
     params: { limit }
   })
 }
+
+export const deletePrintJob = (jobId) => {
+  return request({
+    url: `/api/print/admin/jobs/${jobId}`,
+    method: 'delete'
+  })
+}

@@ -5,6 +5,7 @@ import org.majun.backend.dto.DeliveryShipRequest;
 import org.majun.backend.dto.DeliveryStatusUpdateRequest;
 import org.majun.backend.dto.DeliveryTrackAddRequest;
 import org.majun.backend.dto.DeliveryTrackSimulateRequest;
+import org.majun.backend.dto.RetryAutoShipRequest;
 import org.majun.backend.vo.DeliveryDetailVO;
 import org.majun.backend.vo.DeliveryListVO;
 import org.majun.backend.vo.PageResult;
@@ -28,6 +29,8 @@ public interface OrderDeliveryService {
     void simulateTracks(DeliveryTrackSimulateRequest request);
 
     Long autoShipByOrderId(Long orderId, Long printJobId);
+
+    Long retryAutoShip(RetryAutoShipRequest request);
 
     void autoAdvanceTracks();
 }

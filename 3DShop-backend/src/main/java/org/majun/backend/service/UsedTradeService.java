@@ -47,6 +47,8 @@ public interface UsedTradeService {
 
     void confirmReceive(Long orderId, Long userId);
 
+    void updateOrderAddress(UsedOrderAddressUpdateRequest request, Long userId);
+
     Long sendMessage(UsedMessageSendRequest request, Long userId);
 
     java.util.List<UsedMessageSessionVO> listMessageSessions(Long listingId, Long userId);

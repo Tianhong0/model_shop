@@ -1,92 +1,156 @@
 <template>
   <view class="detail-container" v-if="detail">
-    <view class="post-card card">
-      <view class="head-row">
-        <image :src="detail.post.userAvatar || defaultAvatar" class="avatar" mode="aspectFill"></image>
-        <view class="meta">
-          <text class="name">{{ detail.post.userNickname || '用户' }}</text>
-          <text class="time">{{ detail.post.createTime || '' }}</text>
+    <!-- Post Card -->
+    <view class="post-card">
+      <view class="card-header">
+        <view class="avatar-section">
+          <view class="avatar-ring">
+            <image :src="detail.post.userAvatar || defaultAvatar" class="avatar" mode="aspectFill"></image>
+          </view>
+          <view class="meta">
+            <text class="name">{{ detail.post.userNickname || '创作者' }}</text>
+            <text class="time">{{ detail.post.createTime || '' }}</text>
+          </view>
         </view>
-        <view class="category">{{ detail.post.categoryName || '未分类' }}</view>
-      </view>
-      <text class="title">{{ detail.post.title }}</text>
-      <text class="content">{{ detail.content }}</text>
-
-      <view class="media-list" v-if="detail.post.mediaList && detail.post.mediaList.length">
-        <view v-for="media in detail.post.mediaList" :key="media.id" class="media-item">
-          <image
-            v-if="media.mediaType === 1"
-            :src="media.mediaUrl"
-            mode="aspectFill"
-            @click="previewImage(media.mediaUrl)"
-          ></image>
-          <video
-            v-else
-            :src="media.mediaUrl"
-            controls
-            :page-gesture="true"
-            :vslide-gesture="false"
-            object-fit="cover"
-          ></video>
+        <view class="category-badge">
+          <text>{{ detail.post.categoryName || '未分类' }}</text>
         </view>
       </view>
 
-      <view class="action-row">
-        <view class="action" @click="toggleInteraction(1)">
-          <uni-icons :type="detail.post.liked ? 'heart-filled' : 'heart'" size="20" :color="detail.post.liked ? '#ef4444' : '#64748b'"></uni-icons>
+      <view class="content-section">
+        <text class="title">{{ detail.post.title }}</text>
+        <text class="content">{{ detail.content }}</text>
+      </view>
+
+      <!-- Media Section -->
+      <view class="media-section" v-if="videoList.length || imageList.length">
+        <!-- Video List -->
+        <view class="video-list" v-if="videoList.length">
+          <view v-for="(media, index) in videoList" :key="'v'+index" class="video-item" :style="{ animationDelay: `${index * 0.1}s` }">
+            <video
+              :src="media.mediaUrl"
+              :poster="getVideoCoverUrl(media.mediaUrl)"
+              controls
+              :page-gesture="true"
+              :vslide-gesture="false"
+              object-fit="cover"
+            ></video>
+          </view>
+        </view>
+
+        <!-- Image Gallery -->
+        <view class="image-grid" v-if="imageList.length">
+          <view v-for="(media, index) in imageList" :key="'i'+index" class="image-item" :style="{ animationDelay: `${index * 0.1}s` }">
+            <image
+              :src="media.mediaUrl"
+              mode="aspectFill"
+              @click="previewImage(media.mediaUrl)"
+            ></image>
+          </view>
+        </view>
+      </view>
+
+      <view class="action-bar">
+        <view class="action-item" :class="{ active: detail.post.liked }" @click="toggleInteraction(1)">
+          <view class="icon-wrap">
+            <uni-icons :type="detail.post.liked ? 'heart-filled' : 'heart'" size="22" :color="detail.post.liked ? '#ff4d6d' : '#8a9aaa'"></uni-icons>
+          </view>
           <text>{{ detail.post.likeCount || 0 }}</text>
         </view>
-        <view class="action" @click="toggleInteraction(2)">
-          <uni-icons type="star" size="20" :color="detail.post.collected ? '#f59e0b' : '#64748b'"></uni-icons>
+        <view class="action-item" :class="{ active: detail.post.collected }" @click="toggleInteraction(2)">
+          <view class="icon-wrap">
+            <uni-icons :type="detail.post.collected ? 'star-filled' : 'star'" size="22" :color="detail.post.collected ? '#00bfff' : '#8a9aaa'"></uni-icons>
+          </view>
           <text>{{ detail.post.collectCount || 0 }}</text>
         </view>
-        <view class="action" @click="goEdit" v-if="isPostOwner">
-          <uni-icons type="compose" size="20" color="#4f46e5"></uni-icons>
+        <view class="action-item edit-action" @click="goEdit" v-if="isPostOwner">
+          <view class="icon-wrap">
+            <uni-icons type="compose" size="22" color="#0099cc"></uni-icons>
+          </view>
           <text>编辑</text>
         </view>
       </view>
     </view>
 
-    <view class="reply-card card">
-      <view class="reply-title">全部回复（{{ detail.replies?.length || 0 }}）</view>
-      <view v-if="detail.replies && detail.replies.length">
-        <view class="reply-item" v-for="reply in detail.replies" :key="reply.id">
-          <view class="reply-head">
+    <!-- Replies Section -->
+    <view class="replies-section">
+      <view class="section-header">
+        <text class="section-title">全部回复</text>
+        <view class="reply-count-badge">{{ detail.replies?.length || 0 }}</view>
+      </view>
+
+      <view v-if="detail.replies && detail.replies.length" class="replies-list">
+        <view
+          class="reply-item"
+          v-for="(reply, index) in detail.replies"
+          :key="reply.id"
+          :style="{ animationDelay: `${index * 0.05}s` }"
+        >
+          <view class="reply-header">
             <image :src="reply.userAvatar || defaultAvatar" class="reply-avatar" mode="aspectFill"></image>
             <view class="reply-meta">
               <text class="reply-name">{{ reply.userNickname || '用户' }}</text>
               <text class="reply-time">{{ reply.createTime || '' }}</text>
             </view>
-            <view class="reply-tags">
-              <text class="tag adopted" v-if="reply.isAdopted === 1">已采纳</text>
-              <text class="tag excellent" v-if="reply.isExcellent === 1">优质</text>
+            <view class="reply-badges">
+              <view class="badge adopted" v-if="reply.isAdopted === 1">
+                <uni-icons type="checkmarkempty" size="14" color="#10b981"></uni-icons>
+                <text>已采纳</text>
+              </view>
+              <view class="badge excellent" v-if="reply.isExcellent === 1">
+                <uni-icons type="star-filled" size="14" color="#0099cc"></uni-icons>
+                <text>优质</text>
+              </view>
             </view>
           </view>
-          <text class="reply-content">{{ reply.content }}</text>
+          <view class="reply-content-wrap">
+            <text class="reply-to-tag" v-if="reply.parentId > 0 && reply.parentUserNickname">回复 @{{ reply.parentUserNickname }}</text>
+            <text class="reply-content">{{ reply.content }}</text>
+          </view>
           <view class="reply-actions">
-            <view class="reply-like" @click="toggleReplyLike(reply)">
-              <uni-icons :type="reply.liked ? 'heart-filled' : 'heart'" size="18" :color="reply.liked ? '#ef4444' : '#64748b'"></uni-icons>
-              <text :class="{ active: reply.liked }">{{ reply.likeCount || 0 }}</text>
+            <view class="like-btn" :class="{ liked: reply.liked }" @click="toggleReplyLike(reply)">
+              <uni-icons :type="reply.liked ? 'heart-filled' : 'heart'" size="18" :color="reply.liked ? '#ff4d6d' : '#8a9aaa'"></uni-icons>
+              <text>{{ reply.likeCount || 0 }}</text>
             </view>
-            <text v-if="canAdopt(reply)" @click="adoptReply(reply)">采纳</text>
-            <text v-if="canDeleteReply(reply)" @click="removeReply(reply)">删除</text>
+            <text class="action-link reply-action" @click="startReply(reply)">回复</text>
+            <text class="action-link" v-if="canAdopt(reply)" @click="adoptReply(reply)">采纳</text>
+            <text class="action-link danger" v-if="canDeleteReply(reply)" @click="removeReply(reply)">删除</text>
           </view>
         </view>
       </view>
-      <view v-else class="empty-tip">暂无回复</view>
+
+      <view class="empty-replies" v-else>
+        <view class="empty-icon">
+          <uni-icons type="chatbubble" size="40" color="#e7e5e4"></uni-icons>
+        </view>
+        <text>暂无回复，来抢沙发吧</text>
+      </view>
     </view>
 
-    <view class="reply-input-box">
-      <input
-        v-model="replyContent"
-        class="reply-input"
-        type="text"
-        maxlength="500"
-        confirm-type="send"
-        placeholder="写下你的回复..."
-        @confirm="submitReply"
-      />
-      <button class="send-btn" @click="submitReply">发送</button>
+    <!-- Bottom Reply Input -->
+    <view class="reply-input-bar">
+      <view class="reply-indicator" v-if="replyingTo" @click="cancelReply">
+        <text class="indicator-text">回复 @{{ replyingTo.userNickname }}</text>
+        <uni-icons type="closeempty" size="16" color="#8a9aaa"></uni-icons>
+      </view>
+      <view class="input-row">
+        <view class="input-wrapper">
+          <input
+            v-model="replyContent"
+            class="reply-input"
+            type="text"
+            maxlength="500"
+            confirm-type="send"
+            :placeholder="replyPlaceholder"
+            placeholder-class="input-placeholder"
+            :focus="inputFocus"
+            @confirm="submitReply"
+          />
+        </view>
+        <button class="send-btn" :class="{ active: replyContent.trim() }" @click="submitReply">
+          <uni-icons type="paperplane" size="20" color="#fff"></uni-icons>
+        </button>
+      </view>
     </view>
   </view>
 </template>
@@ -108,6 +172,12 @@ const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=community
 const detail = ref(null)
 const replyContent = ref('')
 const postId = ref('')
+const replyingTo = ref(null)
+const inputFocus = ref(false)
+
+const replyPlaceholder = computed(() => {
+  return replyingTo.value ? `回复 @${replyingTo.value.userNickname}` : '写下你的想法...'
+})
 
 const toIdString = (value) => (value === null || value === undefined ? '' : String(value))
 
@@ -117,6 +187,14 @@ const currentUserId = computed(() => {
 })
 
 const isPostOwner = computed(() => toIdString(detail.value?.post?.userId) === currentUserId.value)
+
+const mediaList = computed(() => Array.isArray(detail.value?.post?.mediaList) ? detail.value.post.mediaList : [])
+const videoList = computed(() => mediaList.value.filter(m => m.mediaType === 2))
+const imageList = computed(() => mediaList.value.filter(m => m.mediaType === 1))
+
+const getVideoCoverUrl = (videoUrl) => {
+  return videoUrl ? videoUrl.replace(/\.\w+$/, '-cover.jpg') : ''
+}
 
 const fetchDetail = async () => {
   detail.value = await getPostDetailApi(postId.value)
@@ -161,14 +239,25 @@ const toggleReplyLike = async (reply) => {
   }
 }
 
+const startReply = (reply) => {
+  replyingTo.value = reply
+  inputFocus.value = false
+  setTimeout(() => { inputFocus.value = true }, 50)
+}
+
+const cancelReply = () => {
+  replyingTo.value = null
+}
+
 const submitReply = async () => {
   if (!replyContent.value.trim()) {
     uni.showToast({ title: '请输入回复内容', icon: 'none' })
     return
   }
   try {
-    await createReplyApi({ postId: postId.value, parentId: 0, content: replyContent.value.trim() })
+    await createReplyApi({ postId: postId.value, parentId: replyingTo.value?.id || 0, content: replyContent.value.trim() })
     replyContent.value = ''
+    replyingTo.value = null
     uni.showToast({ title: '回复成功', icon: 'success' })
     await fetchDetail()
   } catch (error) {
@@ -189,8 +278,8 @@ const adoptReply = async (reply) => {
 const removeReply = async (reply) => {
   const confirm = await new Promise((resolve) => {
     uni.showModal({
-      title: '提示',
-      content: '确认删除该回复吗？',
+      title: '确认删除',
+      content: '删除后无法恢复，确定要删除吗？',
       success: (res) => resolve(!!res.confirm)
     })
   })
@@ -225,74 +314,514 @@ onLoad(async (options) => {
 </script>
 
 <style scoped lang="scss">
-.detail-container { min-height: 100vh; background: #f8fafc; padding: 20rpx; padding-bottom: calc(140rpx + env(safe-area-inset-bottom)); }
-.post-card, .reply-card { padding: 24rpx; margin-bottom: 20rpx; }
-.head-row { display: flex; align-items: center; }
-.avatar { width: 72rpx; height: 72rpx; border-radius: 50%; }
-.meta { flex: 1; margin-left: 14rpx; }
-.name { font-size: 26rpx; font-weight: 700; color: #1e293b; display: block; }
-.time { font-size: 22rpx; color: #94a3b8; display: block; margin-top: 4rpx; }
-.category { font-size: 22rpx; color: #4f46e5; }
-.title { margin-top: 16rpx; display: block; font-size: 32rpx; color: #1e293b; font-weight: 700; }
-.content { margin-top: 10rpx; display: block; font-size: 28rpx; color: #334155; line-height: 1.6; white-space: pre-wrap; }
-.media-list { margin-top: 16rpx; display: grid; gap: 12rpx; grid-template-columns: repeat(2, 1fr); }
-.media-item image, .media-item video { width: 100%; height: 240rpx; border-radius: 12rpx; }
-.action-row { margin-top: 18rpx; display: flex; gap: 30rpx; }
-.action { display: flex; align-items: center; gap: 8rpx; font-size: 24rpx; color: #64748b; }
-.reply-title { font-size: 28rpx; font-weight: 700; color: #1e293b; }
-.reply-item { margin-top: 20rpx; padding-top: 20rpx; border-top: 1rpx solid #f1f5f9; }
-.reply-head { display: flex; align-items: center; }
-.reply-avatar { width: 56rpx; height: 56rpx; border-radius: 50%; }
-.reply-meta { flex: 1; margin-left: 12rpx; }
-.reply-name { display: block; font-size: 24rpx; color: #1e293b; }
-.reply-time { display: block; margin-top: 2rpx; font-size: 20rpx; color: #94a3b8; }
-.reply-tags { display: flex; gap: 8rpx; }
-.tag { font-size: 20rpx; border-radius: 6rpx; padding: 2rpx 10rpx; }
-.tag.adopted { color: #16a34a; background: #dcfce7; }
-.tag.excellent { color: #4f46e5; background: #e0e7ff; }
-.reply-content { margin-top: 10rpx; display: block; font-size: 26rpx; color: #334155; line-height: 1.5; white-space: pre-wrap; }
-.reply-actions { margin-top: 10rpx; display: flex; gap: 24rpx; }
-.reply-actions text { font-size: 24rpx; color: #4f46e5; }
-.reply-like {
+/* Design System Tokens */
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+
+$bg: #f8f8f8;
+$card: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #8a9aaa;
+
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$radius-card: 24rpx;
+$radius-capsule: 999rpx;
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes jellyPop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.25); }
+  50% { transform: scale(0.9); }
+  70% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes imageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.detail-container {
+  min-height: 100vh;
+  background: $bg;
+  padding: 28rpx;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+}
+
+/* Post Card */
+.post-card {
+  background: $card;
+  border-radius: $radius-card;
+  padding: 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: $shadow-card;
+  animation: fadeInUp 0.4s ease;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28rpx;
+}
+
+.avatar-section {
+  display: flex;
+  align-items: center;
+}
+
+.avatar-ring {
+  width: 88rpx;
+  height: 88rpx;
+  padding: 4rpx;
+  background: $gradient;
+  border-radius: 50%;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: imageFadeIn 0.4s ease;
+}
+
+.meta {
+  margin-left: 20rpx;
+}
+
+.name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+  display: block;
+}
+
+.time {
+  font-size: 24rpx;
+  color: $text-muted;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.category-badge {
+  font-size: 22rpx;
+  color: $deep;
+  background: rgba(0, 191, 255, 0.08);
+  padding: 10rpx 20rpx;
+  border-radius: $radius-capsule;
+  font-weight: 500;
+}
+
+.content-section {
+  margin-bottom: 28rpx;
+}
+
+.title {
+  display: block;
+  font-size: 36rpx;
+  color: $text-primary;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 16rpx;
+}
+
+.content {
+  display: block;
+  font-size: 28rpx;
+  color: $text-secondary;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* Media Section */
+.media-section {
+  margin: 24rpx 0;
+}
+
+/* Video List */
+.video-list {
+  padding: 20rpx 0 40rpx;
+}
+
+.video-item {
+  animation: fadeInUp 0.4s ease forwards;
+  opacity: 0;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #000;
+
+  &:not(:last-child) {
+    margin-bottom: 20rpx;
+  }
+
+  video {
+    width: 100%;
+    height: 300rpx;
+    display: block;
+  }
+}
+
+/* Image Grid */
+.image-grid {
+  display: grid;
+  gap: 16rpx;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 20rpx 0;
+}
+
+.image-item {
+  animation: fadeInUp 0.4s ease forwards;
+  opacity: 0;
+  border-radius: 16rpx;
+  overflow: hidden;
+
+  image {
+    width: 100%;
+    height: 280rpx;
+    display: block;
+    background: $bg;
+  }
+}
+
+/* Action Bar */
+.action-bar {
+  display: flex;
+  gap: 16rpx;
+  padding-top: 24rpx;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 14rpx 24rpx;
+  border-radius: $radius-capsule;
+  background: $bg;
+  transition: all 0.25s ease;
+
+  .icon-wrap {
+    display: flex;
+    align-items: center;
+  }
+
+  text {
+    font-size: 26rpx;
+    color: $text-secondary;
+    font-weight: 500;
+  }
+
+  &.active {
+    background: rgba(0, 191, 255, 0.08);
+    text { color: $primary; }
+  }
+
+  &:active {
+    transform: scale(0.96);
+
+    .icon-wrap {
+      animation: jellyPop 0.4s ease;
+    }
+  }
+}
+
+.edit-action {
+  background: rgba(0, 191, 255, 0.08);
+  text { color: $deep; }
+}
+
+/* Replies Section */
+.replies-section {
+  background: $card;
+  border-radius: $radius-card;
+  padding: 32rpx;
+  box-shadow: $shadow-card;
+  animation: fadeInUp 0.5s ease;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.reply-count-badge {
+  margin-left: 12rpx;
+  font-size: 20rpx;
+  color: $deep;
+  background: rgba(0, 191, 255, 0.08);
+  padding: 4rpx 16rpx;
+  border-radius: $radius-capsule;
+  font-weight: 500;
+}
+
+/* Reply Items */
+.replies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.reply-item {
+  padding: 28rpx;
+  background: $bg;
+  border-radius: $radius-card;
+  animation: fadeInUp 0.4s ease forwards;
+  opacity: 0;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.reply-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  animation: imageFadeIn 0.4s ease;
+}
+
+.reply-meta {
+  flex: 1;
+  margin-left: 16rpx;
+}
+
+.reply-name {
+  display: block;
+  font-size: 26rpx;
+  color: $text-primary;
+  font-weight: 500;
+}
+
+.reply-time {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: $text-muted;
+}
+
+.reply-badges {
+  display: flex;
+  gap: 10rpx;
+}
+
+.badge {
   display: flex;
   align-items: center;
   gap: 6rpx;
-  text {
-    font-size: 24rpx;
-    color: #64748b;
+  font-size: 20rpx;
+  border-radius: $radius-capsule;
+  padding: 6rpx 14rpx;
+
+  &.adopted {
+    color: $success;
+    background: rgba(16, 185, 129, 0.1);
   }
-  text.active {
-    color: #ef4444;
+
+  &.excellent {
+    color: $deep;
+    background: rgba(0, 191, 255, 0.08);
   }
 }
-.empty-tip { margin-top: 20rpx; text-align: center; color: #94a3b8; font-size: 24rpx; }
-.reply-input-box {
-  position: fixed;
-  left: 20rpx;
-  right: 20rpx;
-  bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  border-radius: 44rpx;
-  padding: 10rpx 12rpx 10rpx 20rpx;
-  box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.08);
+
+.reply-content-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.reply-to-tag {
+  font-size: 24rpx;
+  color: $deep;
+  background: rgba(0, 191, 255, 0.08);
+  padding: 4rpx 12rpx;
+  border-radius: $radius-capsule;
+  margin-right: 8rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.reply-content {
+  display: block;
+  font-size: 28rpx;
+  color: $text-secondary;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.reply-actions {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 24rpx;
+  margin-top: 20rpx;
+  padding-top: 16rpx;
 }
-.reply-input {
+
+.like-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 18rpx;
+  border-radius: $radius-capsule;
+  transition: all 0.2s ease;
+
+  text {
+    font-size: 24rpx;
+    color: $text-muted;
+  }
+
+  &.liked text {
+    color: $danger;
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.action-link {
+  font-size: 24rpx;
+  color: $deep;
+  font-weight: 500;
+  padding: 8rpx 18rpx;
+  border-radius: $radius-capsule;
+  transition: all 0.2s ease;
+
+  &:active {
+    background: rgba(0, 191, 255, 0.08);
+    transform: scale(0.96);
+  }
+
+  &.danger {
+    color: $danger;
+
+    &:active {
+      background: rgba(255, 77, 109, 0.06);
+    }
+  }
+
+  &.reply-action {
+    color: $text-secondary;
+  }
+}
+
+/* Empty Replies */
+.empty-replies {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 24rpx;
+  animation: fadeInUp 0.5s ease;
+
+  .empty-icon {
+    width: 100rpx;
+    height: 100rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $bg;
+    border-radius: 50%;
+    margin-bottom: 16rpx;
+  }
+
+  text {
+    font-size: 28rpx;
+    color: $text-muted;
+  }
+}
+
+/* Reply Input Bar */
+.reply-input-bar {
+  position: fixed;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
+  border-radius: $radius-card;
+  padding: 16rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.reply-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 16rpx 12rpx;
+}
+
+.indicator-text {
+  font-size: 24rpx;
+  color: $deep;
+  font-weight: 500;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.input-wrapper {
   flex: 1;
-  height: 64rpx;
-  line-height: 64rpx;
-  font-size: 26rpx;
+  background: $bg;
+  border-radius: $radius-capsule;
+  padding: 0 24rpx;
 }
+
+.reply-input {
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 28rpx;
+  color: $text-primary;
+}
+
+.input-placeholder {
+  color: $text-muted;
+}
+
 .send-btn {
-  width: 130rpx;
-  height: 64rpx;
-  line-height: 64rpx;
+  width: 72rpx;
+  height: 72rpx;
   margin: 0;
-  background: #4f46e5;
-  color: #fff;
-  border-radius: 34rpx;
-  font-size: 26rpx;
+  padding: 0;
+  background: $bg;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+
+  &.active {
+    background: $gradient;
+    box-shadow: 0 4rpx 20rpx rgba(0, 191, 255, 0.35);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
 }
 </style>

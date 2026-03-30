@@ -1,45 +1,62 @@
 <template>
 	<view class="settings-container">
 		<view class="group-title">账号安全</view>
-		<view class="menu-card card">
+		<view class="menu-card">
 			<view class="menu-item" @click="goProfile">
 				<text class="name">个人资料修改</text>
-				<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 			</view>
 			<view class="menu-item" @click="goAddress">
 				<text class="name">收货地址管理</text>
-				<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 			</view>
 			<view class="menu-item" @click="goProfile">
 				<text class="name">手机号绑定</text>
 				<text class="val">{{mobileMasked}}</text>
-				<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 			</view>
 			<view class="menu-item" @click="openPasswordEditor">
 				<text class="name">登录密码修改</text>
-				<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 			</view>
 			<view class="menu-item" @click="goDesignerApply">
 				<text class="name">申请成为设计者</text>
 				<text class="val">{{ designerApplyStatusText }}</text>
-				<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 			</view>
 			<view class="menu-item" @click="openDeletionEditor">
 				<text class="name">账号注销</text>
-				<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 			</view>
 		</view>
 
 		<view class="group-title">系统设置</view>
-		<view class="menu-card card">
-			<view class="menu-item">
-				<text class="name">消息通知</text>
-				<switch checked color="#4f46e5" scale="0.8" />
-			</view>
-			<view class="menu-item">
+		<view class="menu-card">
+			<view class="menu-item" @click="clearCache">
 				<text class="name">清除缓存</text>
-				<text class="val">24.5MB</text>
-				<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
+				<text class="val">{{ cacheSize }}</text>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
+			</view>
+			<view class="menu-item" @click="checkUpdate">
+				<text class="name">检查更新</text>
+				<text class="val">{{ versionText }}</text>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
+			</view>
+		</view>
+
+		<view class="group-title">关于</view>
+		<view class="menu-card">
+			<view class="menu-item" @click="goAbout">
+				<text class="name">关于我们</text>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
+			</view>
+			<view class="menu-item" @click="goUserAgreement">
+				<text class="name">用户协议</text>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
+			</view>
+			<view class="menu-item" @click="goPrivacyPolicy">
+				<text class="name">隐私政策</text>
+				<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 			</view>
 			<view class="menu-item">
 				<text class="name">当前版本</text>
@@ -112,6 +129,10 @@ const userProfile = ref({})
 const passwordEditorVisible = ref(false)
 const deletionEditorVisible = ref(false)
 const latestDesignerApply = ref(null)
+const cacheSize = ref('计算中...')
+const versionText = ref('已是最新版本')
+
+const APP_VERSION = 'v1.0.2'
 
 const passwordForm = ref({
 	oldPassword: '',
@@ -144,6 +165,7 @@ onShow(() => {
 		role
 	})
 	loadDesignerApplyStatus()
+	calculateCacheSize()
 })
 
 const designerApplyStatusText = computed(() => {
@@ -254,6 +276,133 @@ const goDesignerApply = () => {
 	uni.navigateTo({ url: '/pages/user/designer-apply' })
 }
 
+// 计算缓存大小
+const calculateCacheSize = () => {
+	try {
+		// 需要保留的关键数据
+		const keepKeys = [
+			'token', 'token_expire_time', 'user_role', 'user_profile',
+			'remember_password', 'auto_login', 'saved_username', 'saved_password'
+		]
+		let totalSize = 0
+
+		// 获取所有存储的键
+		const res = uni.getStorageInfoSync()
+		const keys = res.keys || []
+
+		keys.forEach(key => {
+			if (!keepKeys.includes(key)) {
+				try {
+					const value = uni.getStorageSync(key)
+					if (value !== null && value !== undefined && value !== '') {
+						// 估算数据大小（字节）
+						const str = typeof value === 'string' ? value : JSON.stringify(value)
+						totalSize += new Blob([str]).size
+					}
+				} catch (_) {}
+			}
+		})
+
+		// 转换为可读格式
+		if (totalSize < 1024) {
+			cacheSize.value = `${totalSize}B`
+		} else if (totalSize < 1024 * 1024) {
+			cacheSize.value = `${(totalSize / 1024).toFixed(1)}KB`
+		} else {
+			cacheSize.value = `${(totalSize / (1024 * 1024)).toFixed(1)}MB`
+		}
+	} catch (_) {
+		cacheSize.value = '0KB'
+	}
+}
+
+// 清除缓存
+const clearCache = () => {
+	uni.showModal({
+		title: '清除缓存',
+		content: '确定要清除缓存吗？这不会影响您的账号信息和登录状态。',
+		success: (res) => {
+			if (res.confirm) {
+				// 需要保留的关键数据
+				const keepKeys = [
+					'token', 'token_expire_time', 'user_role', 'user_profile',
+					'remember_password', 'auto_login', 'saved_username', 'saved_password'
+				]
+				const keepValues = {}
+
+				// 保存关键数据
+				keepKeys.forEach(key => {
+					try {
+						keepValues[key] = uni.getStorageSync(key)
+					} catch (_) {}
+				})
+
+				// 清除所有存储
+				try {
+					uni.clearStorageSync()
+				} catch (_) {}
+
+				// 恢复关键数据
+				Object.entries(keepValues).forEach(([key, value]) => {
+					if (value !== null && value !== undefined && value !== '') {
+						try {
+							uni.setStorageSync(key, value)
+						} catch (_) {}
+					}
+				})
+
+				cacheSize.value = '0KB'
+				uni.showToast({ title: '缓存已清除', icon: 'success' })
+			}
+		}
+	})
+}
+
+// 检查更新
+const checkUpdate = () => {
+	uni.showLoading({ title: '检查中...' })
+	setTimeout(() => {
+		uni.hideLoading()
+		uni.showModal({
+			title: '检查更新',
+			content: `当前版本 ${APP_VERSION}，已是最新版本。`,
+			showCancel: false
+		})
+	}, 1000)
+}
+
+// 关于我们
+const goAbout = () => {
+	uni.showModal({
+		title: '关于我们',
+		content: '3D打印小物件定制商城\n您的个性化3D打印定制专家\n\n我们致力于为您提供高质量的3D打印定制服务，让您创意无限，打印未来。',
+		showCancel: false,
+		confirmText: '知道了'
+	})
+}
+
+// 用户协议
+const goUserAgreement = () => {
+	uni.navigateTo({
+		url: '/pages/common/webview?type=userAgreement&title=' + encodeURIComponent('用户协议'),
+		fail: (err) => {
+			console.error('跳转失败:', err)
+			uni.showToast({ title: '跳转失败', icon: 'none' })
+		}
+	})
+}
+
+// 隐私政策
+const goPrivacyPolicy = () => {
+	uni.navigateTo({
+		url: '/pages/common/webview?type=privacyPolicy&title=' + encodeURIComponent('隐私政策'),
+		fail: (err) => {
+			console.error('跳转失败:', err)
+			uni.showToast({ title: '跳转失败', icon: 'none' })
+		}
+	})
+}
+
 const submitPasswordChange = async () => {
 	const payload = {
 		oldPassword: String(passwordForm.value.oldPassword || '').trim(),
@@ -338,135 +487,161 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
 .settings-container {
 	min-height: 100vh;
-	background-color: #f8fafc;
-	padding: 20rpx;
+	background-color: $bg;
+	padding: 8rpx 28rpx 28rpx;
 }
 
 .group-title {
-	font-size: 26rpx;
-	color: #94a3b8;
-	margin: 30rpx 0 20rpx 20rpx;
+	font-size: 24rpx;
+	color: $text3;
+	margin: 32rpx 0 16rpx 8rpx;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 2rpx;
 }
 
 .menu-card {
-	padding: 0 30rpx;
+	padding: 0 32rpx;
+	background: $card;
+	border-radius: 24rpx;
+	box-shadow: $shadow;
 	.menu-item {
-		height: 100rpx;
+		height: 104rpx;
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		border-bottom: 2rpx solid #f1f5f9;
-		&:last-child { border-bottom: none; }
-		.name { font-size: 28rpx; color: #1e293b; }
-		.val { font-size: 26rpx; color: #94a3b8; margin-left: auto; margin-right: 10rpx; }
+		& + .menu-item { border-top: 1rpx solid rgba(0,0,0,0.04); }
+		.name { font-size: 28rpx; color: $text1; font-weight: 500; }
+		.val { font-size: 26rpx; color: $text3; margin-left: auto; margin-right: 12rpx; }
 	}
 }
 
 .logout-section {
-	margin-top: 80rpx;
+	margin-top: 60rpx;
 	.logout-btn {
-		height: 90rpx;
-		background-color: #ffffff;
-		color: #ef4444;
-		border-radius: 20rpx;
+		height: 96rpx;
+		background-color: $card;
+		color: $danger;
+		border-radius: 999rpx;
 		font-size: 30rpx;
 		font-weight: 600;
-		border: 2rpx solid #fee2e2;
+		box-shadow: $shadow;
+		&:active { transform: scale(0.96); }
 	}
 }
 
 .editor-mask {
 	position: fixed;
 	inset: 0;
-	background-color: rgba(15, 23, 42, 0.45);
+	background-color: rgba(0, 0, 0, 0.35);
 	z-index: 1000;
 }
 
 .editor-panel {
 	position: fixed;
-	left: 24rpx;
-	right: 24rpx;
-	bottom: 24rpx;
-	background-color: #ffffff;
-	border-radius: 20rpx;
-	padding: 24rpx;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: $card;
+	border-radius: 32rpx 32rpx 0 0;
+	padding: 36rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
 	z-index: 1001;
+	box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.08);
 	.editor-title {
-		font-size: 30rpx;
+		font-size: 36rpx;
 		font-weight: 700;
-		color: #1e293b;
-		margin-bottom: 14rpx;
+		color: $text1;
+		margin-bottom: 12rpx;
 	}
 	.deletion-tip {
 		font-size: 24rpx;
-		color: #64748b;
-		margin-bottom: 14rpx;
+		color: $text2;
+		margin-bottom: 20rpx;
 	}
 	.form-item {
 		display: flex;
 		align-items: center;
-		min-height: 76rpx;
-		border-bottom: 2rpx solid #f1f5f9;
+		min-height: 84rpx;
 		.label {
-			width: 120rpx;
-			font-size: 26rpx;
-			color: #64748b;
+			width: 130rpx;
+			font-size: 28rpx;
+			color: $text2;
+			font-weight: 500;
 		}
 		.input {
 			flex: 1;
-			font-size: 26rpx;
-			color: #1e293b;
+			font-size: 28rpx;
+			color: $text1;
+			height: 72rpx;
+			background: $bg;
+			border-radius: 16rpx;
+			padding: 0 20rpx;
 		}
-		&.textarea-item {
-			border-bottom: none;
-		}
+		&.textarea-item { display: block; }
 		.textarea {
 			width: 100%;
 			min-height: 160rpx;
-			font-size: 26rpx;
-			color: #1e293b;
-			padding: 18rpx;
-			background-color: #f8fafc;
-			border-radius: 12rpx;
+			font-size: 28rpx;
+			color: $text1;
+			padding: 20rpx;
+			background-color: $bg;
+			border-radius: 16rpx;
 		}
 	}
 	.code-row {
 		.mini-btn {
 			width: 180rpx;
-			height: 60rpx;
-			line-height: 60rpx;
-			font-size: 22rpx;
-			border-radius: 30rpx;
-			background-color: #4f46e5;
+			height: 64rpx;
+			line-height: 64rpx;
+			font-size: 24rpx;
+			border-radius: 999rpx;
+			background: $gradient;
 			color: #ffffff;
 			padding: 0;
 			margin: 0;
+			&:active { transform: scale(0.96); }
 		}
 		.mini-btn[disabled] {
-			background-color: #a5b4fc;
+			background: $bg;
+			color: $text3;
 		}
 	}
 	.editor-actions {
 		display: flex;
 		gap: 20rpx;
-		margin-top: 20rpx;
+		margin-top: 28rpx;
 		.action-btn {
 			flex: 1;
-			height: 76rpx;
-			border-radius: 38rpx;
-			font-size: 28rpx;
+			height: 84rpx;
+			border-radius: 999rpx;
+			font-size: 30rpx;
+			font-weight: 600;
+			&:active { transform: scale(0.96); }
 			&.cancel {
-				background-color: #f1f5f9;
-				color: #475569;
+				background-color: $bg;
+				color: $text2;
 			}
 			&.save {
-				background-color: #4f46e5;
+				background: $gradient;
 				color: #ffffff;
+				box-shadow: 0 6rpx 20rpx rgba(0, 191, 255, 0.25);
 			}
 			&.danger {
-				background-color: #ef4444;
+				background-color: $danger;
 				color: #ffffff;
 			}
 		}

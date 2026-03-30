@@ -3,6 +3,7 @@ package org.majun.backend.config;
 import lombok.RequiredArgsConstructor;
 import org.majun.backend.websocket.AfterSaleMessageWebSocketHandler;
 import org.majun.backend.websocket.BountyMessageWebSocketHandler;
+import org.majun.backend.websocket.CustomerServiceWebSocketHandler;
 import org.majun.backend.websocket.PrintProgressWebSocketHandler;
 import org.majun.backend.websocket.UsedMessageWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,7 @@ public class PrintWebSocketConfig implements WebSocketConfigurer {
     private final AfterSaleMessageWebSocketHandler afterSaleMessageWebSocketHandler;
     private final BountyMessageWebSocketHandler bountyMessageWebSocketHandler;
     private final UsedMessageWebSocketHandler usedMessageWebSocketHandler;
+    private final CustomerServiceWebSocketHandler customerServiceWebSocketHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
@@ -26,5 +28,6 @@ public class PrintWebSocketConfig implements WebSocketConfigurer {
         registry.addHandler(afterSaleMessageWebSocketHandler, "/ws/after-sale/message").setAllowedOriginPatterns("*");
         registry.addHandler(bountyMessageWebSocketHandler, "/ws/bounty/message").setAllowedOriginPatterns("*");
         registry.addHandler(usedMessageWebSocketHandler, "/ws/used/message").setAllowedOriginPatterns("*");
+        registry.addHandler(customerServiceWebSocketHandler, "/ws/cs/message").setAllowedOriginPatterns("*");
     }
 }

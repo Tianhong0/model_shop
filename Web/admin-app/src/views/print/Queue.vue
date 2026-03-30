@@ -53,12 +53,13 @@
             <span>{{ formatLeft(scope.row) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="290" fixed="right">
           <template #default="scope">
             <el-button link @click="openEventDialog(scope.row)">日志</el-button>
             <el-button link type="primary" @click="handleRetry(scope.row)" :disabled="!canRetry(scope.row)">重试</el-button>
             <el-button link type="primary" @click="handleEdit(scope.row)" :disabled="!canAdjust(scope.row)">调整</el-button>
             <el-button link type="danger" @click="handleStop(scope.row)" :disabled="!canStop(scope.row)">终止</el-button>
+            <el-button link type="danger" @click="handleDelete(scope.row)" :disabled="!canDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -160,7 +161,7 @@
 import { ref, onMounted, onUnmounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import { adjustPrintJob, createPrinter, dispatchPrintJob, getPrintJobEvents, getPrintJobPage, getPrinterList, retryPrintJob, stopPrintJob } from '../../api/print'
+import { adjustPrintJob, createPrinter, deletePrintJob, dispatchPrintJob, getPrintJobEvents, getPrintJobPage, getPrinterList, retryPrintJob, stopPrintJob } from '../../api/print'
 
 const loading = ref(false)
 const jobs = ref([])
@@ -220,6 +221,8 @@ const canAdjust = (row) => statusNum(row) === 0
 const canStop = (row) => [0, 1, 3, 4, 5].includes(statusNum(row))
 
 const canRetry = (row) => [2, 7, 8].includes(statusNum(row))
+
+const canDelete = (row) => [2, 6, 7, 8].includes(statusNum(row))
 
 const tempText = (row) => {
   const tool = row.toolTempActual == null ? '-' : `${Number(row.toolTempActual).toFixed(1)}°C`
@@ -284,6 +287,18 @@ const handleRetry = (row) => {
   })
 }
 
+const handleDelete = (row) => {
+  ElMessageBox.confirm(`确定删除任务 ${row.id} 吗？此操作不可恢复。`, '提示', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'error'
+  }).then(async () => {
+    await deletePrintJob(row.id)
+    ElMessage.success('任务已删除')
+    loadJobs()
+  })
+}
+
 const openAddPrinter = () => {
   printerForm.printerName = ''
   printerForm.ip = ''
@@ -296,7 +311,8 @@ const openAddPrinter = () => {
 }
 
 const loadPrinters = async () => {
-  printers.value = await getPrinterList()
+  const result = await getPrinterList()
+  printers.value = result.records || []
 }
 
 const loadJobs = async (reset = false) => {
@@ -427,55 +443,78 @@ onUnmounted(() => {
 .header-actions {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 16px;
 }
+
 .table-card {
-  background: #fff;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
+
 .pager-wrap {
-  margin-top: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
   display: flex;
   justify-content: flex-end;
-  overflow-x: auto;
 }
+
 .event-list-wrap {
   max-height: 480px;
   overflow: auto;
   padding-right: 8px;
 }
+
 .event-item {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: var(--bg-secondary);
+  transition: background 0.2s ease;
 }
+
+.event-item:hover {
+  background: var(--bg-tertiary);
+}
+
 .event-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
+
 .event-time {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 12px;
 }
+
 .event-message {
-  color: #1e293b;
-  margin-bottom: 8px;
+  color: var(--text-primary);
+  margin-bottom: 10px;
   word-break: break-all;
+  font-weight: 500;
 }
+
 .event-payload {
   margin: 0;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 10px;
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  padding: 12px;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-all;
+  color: var(--text-secondary);
 }
 </style>

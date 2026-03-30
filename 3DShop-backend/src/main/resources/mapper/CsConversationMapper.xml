@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.majun.backend.repository.CsConversationRepository">
+
+    <select id="findActiveByUserId" resultType="org.majun.backend.entity.CsConversation">
+        SELECT * FROM cs_conversation
+        WHERE user_id = #{userId}
+        AND status IN (0, 1)
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="findWaitingConversations" resultType="org.majun.backend.entity.CsConversation">
+        SELECT * FROM cs_conversation
+        WHERE status = 0
+        ORDER BY create_time ASC
+        LIMIT 10
+    </select>
+
+    <select id="countActiveByAdminId" resultType="int">
+        SELECT COUNT(*) FROM cs_conversation
+        WHERE admin_id = #{adminId}
+        AND status = 1
+    </select>
+
+    <select id="findExpiredConversations" resultType="org.majun.backend.entity.CsConversation">
+        SELECT * FROM cs_conversation
+        WHERE status = 1
+        AND COALESCE(last_message_time, create_time) &lt; DATE_SUB(NOW(), INTERVAL #{timeoutMinutes} MINUTE)
+        LIMIT 50
+    </select>
+
+</mapper>

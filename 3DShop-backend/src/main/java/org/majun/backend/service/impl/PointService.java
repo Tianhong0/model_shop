@@ -30,9 +30,11 @@ public class PointService {
     public static final String BIZ_ORDER_POINT_DEDUCT = "ORDER_POINT_DEDUCT";
     public static final String BIZ_ORDER_POINT_REFUND = "ORDER_POINT_REFUND";
     public static final String BIZ_BOUNTY_RELEASE = "BOUNTY_RELEASE";
+    public static final String BIZ_ECO_MATERIAL = "ECO_MATERIAL";
 
     private static final int ORDER_REWARD_RATE = 1;
     private static final int BOUNTY_REWARD_RATE = 1;
+    private static final int ECO_MATERIAL_REWARD_POINTS = 5;  // 环保材料奖励积分
 
     private final PointAccountRepository pointAccountRepository;
     private final PointLedgerRepository pointLedgerRepository;
@@ -93,6 +95,12 @@ public class PointService {
         int points = toRewardPoints(amount, ORDER_REWARD_RATE);
         if (points <= 0) return;
         increase(userId, points, BIZ_USED_ORDER_SELL, orderSn, orderId, "二手交易卖出奖励积分");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void rewardEcoMaterial(Long userId, Long orderId, String orderSn) {
+        String bizNo = "ECO_" + orderSn;
+        increase(userId, ECO_MATERIAL_REWARD_POINTS, BIZ_ECO_MATERIAL, bizNo, orderId, "选择环保材料奖励积分");
     }
 
     @Transactional(rollbackFor = Exception.class)

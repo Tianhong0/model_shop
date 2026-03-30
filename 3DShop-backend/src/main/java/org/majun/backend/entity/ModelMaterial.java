@@ -64,6 +64,13 @@ public class ModelMaterial implements Serializable {
     private Boolean isTrusted;
 
     /**
+     * 是否环保材质
+     */
+    @TableField("is_eco")
+    @Schema(description = "是否环保材质")
+    private Boolean isEco;
+
+    /**
      * 创建时间
      */
     @TableField("create_time")

@@ -21,6 +21,7 @@ import org.majun.backend.entity.SysOrder;
 import org.majun.backend.enums.PrintJobStatus;
 import org.majun.backend.enums.PrintPrinterStatus;
 import org.majun.backend.event.PrintJobDoneEvent;
+import org.majun.backend.event.PrintJobRetryEvent;
 import org.majun.backend.repository.PrintJobEventRepository;
 import org.majun.backend.repository.PrintJobRepository;
 import org.majun.backend.repository.PrintPrinterRepository;
@@ -30,6 +31,7 @@ import org.majun.backend.service.OctoPrintService;
 import org.majun.backend.service.PrintJobService;
 import org.majun.backend.service.PrintWebSocketService;
 import org.majun.backend.service.SlicerService;
+import org.majun.backend.util.MinioUtil;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.PrintJobEventVO;
 import org.majun.backend.vo.PrintJobProgressVO;
@@ -38,6 +40,7 @@ import org.majun.backend.vo.PrintPrinterVO;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -70,8 +73,10 @@ public class PrintJobServiceImpl implements PrintJobService {
     private final SlicerService slicerService;
     private final OctoPrintService octoPrintService;
     private final PrintWebSocketService printWebSocketService;
+    private final MinioUtil minioUtil;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     public void createAndDispatchFromPaidOrder(Long orderId) {
@@ -415,6 +420,30 @@ public class PrintJobServiceImpl implements PrintJobService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void deleteJob(Long jobId) {
+        PrintJob job = getJobOrThrow(jobId);
+
+        // 如果正在打印，先取消 OctoPrint 任务
+        if (Objects.equals(job.getStatus(), PrintJobStatus.PRINTING.getCode())) {
+            PrintPrinter printer = job.getPrinterId() == null ? null : printPrinterRepository.selectById(job.getPrinterId());
+            if (printer != null && StringUtils.hasText(printer.getBaseUrl())) {
+                try {
+                    octoPrintService.cancelCurrent(printer.getBaseUrl(), printer.getAuthHeaderKey(), printer.getAuthHeaderValue());
+                } catch (Exception ex) {
+                    log.warn("删除任务时取消 OctoPrint 打印失败 jobId={}", jobId, ex);
+                }
+            }
+        }
+
+        releasePrinter(job.getPrinterId());
+        job.setFinishedAt(LocalDateTime.now());
+        printJobRepository.updateById(job);
+        printJobRepository.deleteById(jobId);
+        saveEvent(job.getId(), "DELETED", "管理员删除任务", null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void retryJob(Long jobId) {
         PrintJob job = getJobOrThrow(jobId);
         Integer status = job.getStatus();
@@ -440,7 +469,7 @@ public class PrintJobServiceImpl implements PrintJobService {
 
         saveEvent(job.getId(), "RETRY", "管理员重试任务", null);
         pushProgress(job);
-        runPipeline(job.getId(), job.getPrinterId());
+        applicationEventPublisher.publishEvent(new PrintJobRetryEvent(job.getId(), job.getPrinterId()));
     }
 
     @Override
@@ -542,69 +571,108 @@ public class PrintJobServiceImpl implements PrintJobService {
         }
     }
 
-    private void runPipeline(Long jobId, Long preferredPrinterId) {
-        PrintJob job = getJobOrThrow(jobId);
-        Long reservedPrinterId = reservePrinter(preferredPrinterId);
-        if (reservedPrinterId == null) {
-            saveEvent(job.getId(), "WAIT_PRINTER", "暂无空闲打印机，等待排产", null);
-            pushProgress(job);
-            return;
-        }
+    @Override
+    public void runPipeline(Long jobId, Long preferredPrinterId) {
+        // ── Phase 1: 短事务（< 100ms）— 预留打印机 + 标记 SLICING ──
+        PipelineContext ctx = transactionTemplate.execute(status -> {
+            PrintJob job = getJobOrThrow(jobId);
+            Long reservedPrinterId = reservePrinter(preferredPrinterId);
+            if (reservedPrinterId == null) {
+                saveEvent(job.getId(), "WAIT_PRINTER", "暂无空闲打印机，等待排产", null);
+                pushProgress(job);
+                return null;
+            }
 
-        PrintPrinter printer = printPrinterRepository.selectById(reservedPrinterId);
-        if (printer == null) {
-            throw new BusinessException("打印机不存在");
-        }
+            PrintPrinter printer = printPrinterRepository.selectById(reservedPrinterId);
+            if (printer == null) {
+                throw new BusinessException("打印机不存在");
+            }
 
-        try {
             printPrinterRepository.update(null,
                 new LambdaUpdateWrapper<PrintPrinter>()
                     .eq(PrintPrinter::getId, reservedPrinterId)
                     .set(PrintPrinter::getCurrentJobId, jobId));
 
-            updateJobStatusAndPush(job.getId(), PrintJobStatus.SLICING.getCode(), null);
+            updateJobStatus(job.getId(), PrintJobStatus.SLICING.getCode(), null);
+            saveEvent(job.getId(), "SLICING", "开始切片", null);
+
+            return new PipelineContext(
+                reservedPrinterId,
+                job.getLayerHeight(),
+                job.getFillDensity(),
+                job.getFilamentDiameter(),
+                printer.getBaseUrl(),
+                printer.getAuthHeaderKey(),
+                printer.getAuthHeaderValue()
+            );
+        });
+
+        if (ctx == null) {
+            return;
+        }
+
+        pushProgress(getJobOrThrow(jobId));
+
+        // ── Phase 2: 无事务（10-30s）— 文件准备 + Slic3r 切片 ──
+        String gcode;
+        try {
             PrintJob fresh = getJobOrThrow(jobId);
-                String localModelFileName = ensureModelLocalFile(fresh);
-            String gcode;
-            try {
-                gcode = slicerService.executeSlice(
-                    localModelFileName,
-                        fresh.getLayerHeight().doubleValue(),
-                        fresh.getFillDensity(),
-                        fresh.getFilamentDiameter().doubleValue()
-                );
-            } catch (Exception sliceEx) {
-                releasePrinter(reservedPrinterId);
-                updateJobStatusAndPush(job.getId(), PrintJobStatus.SLICE_FAILED.getCode(), sliceEx.getMessage());
-                saveEvent(job.getId(), "SLICE_FAILED", "切片失败", sliceEx.getMessage());
-                return;
-            }
+            String localModelFileName = ensureModelLocalFile(fresh);
+            gcode = slicerService.executeSlice(
+                localModelFileName,
+                ctx.layerHeight().doubleValue(),
+                ctx.fillDensity(),
+                ctx.filamentDiameter().doubleValue()
+            );
+        } catch (Exception sliceEx) {
+            log.error("切片失败 jobId={}", jobId, sliceEx);
+            transactionTemplate.executeWithoutResult(status -> {
+                releasePrinter(ctx.printerId());
+                updateJobStatus(jobId, PrintJobStatus.SLICE_FAILED.getCode(), sliceEx.getMessage());
+                saveEvent(jobId, "SLICE_FAILED", "切片失败", sliceEx.getMessage());
+            });
+            pushProgress(getJobOrThrow(jobId));
+            return;
+        }
 
-            fresh.setGcodeFileName(gcode);
-            fresh.setPrinterId(reservedPrinterId);
-            fresh.setStatus(PrintJobStatus.READY_TO_PRINT.getCode());
-            fresh.setStartedAt(LocalDateTime.now());
-            printJobRepository.updateById(fresh);
-            saveEvent(fresh.getId(), "SLICED", "切片完成", gcode);
-            pushProgress(fresh);
+        // ── Phase 3: 短事务（< 100ms）— 更新切片结果 + 提交打印 ──
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                PrintJob latest = getJobOrThrow(jobId);
+                latest.setGcodeFileName(gcode);
+                latest.setPrinterId(ctx.printerId());
+                latest.setStatus(PrintJobStatus.READY_TO_PRINT.getCode());
+                latest.setStartedAt(LocalDateTime.now());
+                printJobRepository.updateById(latest);
+                saveEvent(latest.getId(), "SLICED", "切片完成", gcode);
+            });
+            pushProgress(getJobOrThrow(jobId));
 
-                octoPrintService.uploadAndStartPrint(
-                    printer.getBaseUrl(),
-                    gcode,
-                    buildWorkPath(gcode),
-                    printer.getAuthHeaderKey(),
-                    printer.getAuthHeaderValue()
-                );
+            // OctoPrint 上传也在事务外执行，避免网络延迟持锁
+            octoPrintService.uploadAndStartPrint(
+                ctx.printerBaseUrl(),
+                gcode,
+                buildWorkPath(gcode),
+                ctx.printerAuthKey(),
+                ctx.printerAuthValue()
+            );
 
-            fresh.setStatus(PrintJobStatus.PRINTING.getCode());
-            fresh.setProgress(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
-            printJobRepository.updateById(fresh);
-            saveEvent(fresh.getId(), "PRINTING", "已提交 OctoPrint 打印", null);
-            pushProgress(fresh);
+            transactionTemplate.executeWithoutResult(status -> {
+                PrintJob latest = getJobOrThrow(jobId);
+                latest.setStatus(PrintJobStatus.PRINTING.getCode());
+                latest.setProgress(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+                printJobRepository.updateById(latest);
+                saveEvent(latest.getId(), "PRINTING", "已提交 OctoPrint 打印", null);
+            });
+            pushProgress(getJobOrThrow(jobId));
         } catch (Exception ex) {
-            releasePrinter(reservedPrinterId);
-            updateJobStatusAndPush(job.getId(), PrintJobStatus.FAILED.getCode(), ex.getMessage());
-            saveEvent(job.getId(), "FAILED", "任务失败", ex.getMessage());
+            log.error("提交打印失败 jobId={}", jobId, ex);
+            transactionTemplate.executeWithoutResult(status -> {
+                releasePrinter(ctx.printerId());
+                updateJobStatus(jobId, PrintJobStatus.FAILED.getCode(), ex.getMessage());
+                saveEvent(jobId, "FAILED", "任务失败", ex.getMessage());
+            });
+            pushProgress(getJobOrThrow(jobId));
         }
     }
 
@@ -859,7 +927,9 @@ public class PrintJobServiceImpl implements PrintJobService {
 
             String sourcePath = source.sourcePath();
             if (isHttpUrl(sourcePath)) {
-                downloadToLocal(sourcePath, targetPath);
+                // 将公网 URL 转换为内网 URL，后端在 WSL 内部只能访问 127.0.0.1:9000
+                String internalUrl = minioUtil.toInternalUrl(sourcePath);
+                downloadToLocal(internalUrl, targetPath);
             } else if (StringUtils.hasText(sourcePath)) {
                 Path sourceLocalPath = Paths.get(sourcePath.trim());
                 if (!Files.exists(sourceLocalPath)) {
@@ -1051,6 +1121,16 @@ public class PrintJobServiceImpl implements PrintJobService {
         }
         return "Unknown";
     }
+
+    private record PipelineContext(
+        Long printerId,
+        BigDecimal layerHeight,
+        Integer fillDensity,
+        BigDecimal filamentDiameter,
+        String printerBaseUrl,
+        String printerAuthKey,
+        String printerAuthValue
+    ) {}
 
     private record SliceParams(BigDecimal layerHeight, Integer fillDensity, BigDecimal filamentDiameter, Integer priority) {
     }

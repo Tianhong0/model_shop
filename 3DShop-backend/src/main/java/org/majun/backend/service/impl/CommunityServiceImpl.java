@@ -493,10 +493,12 @@ public class CommunityServiceImpl implements CommunityService {
         Set<Long> userIds = posts.stream().map(SysPost::getUserId).collect(Collectors.toSet());
         Set<Long> categoryIds = posts.stream().map(SysPost::getCategoryId).collect(Collectors.toSet());
 
-        Map<Long, SysUser> userMap = userRepository.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(SysUser::getId, Function.identity()));
-        Map<Long, SysPostCategory> categoryMap = postCategoryRepository.selectBatchIds(categoryIds).stream()
-                .collect(Collectors.toMap(SysPostCategory::getId, Function.identity()));
+        Map<Long, SysUser> userMap = userIds.isEmpty() ? Map.of() :
+                userRepository.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(SysUser::getId, Function.identity()));
+        Map<Long, SysPostCategory> categoryMap = categoryIds.isEmpty() ? Map.of() :
+                postCategoryRepository.selectBatchIds(categoryIds).stream()
+                        .collect(Collectors.toMap(SysPostCategory::getId, Function.identity()));
 
         Map<Long, List<SysPostMedia>> mediaMap = postMediaRepository.selectList(new LambdaQueryWrapper<SysPostMedia>()
                         .in(SysPostMedia::getPostId, postIds)
@@ -561,12 +563,16 @@ public class CommunityServiceImpl implements CommunityService {
         }
         List<Long> replyIds = replies.stream().map(SysPostReply::getId).toList();
         Set<Long> userIds = replies.stream().map(SysPostReply::getUserId).collect(Collectors.toSet());
-        Map<Long, SysUser> userMap = userRepository.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(SysUser::getId, Function.identity()));
+        Map<Long, SysUser> userMap = userIds.isEmpty() ? Map.of() :
+                userRepository.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(SysUser::getId, Function.identity()));
         Set<Long> likedReplyIds = currentUserId == null ? Set.of() : postReplyInteractionRepository.selectList(new LambdaQueryWrapper<SysPostReplyInteraction>()
                         .eq(SysPostReplyInteraction::getUserId, currentUserId)
                         .in(SysPostReplyInteraction::getReplyId, replyIds))
                 .stream().map(SysPostReplyInteraction::getReplyId).collect(Collectors.toSet());
+
+        Map<Long, SysPostReply> replyMap = replies.stream()
+                .collect(Collectors.toMap(SysPostReply::getId, Function.identity()));
 
         return replies.stream().map(reply -> {
             PostReplyVO vo = new PostReplyVO();
@@ -585,6 +591,14 @@ public class CommunityServiceImpl implements CommunityService {
             SysUser user = userMap.get(reply.getUserId());
             vo.setUserNickname(user == null ? "用户" : (StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUserName()));
             vo.setUserAvatar(user == null ? null : user.getAvatar());
+
+            if (reply.getParentId() != null && reply.getParentId() > 0) {
+                SysPostReply parentReply = replyMap.get(reply.getParentId());
+                if (parentReply != null) {
+                    SysUser parentUser = userMap.get(parentReply.getUserId());
+                    vo.setParentUserNickname(parentUser == null ? "用户" : (StringUtils.hasText(parentUser.getNickname()) ? parentUser.getNickname() : parentUser.getUserName()));
+                }
+            }
             return vo;
         }).toList();
     }

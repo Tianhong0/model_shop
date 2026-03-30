@@ -81,6 +81,7 @@ public class UsedTradeServiceImpl implements UsedTradeService {
     private final SysUserRepository sysUserRepository;
     private final WalletAccountRepository walletAccountRepository;
     private final WalletLedgerRepository walletLedgerRepository;
+    private final WalletFrozenRecordRepository walletFrozenRecordRepository;
     private final ObjectMapper objectMapper;
     private final UsedMessageWebSocketService usedMessageWebSocketService;
     private final PaymentProperties paymentProperties;
@@ -594,8 +595,30 @@ public class UsedTradeServiceImpl implements UsedTradeService {
         order.setStatus(UsedOrderStatus.COMPLETED.getCode());
         order.setReceiveTime(LocalDateTime.now());
         usedOrderRepository.updateById(order);
+
+        // 卖家钱包入账：根据系统设计，二手交易采用担保机制，买家确认收货后资金结算给卖家
+        settleSellerIncome(order);
+
         pointService.rewardUsedOrderSell(order.getSellerId(), order.getId(), order.getOrderSn(), order.getOrderAmount());
         appendSystemMessage(order.getListingId(), order.getSellerId(), userId, "买家已确认收货，本次交易已完成");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateOrderAddress(UsedOrderAddressUpdateRequest request, Long userId) {
+        UsedOrder order = getOrderOrThrow(request.getOrderId());
+        if (!Objects.equals(order.getBuyerId(), userId)) {
+            throw new BusinessException(ResultCode.PERMISSION_DENIED, "无权修改该订单收货地址");
+        }
+        // 只有待支付和待发货状态可以修改收货地址
+        if (!Objects.equals(order.getStatus(), UsedOrderStatus.PENDING_PAYMENT.getCode())
+                && !Objects.equals(order.getStatus(), UsedOrderStatus.WAIT_SHIPMENT.getCode())) {
+            throw new BusinessException("当前订单状态不可修改收货地址");
+        }
+        order.setReceiverName(trim(request.getReceiverName()));
+        order.setReceiverPhone(trim(request.getReceiverPhone()));
+        order.setReceiverAddress(trim(request.getReceiverAddress()));
+        usedOrderRepository.updateById(order);
     }
 
     @Override
@@ -894,14 +917,20 @@ public class UsedTradeServiceImpl implements UsedTradeService {
         LambdaQueryWrapper<UsedAfterSale> wrapper = new LambdaQueryWrapper<UsedAfterSale>()
                 .eq(UsedAfterSale::getIsDelete, 0)
                 .orderByDesc(UsedAfterSale::getCreateTime);
+        if (safeRequest.getStatus() != null) {
+            wrapper.eq(UsedAfterSale::getStatus, safeRequest.getStatus());
+        } else if (safeRequest.getStatuses() != null && !safeRequest.getStatuses().isEmpty()) {
+            wrapper.in(UsedAfterSale::getStatus, safeRequest.getStatuses());
+        }
         if (sellerMode) {
             wrapper.eq(UsedAfterSale::getSellerId, userId);
         } else {
             wrapper.eq(UsedAfterSale::getBuyerId, userId);
         }
         Page<UsedAfterSale> result = usedAfterSaleRepository.selectPage(page, wrapper);
-        Map<Long, UsedOrder> orderMap = usedOrderRepository.selectBatchIds(result.getRecords().stream().map(UsedAfterSale::getOrderId).collect(Collectors.toSet()))
-                .stream().collect(Collectors.toMap(UsedOrder::getId, Function.identity()));
+        Set<Long> orderIds = result.getRecords().stream().map(UsedAfterSale::getOrderId).collect(Collectors.toSet());
+        Map<Long, UsedOrder> orderMap = orderIds.isEmpty() ? Map.of()
+                : usedOrderRepository.selectBatchIds(orderIds).stream().collect(Collectors.toMap(UsedOrder::getId, Function.identity()));
         List<UsedAfterSaleVO> records = result.getRecords().stream().map(item -> toAfterSaleVO(item, orderMap.get(item.getOrderId()))).toList();
         return buildPageResult(records, result.getTotal(), safeRequest.getPageNum(), safeRequest.getPageSize(), result.getPages());
     }
@@ -1595,6 +1624,76 @@ public class UsedTradeServiceImpl implements UsedTradeService {
 
         wallet.setAvailableBalance(afterAvailable);
         wallet.setVersion(wallet.getVersion() + 1);
+    }
+
+    /**
+     * 二手交易卖家入账：买家确认收货后，将订单金额冻结7天，到期后自动解冻
+     */
+    private void settleSellerIncome(UsedOrder order) {
+        BigDecimal amount = normalizeAmount(order.getOrderAmount());
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        WalletAccount sellerWallet = getOrCreateWallet(order.getSellerId());
+        if (!Objects.equals(sellerWallet.getStatus(), 1)) {
+            log.warn("卖家钱包状态异常，无法入账 sellerId={}, orderId={}", order.getSellerId(), order.getId());
+            return;
+        }
+
+        // 冻结资金7天
+        int frozenDays = 7;
+        BigDecimal beforeAvailable = amount(sellerWallet.getAvailableBalance());
+        BigDecimal beforeFrozen = amount(sellerWallet.getFrozenBalance());
+        BigDecimal afterFrozen = beforeFrozen.add(amount);
+
+        int updated = walletAccountRepository.update(null,
+                new LambdaUpdateWrapper<WalletAccount>()
+                        .eq(WalletAccount::getId, sellerWallet.getId())
+                        .eq(WalletAccount::getVersion, sellerWallet.getVersion())
+                        .eq(WalletAccount::getIsDelete, 0)
+                        .set(WalletAccount::getFrozenBalance, afterFrozen)
+                        .set(WalletAccount::getVersion, sellerWallet.getVersion() + 1)
+        );
+        if (updated <= 0) {
+            log.error("卖家钱包冻结失败 sellerId={}, orderId={}", order.getSellerId(), order.getId());
+            throw new BusinessException("卖家钱包冻结失败，请重试");
+        }
+
+        // 记录冻结流水
+        WalletLedger ledger = new WalletLedger();
+        ledger.setUserId(order.getSellerId());
+        ledger.setAccountId(sellerWallet.getId());
+        ledger.setDirection(WalletLedgerDirection.FREEZE.getCode());
+        ledger.setBizType("USED_ORDER_SELL_INCOME");
+        ledger.setBizNo(String.valueOf(order.getId()));
+        ledger.setRefId(order.getId());
+        ledger.setAmount(amount);
+        ledger.setBeforeAvailable(beforeAvailable);
+        ledger.setAfterAvailable(beforeAvailable);
+        ledger.setBeforeFrozen(beforeFrozen);
+        ledger.setAfterFrozen(afterFrozen);
+        ledger.setRemark("二手交易卖出收入冻结7天，订单号:" + order.getOrderSn());
+        walletLedgerRepository.insert(ledger);
+
+        // 创建冻结记录
+        LocalDateTime now = LocalDateTime.now();
+        WalletFrozenRecord frozenRecord = new WalletFrozenRecord();
+        frozenRecord.setUserId(order.getSellerId());
+        frozenRecord.setAccountId(sellerWallet.getId());
+        frozenRecord.setAmount(amount);
+        frozenRecord.setBizType("USED_ORDER_SELL_INCOME");
+        frozenRecord.setBizNo(String.valueOf(order.getId()));
+        frozenRecord.setRefId(order.getId());
+        frozenRecord.setFrozenDays(frozenDays);
+        frozenRecord.setFrozenStartTime(now);
+        frozenRecord.setFrozenEndTime(now.plusDays(frozenDays));
+        frozenRecord.setStatus(0);
+        frozenRecord.setRemark("二手交易卖出收入，订单号:" + order.getOrderSn());
+        frozenRecord.setIsDelete(0);
+        walletFrozenRecordRepository.insert(frozenRecord);
+
+        log.info("二手交易卖家收入已冻结 sellerId={}, orderId={}, amount={}, frozenDays={}", order.getSellerId(), order.getId(), amount, frozenDays);
     }
 
     private BigDecimal amount(BigDecimal value) {

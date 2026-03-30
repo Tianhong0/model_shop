@@ -32,10 +32,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="下单时间" width="180" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="scope">
             <el-button link type="primary" @click="handleDetail(scope.row)">详情</el-button>
             <el-button link type="primary" @click="openStatusDialog(scope.row)">修改状态</el-button>
+            <el-button
+              v-if="scope.row.orderStatus === 2"
+              link
+              type="success"
+              @click="handleRetryShip(scope.row)"
+            >重新发货</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -103,13 +109,47 @@
         <el-button type="primary" :loading="statusSubmitting" @click="submitStatus">确定</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="shipVisible" title="重新发货" width="550px">
+      <el-form :model="shipForm" label-width="100px">
+        <el-form-item label="订单号">
+          <span>{{ shipForm.orderSn }}</span>
+        </el-form-item>
+        <el-form-item label="收件人姓名">
+          <el-input v-model="shipForm.receiverName" placeholder="留空则从订单信息提取" />
+        </el-form-item>
+        <el-form-item label="收件人电话">
+          <el-input v-model="shipForm.receiverPhone" placeholder="留空则从订单信息提取" />
+        </el-form-item>
+        <el-form-item label="收件人地址">
+          <el-input
+            v-model="shipForm.receiverAddress"
+            type="textarea"
+            :rows="2"
+            placeholder="留空则从订单信息提取"
+          />
+        </el-form-item>
+        <el-alert
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-top: 8px"
+        >
+          如订单信息中缺少收件信息，请手动填写后提交
+        </el-alert>
+      </el-form>
+      <template #footer>
+        <el-button @click="shipVisible = false">取消</el-button>
+        <el-button type="primary" :loading="shipSubmitting" @click="submitShip">确定发货</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getAdminOrderDetail, getAdminOrderList, updateAdminOrderStatus } from '../../api/order'
+import { getAdminOrderDetail, getAdminOrderList, updateAdminOrderStatus, retryAutoShip } from '../../api/order'
 
 const loading = ref(false)
 const total = ref(0)
@@ -125,6 +165,16 @@ const statusForm = reactive({
   orderSn: '',
   status: 0,
   printerId: null
+})
+
+const shipVisible = ref(false)
+const shipSubmitting = ref(false)
+const shipForm = reactive({
+  orderId: null,
+  orderSn: '',
+  receiverName: '',
+  receiverPhone: '',
+  receiverAddress: ''
 })
 
 const queryParams = reactive({
@@ -243,34 +293,99 @@ const submitStatus = async () => {
   }
 }
 
+const handleRetryShip = (row) => {
+  Object.assign(shipForm, {
+    orderId: row.id,
+    orderSn: row.orderSn,
+    receiverName: '',
+    receiverPhone: '',
+    receiverAddress: ''
+  })
+  shipVisible.value = true
+}
+
+const submitShip = async () => {
+  shipSubmitting.value = true
+  try {
+    const deliveryId = await retryAutoShip({
+      orderId: shipForm.orderId,
+      receiverName: shipForm.receiverName || null,
+      receiverPhone: shipForm.receiverPhone || null,
+      receiverAddress: shipForm.receiverAddress || null
+    })
+    ElMessage.success(`发货成功，物流单ID: ${deliveryId}`)
+    shipVisible.value = false
+    await fetchOrderList()
+  } catch (error) {
+    console.error('重新发货失败:', error)
+    ElMessage.error(error.message || '重新发货失败')
+  } finally {
+    shipSubmitting.value = false
+  }
+}
+
 onMounted(() => {
   fetchOrderList()
 })
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
-.table-card {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+.page-container {
+  padding: 0;
 }
+
+.table-card {
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
 .header-actions {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
 }
+
+.header-actions :deep(.el-input__wrapper),
+.header-actions :deep(.el-select .el-input__wrapper) {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.header-actions :deep(.el-input__wrapper:hover) {
+  border-color: var(--border-dark);
+}
+
+.header-actions :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-lighter);
+}
+
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
 }
+
 .json-block {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 12px;
-  color: #334155;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: var(--radius-md);
 }
 </style>

@@ -1,18 +1,32 @@
 <template>
   <view class="page" v-if="detail">
-    <view class="card">
+    <!-- Order Info Card -->
+    <view class="card fadeInUp">
       <view class="row-between">
         <text class="sn">{{ detail.orderSn }}</text>
-        <text class="status">{{ statusText(detail.status) }}</text>
+        <text class="status-badge">{{ statusText(detail.status) }}</text>
       </view>
       <view class="title">{{ detail.listingTitle }}</view>
       <view class="meta">订单金额：￥{{ Number(detail.orderAmount || 0).toFixed(2) }}</view>
-      <view class="meta">收货人：{{ detail.receiverName }} {{ detail.receiverPhone }}</view>
-      <view class="meta">收货地址：{{ detail.receiverAddress }}</view>
+      <view class="address-section" v-if="role === 'buy' && (detail.status === 0 || detail.status === 1)" @click="selectAddress">
+        <view class="address-icon">📍</view>
+        <view class="address-info">
+          <view class="addr-name">{{ detail.receiverName || '收货人' }} {{ detail.receiverPhone || '' }}</view>
+          <text class="addr-detail">{{ detail.receiverAddress || '请选择收货地址' }}</text>
+        </view>
+        <view class="arrow">
+          <uni-icons type="right" size="16" color="#94a3b8"></uni-icons>
+        </view>
+      </view>
+      <template v-else>
+        <view class="meta">收货人：{{ detail.receiverName }} {{ detail.receiverPhone }}</view>
+        <view class="meta">收货地址：{{ detail.receiverAddress }}</view>
+      </template>
       <view class="meta">物流信息：{{ detail.deliveryCompany || '-' }} {{ detail.deliverySn || '' }}</view>
     </view>
 
-    <view v-if="role === 'buy' && detail.status === 0" class="card">
+    <!-- Payment Method Card -->
+    <view v-if="role === 'buy' && detail.status === 0" class="card fadeInUp">
       <view class="section-title">支付方式</view>
       <view class="pay-method-list">
         <view class="pay-method-item" :class="{ active: payMethod === 'wallet' }" @click="payMethod = 'wallet'">
@@ -32,7 +46,8 @@
       </view>
     </view>
 
-    <view class="card" v-if="detail.afterSale">
+    <!-- After Sale Info Card -->
+    <view class="card fadeInUp" v-if="detail.afterSale">
       <view class="section-title">售后信息</view>
       <view class="meta">售后单号：{{ detail.afterSale.afterSaleSn }}</view>
       <view class="meta">售后状态：{{ afterSaleText(detail.afterSale.status) }}</view>
@@ -40,6 +55,7 @@
       <view class="meta">卖家备注：{{ detail.afterSale.sellerRemark || '-' }}</view>
     </view>
 
+    <!-- Ship Popup -->
     <view v-if="shipPopupVisible" class="popup-mask" @click="closeShipPopup">
       <view class="popup-card" @click.stop>
         <view class="popup-title">填写发货信息</view>
@@ -52,6 +68,7 @@
       </view>
     </view>
 
+    <!-- Bottom Bar -->
     <view class="bottom-bar">
       <button class="ghost-btn" @click="goReport">举报</button>
       <button v-if="role === 'buy' && detail.status === 0" class="primary-btn" @click="payOrder">立即支付</button>
@@ -67,9 +84,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getWalletAccountApi } from '../../api/wallet'
-import { auditUsedAfterSaleBySellerApi, cancelUsedOrderApi, confirmUsedOrderApi, getUsedOrderDetailApi, getUsedOrderPayStatusApi, payUsedOrderApi, payUsedOrderByWalletApi, shipUsedOrderApi, syncUsedOrderPayStatusApi } from '../../api/used'
+import { auditUsedAfterSaleBySellerApi, cancelUsedOrderApi, confirmUsedOrderApi, getUsedOrderDetailApi, getUsedOrderPayStatusApi, payUsedOrderApi, payUsedOrderByWalletApi, shipUsedOrderApi, syncUsedOrderPayStatusApi, updateUsedOrderAddressApi } from '../../api/used'
 
 const orderId = ref('')
 const role = ref('buy')
@@ -82,6 +99,9 @@ const shipForm = ref({
   deliveryCompany: '',
   deliverySn: ''
 })
+
+const ADDRESS_STORAGE_KEY = 'user_addresses'
+const USED_ORDER_SELECTED_ADDRESS_KEY = 'used_order_selected_address_id'
 
 const statusText = (status) => ({ 0: '待支付', 1: '待发货', 2: '待收货', 3: '已完成', 4: '已取消', 5: '售后中' }[Number(status)] || '未知')
 const afterSaleText = (status) => ({ 0: '待处理', 1: '已同意', 2: '已拒绝', 3: '平台介入', 4: '已退款', 5: '已关闭' }[Number(status)] || '未知')
@@ -305,6 +325,61 @@ const closeShipPopup = () => {
   shipPopupVisible.value = false
 }
 
+const selectAddress = () => {
+  uni.navigateTo({ url: '/pages/user/address?select=1&used_order=1' })
+}
+
+const normalizeAddress = (item) => {
+  if (!item) return null
+  return {
+    id: item.id || '',
+    name: item.name || '',
+    phone: item.phone || '',
+    province: item.province || '',
+    city: item.city || '',
+    district: item.district || '',
+    detail: item.detail || ''
+  }
+}
+
+const checkSelectedAddressAndUpdate = async () => {
+  const selectedId = uni.getStorageSync(USED_ORDER_SELECTED_ADDRESS_KEY)
+  if (!selectedId) return
+  uni.removeStorageSync(USED_ORDER_SELECTED_ADDRESS_KEY)
+
+  const list = uni.getStorageSync(ADDRESS_STORAGE_KEY)
+  if (!Array.isArray(list)) return
+
+  const selected = list.find(item => String(item.id) === String(selectedId))
+  if (!selected) return
+
+  const addr = normalizeAddress(selected)
+  const receiverName = addr.name
+  const receiverPhone = addr.phone
+  const receiverAddress = `${addr.province}${addr.city}${addr.district}${addr.detail}`
+
+  if (!receiverName || !receiverPhone || !receiverAddress) {
+    uni.showToast({ title: '地址信息不完整', icon: 'none' })
+    return
+  }
+
+  try {
+    uni.showLoading({ title: '更新地址中...' })
+    await updateUsedOrderAddressApi({
+      orderId: orderId.value,
+      receiverName,
+      receiverPhone,
+      receiverAddress
+    })
+    uni.hideLoading()
+    uni.showToast({ title: '地址已更新', icon: 'success' })
+    await loadDetail()
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({ title: error.message || '更新失败', icon: 'none' })
+  }
+}
+
 const submitShipOrder = async () => {
   const deliveryCompany = String(shipForm.value.deliveryCompany || '').trim()
   const deliverySn = String(shipForm.value.deliverySn || '').trim()
@@ -352,30 +427,194 @@ onLoad(async (options) => {
     uni.showToast({ title: error.message || '加载失败', icon: 'none' })
   }
 })
+
+onShow(() => {
+  checkSelectedAddressAndUpdate()
+})
 </script>
 
 <style scoped lang="scss">
-.page { min-height: 100vh; background: #f8fafc; padding: 20rpx 20rpx 140rpx; }
-.card { background: #fff; border-radius: 24rpx; padding: 24rpx; margin-bottom: 20rpx; }
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$danger: #ff4d6d;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fadeInUp { animation: fadeInUp 0.4s ease both; }
+
+.page {
+  min-height: 100vh;
+  padding: 28rpx 28rpx 160rpx;
+  background: $bg;
+}
+
+.card {
+  background: $card;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: $shadow;
+}
+
 .row-between { display: flex; justify-content: space-between; align-items: center; }
-.sn, .status, .meta { font-size: 24rpx; color: #64748b; }
-.title { margin-top: 16rpx; font-size: 32rpx; color: #0f172a; font-weight: 700; }
-.meta { margin-top: 12rpx; line-height: 1.6; }
-.section-title { font-size: 28rpx; font-weight: 600; color: #0f172a; }
-.pay-method-list { margin-top: 20rpx; display: flex; flex-direction: column; gap: 16rpx; }
-.pay-method-item { display: flex; align-items: center; justify-content: space-between; padding: 22rpx 24rpx; border-radius: 22rpx; background: #f8fafc; border: 2rpx solid transparent; }
-.pay-method-item.active { border-color: #111827; background: #eff6ff; }
-.pay-method-title { font-size: 28rpx; font-weight: 700; color: #0f172a; }
-.pay-method-desc { margin-top: 8rpx; font-size: 24rpx; color: #64748b; }
-.pay-method-check { width: 44rpx; height: 44rpx; border-radius: 50%; background: #111827; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26rpx; }
-.bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; padding: 20rpx; display: flex; gap: 16rpx; box-shadow: 0 -8rpx 24rpx rgba(15, 23, 42, 0.08); flex-wrap: wrap; }
-.ghost-btn, .primary-btn { flex: 1; min-width: 220rpx; border-radius: 999rpx; }
-.ghost-btn { background: #eef2ff; color: #4338ca; }
-.primary-btn { background: #111827; color: #fff; }
-.popup-mask { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; align-items: center; justify-content: center; padding: 32rpx; z-index: 20; }
-.popup-card { width: 100%; background: #fff; border-radius: 28rpx; padding: 28rpx; box-sizing: border-box; }
-.popup-title { font-size: 30rpx; font-weight: 700; color: #0f172a; margin-bottom: 20rpx; }
-.popup-input { width: 100%; height: 88rpx; background: #f8fafc; border-radius: 20rpx; padding: 0 24rpx; box-sizing: border-box; font-size: 28rpx; color: #0f172a; margin-bottom: 16rpx; }
-.popup-actions { display: flex; gap: 16rpx; margin-top: 8rpx; }
+
+.sn { font-size: 24rpx; color: $text2; }
+
+.status-badge {
+  font-size: 24rpx;
+  color: $deep;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(0, 191, 255, 0.08);
+}
+
+.title { margin-top: 16rpx; font-size: 30rpx; color: $text1; font-weight: 700; }
+
+.meta { margin-top: 12rpx; font-size: 24rpx; color: $text2; line-height: 1.7; }
+
+.address-section {
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+  padding: 20rpx;
+  background: #fafbfc;
+  border-radius: 16rpx;
+
+  .address-icon {
+    font-size: 36rpx;
+  }
+  .address-info {
+    flex: 1;
+    margin-left: 16rpx;
+  }
+  .addr-name {
+    display: block;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: $text1;
+  }
+  .addr-detail {
+    display: block;
+    font-size: 24rpx;
+    color: $text2;
+    margin-top: 6rpx;
+  }
+  .arrow {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.section-title { font-size: 30rpx; font-weight: 600; color: $text1; margin-bottom: 16rpx; }
+
+.pay-method-list { display: flex; flex-direction: column; gap: 16rpx; }
+
+.pay-method-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: #fafbfc;
+  box-shadow: inset 0 0 0 2rpx transparent;
+}
+
+.pay-method-item.active {
+  box-shadow: inset 0 0 0 2rpx $primary;
+  background: rgba(0, 191, 255, 0.04);
+}
+
+.pay-method-title { font-size: 28rpx; font-weight: 700; color: $text1; }
+.pay-method-desc { margin-top: 8rpx; font-size: 24rpx; color: $text2; }
+
+.pay-method-check {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: $gradient;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
+  padding: 20rpx 28rpx;
+  display: flex;
+  gap: 16rpx;
+  box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.04);
+  flex-wrap: wrap;
+}
+
+.ghost-btn, .primary-btn {
+  flex: 1;
+  min-width: 200rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  &:active { transform: scale(0.96); }
+}
+
+.ghost-btn {
+  background: rgba(0, 191, 255, 0.08);
+  color: $deep;
+}
+
+.primary-btn {
+  background: $gradient;
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(0, 191, 255, 0.2);
+}
+
+.popup-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 32, 48, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36rpx;
+  z-index: 20;
+}
+
+.popup-card {
+  width: 100%;
+  background: $card;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-sizing: border-box;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.1);
+}
+
+.popup-title { font-size: 30rpx; font-weight: 700; color: $text1; margin-bottom: 24rpx; }
+
+.popup-input {
+  width: 100%;
+  height: 88rpx;
+  background: #fafbfc;
+  border-radius: 20rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: $text1;
+  margin-bottom: 16rpx;
+}
+
+.popup-actions { display: flex; gap: 16rpx; margin-top: 12rpx; }
 .popup-btn { min-width: 0; }
 </style>

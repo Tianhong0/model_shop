@@ -49,7 +49,7 @@ public class OrderPaymentController {
         return Result.success(orderPaymentService.createBatchAppPayOrder(request, loginUser.getId()));
     }
 
-    @Operation(summary = "Wallet pay single order", description = "Use wallet balance to pay a single order")
+    // ==================== 钱包支付 ====================
     @PostMapping("/wallet/pay")
     public Result<OrderPayStatusVO> payOrderByWallet(@AuthenticationPrincipal LoginUser loginUser,
                                                      @Valid @RequestBody OrderPayCreateRequest request) {

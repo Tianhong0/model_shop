@@ -170,16 +170,54 @@ onMounted(fetchList)
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
-.table-card {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+.page-container {
+  padding: 0;
 }
-.header-actions { display: flex; justify-content: space-between; margin-bottom: 20px; }
-.pagination-container { display: flex; justify-content: flex-end; margin-top: 20px; }
-.detail-title { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 14px; }
-.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-.media-item { width: 100%; height: 140px; border-radius: 12px; }
+
+.table-card {
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.detail-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.media-item {
+  width: 100%;
+  height: 140px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
 </style>

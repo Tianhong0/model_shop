@@ -151,6 +151,9 @@ public class AfterSaleMessageWebSocketHandler extends TextWebSocketHandler {
             return false;
         }
         Set<Long> roleIds = userRoles.stream().map(SysUserRole::getRoleId).collect(Collectors.toSet());
+        if (roleIds.isEmpty()) {
+            return false;
+        }
         List<SysRole> roles = roleRepository.selectBatchIds(roleIds);
         return roles != null && roles.stream().anyMatch(role -> "ROLE_ADMIN".equals(role.getRoleName()));
     }

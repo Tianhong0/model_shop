@@ -45,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -145,6 +146,9 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
 
         // 查询设计者信息
+        if (designerIds.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<SysUser> designers = userRepository.selectBatchIds(designerIds);
 
         return designers.stream().map(designer -> {

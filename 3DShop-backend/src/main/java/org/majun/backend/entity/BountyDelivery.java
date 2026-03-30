@@ -43,6 +43,15 @@ public class BountyDelivery implements Serializable {
     @TableField("is_final")
     private Integer isFinal;
 
+    @TableField("allow_commercial_use")
+    private Integer allowCommercialUse;
+
+    @TableField("allow_modification")
+    private Integer allowModification;
+
+    @TableField("license_type")
+    private String licenseType;
+
     @TableField("is_delete")
     @TableLogic
     private Integer isDelete;

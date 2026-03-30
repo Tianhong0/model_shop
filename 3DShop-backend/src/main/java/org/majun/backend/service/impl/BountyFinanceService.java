@@ -24,10 +24,13 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class BountyFinanceService {
 
+    private static final int BOUNTY_RELEASE_FROZEN_DAYS = 7;
+
     private final BountyEscrowRepository bountyEscrowRepository;
     private final WalletAccountRepository walletAccountRepository;
     private final WalletLedgerRepository walletLedgerRepository;
     private final PointService pointService;
+    private final WalletService walletService;
 
     public boolean hasAvailableBalance(Long userId, BigDecimal requiredAmount) {
         BigDecimal required = amount(requiredAmount);
@@ -64,21 +67,58 @@ public class BountyFinanceService {
             return;
         }
 
-        WalletAccount winnerWallet = getOrCreateWallet(task.getWinnerDesignerId());
-        WalletAccount updatedWinnerWallet = credit(
-                winnerWallet,
+        // 悬赏结算金额冻结7天后到账
+        walletService.freezeAmount(
+                task.getWinnerDesignerId(),
                 toRelease,
                 "BOUNTY_RELEASE",
                 task.getTaskSn(),
                 task.getId(),
-                "悬赏验收通过入账"
+                BOUNTY_RELEASE_FROZEN_DAYS,
+                "悬赏验收通过，冻结" + BOUNTY_RELEASE_FROZEN_DAYS + "天后到账"
         );
 
         escrow.setReleasedAmount(releasedAmount.add(toRelease));
         refreshEscrowStatus(escrow);
         bountyEscrowRepository.updateById(escrow);
-        walletAccountRepository.updateById(updatedWinnerWallet);
         pointService.rewardBountyRelease(task.getWinnerDesignerId(), task.getId(), task.getTaskSn(), toRelease);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void refundToPublisher(BountyTask task) {
+        if (task == null || task.getId() == null) {
+            throw new BusinessException("任务信息无效");
+        }
+        if (task.getPublisherId() == null) {
+            throw new BusinessException("任务发布者信息无效");
+        }
+
+        BountyEscrow escrow = getEscrowOrThrow(task.getId());
+        BigDecimal escrowAmount = amount(escrow.getEscrowAmount());
+        BigDecimal releasedAmount = amount(escrow.getReleasedAmount());
+        BigDecimal refundedAmount = amount(escrow.getRefundAmount());
+        BigDecimal toRefund = escrowAmount.subtract(releasedAmount).subtract(refundedAmount);
+
+        if (toRefund.compareTo(BigDecimal.ZERO) <= 0) {
+            refreshEscrowStatus(escrow);
+            bountyEscrowRepository.updateById(escrow);
+            return;
+        }
+
+        WalletAccount publisherWallet = getOrCreateWallet(task.getPublisherId());
+        WalletAccount updatedWallet = credit(
+                publisherWallet,
+                toRefund,
+                "BOUNTY_CANCEL_REFUND",
+                task.getTaskSn(),
+                task.getId(),
+                "悬赏取消退款"
+        );
+
+        escrow.setRefundAmount(refundedAmount.add(toRefund));
+        refreshEscrowStatus(escrow);
+        bountyEscrowRepository.updateById(escrow);
+        walletAccountRepository.updateById(updatedWallet);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -338,6 +338,8 @@ public class OrderAfterSaleServiceImpl extends ServiceImpl<SysOrderAfterSaleRepo
         }
         if (request.getStatus() != null) {
             wrapper.eq(SysOrderAfterSale::getStatus, request.getStatus());
+        } else if (request.getStatuses() != null && !request.getStatuses().isEmpty()) {
+            wrapper.in(SysOrderAfterSale::getStatus, request.getStatuses());
         }
         if (request.getType() != null) {
             wrapper.eq(SysOrderAfterSale::getType, request.getType());

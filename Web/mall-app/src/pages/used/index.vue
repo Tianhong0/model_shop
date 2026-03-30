@@ -1,35 +1,36 @@
 <template>
   <view class="page">
-    <view class="hero-shell">
-      <view class="hero-panel">
-        <view class="hero-copy">
-          <text class="eyebrow">SECOND LIFE CURATION</text>
-          <view class="title">二手好物</view>
-          <view class="sub">把闲置打印成品、展示摆件和创意配件重新流转，让真正喜欢的人接手。</view>
-        </view>
-        <view class="hero-stat">
-          <text class="hero-stat-value">{{ records.length }}</text>
-          <text class="hero-stat-label">当前展示</text>
-        </view>
+    <!-- Hero Section -->
+    <view class="hero-panel">
+      <view class="hero-copy">
+        <text class="eyebrow">SECOND LIFE CURATION</text>
+        <view class="hero-title">二手好物</view>
+        <view class="hero-sub">把闲置打印成品、展示摆件和创意配件重新流转，让真正喜欢的人接手。</view>
       </view>
-
-      <view class="action-ribbon action-ribbon-top">
-        <button class="ghost-btn" @click="goMySales">我的出售</button>
-        <button class="ghost-btn" @click="goMyPurchases">我的购买</button>
-        <button class="primary-btn" @click="goPublish">发布闲置</button>
+      <view class="hero-stat">
+        <text class="hero-stat-value">{{ records.length }}</text>
+        <text class="hero-stat-label">当前展示</text>
       </view>
     </view>
 
+    <!-- Action Buttons -->
+    <view class="action-ribbon">
+      <button class="ghost-btn" @click="goMySales">我的出售</button>
+      <button class="ghost-btn" @click="goMyPurchases">我的购买</button>
+      <button class="primary-btn" @click="goPublish">发布闲置</button>
+    </view>
+
+    <!-- Manage Cards -->
     <view class="manage-strip">
       <view class="manage-card" @click="goMySales">
-        <view>
+        <view class="manage-info">
           <text class="manage-title">管理我的出售</text>
           <text class="manage-desc">查看在售、已成交和订单动态</text>
         </view>
         <text class="manage-arrow">→</text>
       </view>
-      <view class="manage-card warm" @click="goMyPurchases">
-        <view>
+      <view class="manage-card" @click="goMyPurchases">
+        <view class="manage-info">
           <text class="manage-title">管理我的购买</text>
           <text class="manage-desc">继续支付、查看物流和售后记录</text>
         </view>
@@ -37,6 +38,7 @@
       </view>
     </view>
 
+    <!-- Search -->
     <view class="search-panel">
       <view class="search-box">
         <text class="search-icon">⌕</text>
@@ -45,6 +47,7 @@
       <button class="mini-btn" @click="fetchList">搜索</button>
     </view>
 
+    <!-- Listing Scroll -->
     <scroll-view scroll-y class="scroll" @scrolltolower="loadMore">
       <view v-if="records.length === 0" class="empty-state">
         <view class="empty-orb"></view>
@@ -52,7 +55,7 @@
         <text class="empty-sub">不妨先发布第一件，让你的作品进入下一段旅程。</text>
       </view>
 
-      <view v-for="item in records" :key="item.id" class="listing-card" @click="goDetail(item.id)">
+      <view v-for="item in records" :key="item.id" class="listing-card fadeInUp" @click="goDetail(item.id)">
         <view class="cover-wrap">
           <image :src="item.coverUrl" class="cover" mode="aspectFill"></image>
           <view class="status-badge">{{ statusText(item.status) }}</view>
@@ -129,27 +132,44 @@ onShow(() => {
 </script>
 
 <style scoped lang="scss">
-.page {
-  min-height: 100vh;
-  padding: 24rpx;
-  background:
-    radial-gradient(circle at top left, rgba(255, 219, 172, 0.65), transparent 26%),
-    radial-gradient(circle at 85% 10%, rgba(255, 243, 214, 0.88), transparent 20%),
-    linear-gradient(180deg, #fff8ef 0%, #fffdf8 34%, #f7f1e9 100%);
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.hero-shell {
-  margin-bottom: 22rpx;
+.fadeInUp {
+  animation: fadeInUp 0.4s ease both;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 28rpx;
+  background: $bg;
 }
 
 .hero-panel {
   display: flex;
   justify-content: space-between;
-  gap: 18rpx;
-  padding: 28rpx;
-  border-radius: 32rpx;
-  background: linear-gradient(145deg, rgba(50, 32, 20, 0.92) 0%, rgba(98, 63, 39, 0.9) 100%);
-  box-shadow: 0 18rpx 40rpx rgba(59, 31, 13, 0.18);
+  align-items: stretch;
+  gap: 20rpx;
+  padding: 32rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(145deg, $deep 0%, $primary 100%);
+  box-shadow: 0 16rpx 40rpx rgba(0, 153, 204, 0.18);
+  margin-bottom: 28rpx;
 }
 
 .hero-copy {
@@ -158,36 +178,39 @@ onShow(() => {
 
 .eyebrow {
   display: block;
-  color: rgba(255, 232, 208, 0.7);
+  color: rgba(255, 255, 255, 0.65);
   font-size: 20rpx;
   letter-spacing: 4rpx;
 }
 
-.title {
+.hero-title {
   margin-top: 12rpx;
-  font-size: 48rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  color: #fff7ef;
+  color: #ffffff;
 }
 
-.sub {
+.hero-sub {
   margin-top: 14rpx;
   font-size: 24rpx;
-  color: rgba(255, 237, 222, 0.82);
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.7;
 }
 
 .hero-stat {
-  width: 170rpx;
+  width: 160rpx;
   padding: 22rpx 16rpx;
-  border-radius: 26rpx;
-  background: rgba(255, 244, 229, 0.14);
-  border: 1px solid rgba(255, 241, 222, 0.16);
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-stat-value {
   display: block;
-  color: #fff2df;
+  color: #ffffff;
   font-size: 42rpx;
   font-weight: 700;
 }
@@ -195,20 +218,14 @@ onShow(() => {
 .hero-stat-label {
   display: block;
   margin-top: 10rpx;
-  color: rgba(255, 235, 214, 0.76);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 22rpx;
 }
 
 .action-ribbon {
   display: flex;
   gap: 16rpx;
-  margin-top: 18rpx;
-}
-
-.action-ribbon-top .ghost-btn,
-.action-ribbon-top .primary-btn {
-  flex: 1;
-  min-width: 0;
+  margin-bottom: 28rpx;
 }
 
 .primary-btn,
@@ -216,57 +233,51 @@ onShow(() => {
 .mini-btn {
   border-radius: 999rpx;
   font-size: 24rpx;
+  &:active { transform: scale(0.96); }
 }
 
 .primary-btn {
   flex: 1;
-  background: linear-gradient(135deg, #ffb55e 0%, #ff8d39 100%);
+  background: $gradient;
   color: #fff;
-  box-shadow: 0 12rpx 24rpx rgba(255, 141, 57, 0.22);
+  box-shadow: 0 8rpx 24rpx rgba(0, 191, 255, 0.22);
 }
 
 .ghost-btn {
   flex: 1;
-  background: rgba(255, 255, 255, 0.74);
-  color: #7c4a26;
-  border: 1px solid rgba(171, 99, 44, 0.12);
-}
-
-.search-panel {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  margin-bottom: 22rpx;
+  background: $card;
+  color: $deep;
+  box-shadow: $shadow;
 }
 
 .manage-strip {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16rpx;
-  margin-bottom: 22rpx;
+  margin-bottom: 28rpx;
 }
 
 .manage-card {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 16rpx;
-  padding: 24rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(171, 99, 44, 0.08);
-  box-shadow: 0 14rpx 30rpx rgba(80, 41, 16, 0.05);
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
-.manage-card.warm {
-  background: linear-gradient(180deg, rgba(255, 247, 235, 0.96) 0%, rgba(255, 239, 220, 0.96) 100%);
+.manage-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .manage-title {
   display: block;
   font-size: 28rpx;
   font-weight: 700;
-  color: #2f1d14;
+  color: $text1;
 }
 
 .manage-desc {
@@ -274,7 +285,7 @@ onShow(() => {
   margin-top: 10rpx;
   font-size: 22rpx;
   line-height: 1.6;
-  color: #8a6b54;
+  color: $text2;
 }
 
 .manage-arrow {
@@ -284,9 +295,16 @@ onShow(() => {
   line-height: 52rpx;
   text-align: center;
   border-radius: 50%;
-  background: #fff1db;
-  color: #a16207;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
   font-size: 28rpx;
+}
+
+.search-panel {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
 }
 
 .search-box {
@@ -295,29 +313,28 @@ onShow(() => {
   align-items: center;
   gap: 12rpx;
   height: 84rpx;
-  padding: 0 22rpx;
+  padding: 0 24rpx;
   border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(163, 107, 67, 0.08);
-  box-shadow: 0 12rpx 28rpx rgba(80, 41, 16, 0.05);
+  background: $card;
+  box-shadow: $shadow;
 }
 
 .search-icon {
-  color: #a16207;
+  color: $deep;
   font-size: 28rpx;
 }
 
 .search-input {
   flex: 1;
   height: 100%;
-  font-size: 26rpx;
-  color: #332117;
+  font-size: 28rpx;
+  color: $text1;
 }
 
 .mini-btn {
   min-width: 144rpx;
-  background: #2f1d14;
-  color: #fff5ea;
+  background: $deep;
+  color: #ffffff;
   padding: 0 28rpx;
 }
 
@@ -329,11 +346,10 @@ onShow(() => {
   display: flex;
   gap: 20rpx;
   margin-bottom: 20rpx;
-  padding: 18rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(178, 123, 81, 0.08);
-  box-shadow: 0 14rpx 34rpx rgba(89, 47, 18, 0.06);
+  padding: 20rpx;
+  border-radius: 24rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
 .cover-wrap {
@@ -344,19 +360,22 @@ onShow(() => {
 .cover {
   width: 228rpx;
   height: 228rpx;
-  border-radius: 22rpx;
+  border-radius: 20rpx;
   background: #e2e8f0;
+  opacity: 0;
+  animation: fadeInUp 0.45s ease both;
 }
 
 .status-badge {
   position: absolute;
   left: 12rpx;
   bottom: 12rpx;
-  padding: 8rpx 14rpx;
+  padding: 8rpx 16rpx;
   border-radius: 999rpx;
-  background: rgba(47, 29, 20, 0.72);
-  color: #fff5ea;
+  background: rgba(0, 153, 204, 0.78);
+  color: #ffffff;
   font-size: 20rpx;
+  backdrop-filter: blur(8rpx);
 }
 
 .info {
@@ -368,8 +387,8 @@ onShow(() => {
 
 .name {
   font-size: 30rpx;
-  font-weight: 700;
-  color: #2f1d14;
+  font-weight: 600;
+  color: $text1;
   line-height: 1.5;
 }
 
@@ -384,16 +403,16 @@ onShow(() => {
 .meta-pill {
   padding: 8rpx 16rpx;
   border-radius: 999rpx;
-  background: #fff4de;
-  color: #a16207;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
   font-size: 22rpx;
 }
 
 .meta-text,
 .seller,
 .hint {
-  font-size: 23rpx;
-  color: #8a6b54;
+  font-size: 24rpx;
+  color: $text2;
 }
 
 .seller {
@@ -408,7 +427,7 @@ onShow(() => {
 }
 
 .price {
-  color: #c2410c;
+  color: $deep;
   font-size: 36rpx;
   font-weight: 700;
 }
@@ -423,33 +442,31 @@ onShow(() => {
   line-height: 54rpx;
   text-align: center;
   border-radius: 50%;
-  background: #fff1db;
-  color: #a16207;
+  background: rgba(0, 191, 255, 0.1);
+  color: $deep;
   font-size: 30rpx;
 }
 
 .empty-state {
-  position: relative;
-  overflow: hidden;
   padding: 120rpx 40rpx;
   text-align: center;
-  border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(186, 145, 105, 0.12);
+  border-radius: 24rpx;
+  background: $card;
+  box-shadow: $shadow;
 }
 
 .empty-orb {
   width: 120rpx;
   height: 120rpx;
-  margin: 0 auto 24rpx;
+  margin: 0 auto 28rpx;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff6d9 0%, #ffd59f 45%, #ffb35d 100%);
-  box-shadow: 0 20rpx 38rpx rgba(255, 179, 93, 0.24);
+  background: radial-gradient(circle at 35% 30%, #b8e4f0 0%, #87ceeb 45%, #00bfff 100%);
+  box-shadow: 0 16rpx 36rpx rgba(0, 191, 255, 0.22);
 }
 
 .empty-title {
   display: block;
-  color: #3f2b1f;
+  color: $text1;
   font-size: 30rpx;
   font-weight: 700;
 }
@@ -457,7 +474,7 @@ onShow(() => {
 .empty-sub {
   display: block;
   margin-top: 12rpx;
-  color: #8a6b54;
+  color: $text2;
   font-size: 24rpx;
   line-height: 1.7;
 }

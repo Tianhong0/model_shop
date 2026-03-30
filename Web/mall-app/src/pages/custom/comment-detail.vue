@@ -69,7 +69,7 @@
 							<text class="reply-time">{{ formatCommentTime(item.createTime) }}</text>
 						</view>
 						<view class="reply-like" :class="{ active: !!item.liked }" @click="toggleReplyLike(item)">
-							<uni-icons :type="item.liked ? 'heart-filled' : 'heart'" size="16" :color="item.liked ? '#ef4444' : '#64748b'" />
+							<uni-icons :type="item.liked ? 'heart-filled' : 'heart'" size="16" :color="item.liked ? '#ef4444' : '#5a6a7a'" />
 							<text class="reply-like-text">{{ Number(item.likeCount || 0) }}</text>
 						</view>
 					</view>
@@ -264,9 +264,26 @@ const toggleReplyLike = async (reply) => {
 </script>
 
 <style scoped lang="scss">
+$sky-blue: #00bfff;
+$sky-light: #5ce1ff;
+$sky-deep: #0099cc;
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$danger: #ff4d6d;
+$gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .comment-detail-page {
 	padding: 24rpx;
-	background-color: #f8fafc;
+	background-color: $surface;
 	min-height: 100vh;
 	box-sizing: border-box;
 }
@@ -274,44 +291,48 @@ const toggleReplyLike = async (reply) => {
 .comment-user-row {
 	display: flex;
 	align-items: center;
-	padding: 18rpx;
-	border-radius: 16rpx;
-	background-color: #ffffff;
+	padding: 28rpx 32rpx;
+	border-radius: 24rpx;
+	background-color: $surface-raised;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out both;
 }
 
 .comment-avatar {
 	width: 72rpx;
 	height: 72rpx;
 	border-radius: 50%;
-	background-color: #e2e8f0;
+	background-color: $surface;
 }
 
 .comment-user-meta {
-	margin-left: 14rpx;
+	margin-left: 18rpx;
 	display: flex;
 	flex-direction: column;
-	gap: 4rpx;
+	gap: 6rpx;
 }
 
 .comment-user {
-	font-size: 26rpx;
+	font-size: 28rpx;
 	font-weight: 600;
-	color: #0f172a;
+	color: $text-primary;
 }
 
 .comment-time {
-	font-size: 22rpx;
-	color: #94a3b8;
+	font-size: 24rpx;
+	color: $text-muted;
 }
 
 .score-card {
-	margin-top: 18rpx;
-	padding: 18rpx;
-	border-radius: 16rpx;
-	background-color: #ffffff;
+	margin-top: 24rpx;
+	padding: 28rpx 32rpx;
+	border-radius: 24rpx;
+	background-color: $surface-raised;
+	box-shadow: $shadow-card;
 	display: flex;
 	flex-direction: column;
-	gap: 12rpx;
+	gap: 16rpx;
+	animation: fadeInUp 0.35s ease-out 0.05s both;
 }
 
 .score-item {
@@ -321,44 +342,56 @@ const toggleReplyLike = async (reply) => {
 }
 
 .score-item.total {
-	padding-top: 8rpx;
-	border-top: 1px solid #e2e8f0;
+	padding-top: 12rpx;
+	position: relative;
+
+	&::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		height: 1rpx;
+		background: rgba(0, 0, 0, 0.03);
+	}
 }
 
 .score-label {
 	width: 130rpx;
-	font-size: 24rpx;
-	color: #475569;
+	font-size: 26rpx;
+	color: $text-secondary;
 }
 
 .score-stars {
-	font-size: 24rpx;
+	font-size: 26rpx;
 	letter-spacing: 2rpx;
 	color: #f59e0b;
 }
 
 .score-value {
 	margin-left: auto;
-	font-size: 24rpx;
+	font-size: 26rpx;
 	font-weight: 600;
-	color: #334155;
+	color: $text-primary;
 }
 
 .comment-text {
-	margin-top: 18rpx;
-	padding: 18rpx;
-	border-radius: 16rpx;
-	background-color: #ffffff;
-	font-size: 24rpx;
-	line-height: 1.6;
-	color: #334155;
+	margin-top: 24rpx;
+	padding: 28rpx 32rpx;
+	border-radius: 24rpx;
+	background-color: $surface-raised;
+	box-shadow: $shadow-card;
+	font-size: 28rpx;
+	line-height: 1.7;
+	color: $text-primary;
+	animation: fadeInUp 0.35s ease-out 0.1s both;
 }
 
 .media-list {
-	margin-top: 18rpx;
+	margin-top: 24rpx;
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12rpx;
+	gap: 16rpx;
 }
 
 .media-item {
@@ -369,8 +402,8 @@ const toggleReplyLike = async (reply) => {
 .media-video {
 	width: 220rpx;
 	height: 220rpx;
-	border-radius: 12rpx;
-	background-color: #0f172a;
+	border-radius: 16rpx;
+	background-color: $surface;
 }
 
 .media-video-wrap {
@@ -384,48 +417,52 @@ const toggleReplyLike = async (reply) => {
 	left: 50%;
 	bottom: 10rpx;
 	transform: translateX(-50%);
-	padding: 6rpx 12rpx;
+	padding: 6rpx 16rpx;
 	border-radius: 999rpx;
 	font-size: 20rpx;
 	color: #ffffff;
-	background-color: rgba(15, 23, 42, 0.65);
+	background-color: rgba(0, 0, 0, 0.45);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
 }
 
 .reply-card {
-	margin-top: 18rpx;
-	padding: 18rpx;
-	border-radius: 16rpx;
-	background: #fff;
+	margin-top: 24rpx;
+	padding: 28rpx 32rpx;
+	border-radius: 24rpx;
+	background: $surface-raised;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out 0.15s both;
 }
 
 .reply-title-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 10rpx;
+	margin-bottom: 16rpx;
 }
 
 .reply-title {
-	font-size: 26rpx;
+	font-size: 30rpx;
 	font-weight: 600;
-	color: #0f172a;
+	color: $text-primary;
 }
 
 .reply-total {
-	font-size: 22rpx;
-	color: #64748b;
+	font-size: 24rpx;
+	color: $text-secondary;
 }
 
 .reply-list {
 	display: flex;
 	flex-direction: column;
-	gap: 12rpx;
+	gap: 16rpx;
 }
 
 .reply-item {
-	padding: 14rpx;
-	border-radius: 12rpx;
-	background: #f8fafc;
+	padding: 20rpx;
+	border-radius: 16rpx;
+	background: $surface;
 }
 
 .reply-user-row {
@@ -437,25 +474,25 @@ const toggleReplyLike = async (reply) => {
 	width: 52rpx;
 	height: 52rpx;
 	border-radius: 50%;
-	background: #e2e8f0;
+	background: $surface-raised;
 }
 
 .reply-user-meta {
-	margin-left: 10rpx;
+	margin-left: 12rpx;
 	display: flex;
 	flex-direction: column;
-	gap: 2rpx;
+	gap: 4rpx;
 }
 
 .reply-user {
-	font-size: 23rpx;
+	font-size: 26rpx;
 	font-weight: 600;
-	color: #1e293b;
+	color: $text-primary;
 }
 
 .reply-time {
-	font-size: 20rpx;
-	color: #94a3b8;
+	font-size: 22rpx;
+	color: $text-muted;
 }
 
 .reply-like {
@@ -463,9 +500,9 @@ const toggleReplyLike = async (reply) => {
 	display: flex;
 	align-items: center;
 	gap: 6rpx;
-	padding: 6rpx 12rpx;
+	padding: 8rpx 16rpx;
 	border-radius: 999rpx;
-	background: #fff;
+	background: $surface-raised;
 
 	&.active {
 		background: #fff1f2;
@@ -473,49 +510,55 @@ const toggleReplyLike = async (reply) => {
 }
 
 .reply-like-text {
-	font-size: 20rpx;
-	color: #64748b;
+	font-size: 22rpx;
+	color: $text-secondary;
 }
 
 .reply-content {
 	display: block;
-	margin-top: 8rpx;
-	font-size: 23rpx;
-	line-height: 1.6;
-	color: #334155;
+	margin-top: 10rpx;
+	font-size: 26rpx;
+	line-height: 1.7;
+	color: $text-primary;
 }
 
 .reply-empty {
-	font-size: 22rpx;
-	color: #94a3b8;
-	padding: 10rpx 0;
+	font-size: 24rpx;
+	color: $text-muted;
+	padding: 16rpx 0;
 }
 
 .reply-input-row {
-	margin-top: 14rpx;
+	margin-top: 20rpx;
 	display: flex;
-	gap: 10rpx;
+	gap: 12rpx;
 }
 
 .reply-input {
 	flex: 1;
-	height: 64rpx;
-	padding: 0 16rpx;
+	height: 68rpx;
+	padding: 0 20rpx;
 	border-radius: 999rpx;
-	background: #f1f5f9;
-	font-size: 24rpx;
+	background: $surface;
+	font-size: 26rpx;
 	box-sizing: border-box;
 }
 
 .reply-send {
-	width: 110rpx;
-	height: 64rpx;
+	width: 120rpx;
+	height: 68rpx;
 	border-radius: 999rpx;
-	background: #2563eb;
+	background: $gradient-primary;
 	color: #fff;
-	font-size: 24rpx;
+	font-size: 26rpx;
+	font-weight: 600;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
+
+	&:active {
+		transform: scale(0.96);
+	}
 }
 </style>

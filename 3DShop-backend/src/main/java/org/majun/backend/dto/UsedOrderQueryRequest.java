@@ -3,6 +3,8 @@ package org.majun.backend.dto;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class UsedOrderQueryRequest {
 
@@ -13,6 +15,8 @@ public class UsedOrderQueryRequest {
     private Integer pageSize = 10;
 
     private Integer status;
+
+    private List<Integer> statuses;
 
     private Long sellerId;
 

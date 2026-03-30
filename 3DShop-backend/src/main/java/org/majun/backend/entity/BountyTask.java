@@ -68,6 +68,9 @@ public class BountyTask implements Serializable {
     @TableField("close_reason")
     private String closeReason;
 
+    @TableField("cancel_requested")
+    private Integer cancelRequested;
+
     @TableField("is_delete")
     @TableLogic
     private Integer isDelete;

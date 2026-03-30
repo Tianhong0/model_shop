@@ -43,11 +43,48 @@ onShow(loadData)
 </script>
 
 <style scoped lang="scss">
-.page { min-height: 100vh; background: #f8fafc; padding: 20rpx; }
-.item { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 18rpx; }
-.top { display: flex; justify-content: space-between; margin-bottom: 10rpx; }
-.sn { color: #1e293b; font-size: 26rpx; font-weight: 600; }
-.status { color: #4f46e5; font-size: 24rpx; }
-.row { font-size: 24rpx; color: #475569; line-height: 1.6; }
-.empty { padding-top: 200rpx; text-align: center; color: #94a3b8; font-size: 28rpx; }
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page {
+  min-height: 100vh;
+  background: $bg;
+  padding: 28rpx;
+}
+
+.item {
+  background: $card;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: $shadow;
+  animation: fadeInUp 0.4s ease both;
+}
+
+.top { display: flex; justify-content: space-between; margin-bottom: 14rpx; }
+.sn { color: $text1; font-size: 28rpx; font-weight: 600; }
+.status {
+  color: $primary;
+  font-size: 24rpx;
+  font-weight: 600;
+  background: rgba(0, 191, 255, 0.08);
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+}
+.row { font-size: 24rpx; color: $text2; line-height: 1.8; }
+.empty { padding-top: 240rpx; text-align: center; color: $text3; font-size: 28rpx; }
 </style>

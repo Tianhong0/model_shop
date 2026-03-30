@@ -637,116 +637,146 @@ const submitBid = async () => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$success: #10b981;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+@keyframes breathGlow {
+	0%, 100% { box-shadow: 0 0 12rpx rgba(0,191,255,0.15); }
+	50% { box-shadow: 0 0 24rpx rgba(0,191,255,0.35); }
+}
+
 .bid-page {
 	min-height: 100vh;
-	background-color: #f8fafc;
-	padding: 20rpx 24rpx 140rpx;
+	background-color: $bg;
+	padding: 24rpx 32rpx 160rpx;
 }
 
 .card {
-	background-color: #fff;
-	border-radius: 16rpx;
-	padding: 24rpx;
-	margin-bottom: 20rpx;
+	background-color: $card;
+	border-radius: 24rpx;
+	padding: 32rpx;
+	margin-bottom: 28rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.4s ease-out both;
 }
 
 .header-card {
-	.title { font-size: 30rpx; font-weight: 700; color: #1e293b; }
-	.meta { font-size: 24rpx; color: #64748b; margin-top: 8rpx; display: block; }
+	.title { font-size: 30rpx; font-weight: 700; color: $text-primary; }
+	.meta { font-size: 26rpx; color: $text-secondary; margin-top: 10rpx; display: block; }
 }
 
 .status-row {
-	margin-top: 14rpx;
+	margin-top: 16rpx;
 	display: flex;
 	align-items: center;
-	gap: 10rpx;
+	gap: 12rpx;
 }
 
 .status-label {
-	font-size: 22rpx;
-	color: #64748b;
+	font-size: 24rpx;
+	color: $text-secondary;
 }
 
 .status-pill {
 	font-size: 20rpx;
-	padding: 2rpx 12rpx;
-	border-radius: 20rpx;
+	padding: 4rpx 16rpx;
+	border-radius: 999rpx;
 	font-weight: 500;
-	&.submitted { background-color: #eef2ff; color: #4f46e5; }
-	&.winner { background-color: #dcfce7; color: #16a34a; }
-	&.lost { background-color: #fee2e2; color: #dc2626; }
-	&.withdrawn { background-color: #f1f5f9; color: #64748b; }
+	&.submitted { background-color: rgba(0, 191, 255, 0.1); color: $primary; animation: breathGlow 2s ease-in-out infinite; }
+	&.winner { background-color: rgba(16,185,129,0.1); color: $success; }
+	&.lost { background-color: rgba(255,77,109,0.1); color: $danger; }
+	&.withdrawn { background-color: $bg; color: $text-secondary; }
 }
 
 .status-tip {
-	margin-top: 8rpx;
-	font-size: 22rpx;
-	color: #64748b;
+	margin-top: 10rpx;
+	font-size: 24rpx;
+	color: $text-secondary;
+	line-height: 1.5;
 }
 
 .row {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 12rpx 0;
-	border-bottom: 2rpx solid #f1f5f9;
+	padding: 16rpx 0;
+	& + .row {
+		border-top: 1rpx solid rgba(0,0,0,0.04);
+	}
 }
 
 .label {
-	font-size: 24rpx;
-	color: #64748b;
+	font-size: 28rpx;
+	color: $text-secondary;
 }
 
 .input {
 	flex: 1;
 	text-align: right;
-	font-size: 26rpx;
-	color: #1e293b;
+	font-size: 28rpx;
+	color: $text-primary;
 }
 
 .desc-wrap {
-	margin-top: 16rpx;
+	margin-top: 20rpx;
 }
 
 .textarea {
 	width: 100%;
-	min-height: 180rpx;
-	background-color: #f8fafc;
-	border-radius: 12rpx;
-	padding: 16rpx;
-	font-size: 24rpx;
+	min-height: 200rpx;
+	background-color: $bg;
+	border-radius: 16rpx;
+	padding: 20rpx;
+	font-size: 26rpx;
 	box-sizing: border-box;
+	color: $text-primary;
 }
 
 .upload-actions {
-	margin-top: 16rpx;
+	margin-top: 20rpx;
 	display: flex;
-	gap: 12rpx;
+	gap: 14rpx;
 	.btn {
 		flex: 1;
-		height: 72rpx;
-		line-height: 72rpx;
-		font-size: 22rpx;
-		border-radius: 10rpx;
-		background-color: #eef2ff;
-		color: #4f46e5;
+		height: 76rpx;
+		line-height: 76rpx;
+		font-size: 24rpx;
+		border-radius: 999rpx;
+		background-color: rgba(0, 191, 255, 0.08);
+		color: $primary;
+		font-weight: 500;
+		&:active { transform: scale(0.96); }
 	}
 }
 
 .asset-list {
-	margin-top: 14rpx;
+	margin-top: 20rpx;
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12rpx;
+	gap: 16rpx;
 }
 
 .asset-item {
 	position: relative;
 	width: 140rpx;
 	height: 140rpx;
-	border-radius: 12rpx;
+	border-radius: 16rpx;
 	overflow: hidden;
-	background-color: #eef2ff;
+	background-color: rgba(0, 191, 255, 0.04);
 }
 
 .asset-image {
@@ -759,37 +789,40 @@ const submitBid = async () => {
 	flex-direction: column;
 	justify-content: center;
 	height: 100%;
-	padding: 10rpx;
+	padding: 12rpx;
 }
 
 .asset-type {
 	font-size: 20rpx;
-	color: #4f46e5;
+	color: $primary;
+	font-weight: 500;
 }
 
 .asset-name {
 	font-size: 20rpx;
-	color: #475569;
+	color: $text-secondary;
 	margin-top: 6rpx;
 }
 
 .asset-remove {
 	position: absolute;
-	top: 4rpx;
-	right: 4rpx;
-	width: 32rpx;
-	height: 32rpx;
-	line-height: 32rpx;
+	top: 6rpx;
+	right: 6rpx;
+	width: 36rpx;
+	height: 36rpx;
+	line-height: 36rpx;
 	text-align: center;
 	border-radius: 50%;
-	background: rgba(15, 23, 42, 0.6);
+	background: rgba(15, 23, 42, 0.55);
 	color: #fff;
 	font-size: 24rpx;
 }
 
 .blocked {
-	font-size: 24rpx;
-	color: #ef4444;
+	font-size: 26rpx;
+	color: $danger;
+	text-align: center;
+	padding: 40rpx 0;
 }
 
 .submit-bar {
@@ -797,17 +830,21 @@ const submitBid = async () => {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: #fff;
-	padding: 16rpx 24rpx 24rpx;
-	box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.05);
+	background: rgba(255,255,255,0.72);
+	backdrop-filter: blur(24px);
+	padding: 20rpx 32rpx;
+	padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
+	box-shadow: 0 -4rpx 24rpx rgba(0,0,0,0.06);
 }
 
 .submit-btn {
-	height: 84rpx;
-	line-height: 84rpx;
-	border-radius: 42rpx;
-	font-size: 28rpx;
-	background-color: #4f46e5;
+	height: 88rpx;
+	line-height: 88rpx;
+	border-radius: 999rpx;
+	font-size: 30rpx;
+	font-weight: 600;
+	background: $gradient;
 	color: #fff;
+	&:active { transform: scale(0.96); }
 }
 </style>

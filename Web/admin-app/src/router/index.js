@@ -70,6 +70,12 @@ const routes = [
             name: 'ModelList',
             component: () => import('../views/models/ModelMall.vue'),
             meta: { title: '模型管理', requiresAuth: true }
+          },
+          {
+            path: 'model-lists',
+            name: 'ModelListManage',
+            component: () => import('../views/model-list/ModelListManage.vue'),
+            meta: { title: '清单管理', requiresAuth: true }
           }
         ]
       },
@@ -142,6 +148,18 @@ const routes = [
         meta: { title: '任务悬赏', requiresAuth: true }
       },
       {
+        path: 'bounty/appeal',
+        name: 'BountyAppeal',
+        component: () => import('../views/bounty/BountyAppealManage.vue'),
+        meta: { title: '评价申诉', requiresAuth: true }
+      },
+      {
+        path: 'customer-service',
+        name: 'CustomerService',
+        component: () => import('../views/customer-service/Index.vue'),
+        meta: { title: '客服管理', requiresAuth: true }
+      },
+      {
         path: 'community/posts',
         name: 'CommunityPostList',
         component: () => import('../views/community/ForumList.vue'),
@@ -182,6 +200,24 @@ const routes = [
         name: 'FinanceWithdraws',
         component: () => import('../views/finance/WithdrawManage.vue'),
         meta: { title: '提现管理', requiresAuth: true }
+      },
+      {
+        path: 'events',
+        name: 'EventManage',
+        component: () => import('../views/event/EventManage.vue'),
+        meta: { title: '活动管理', requiresAuth: true }
+      },
+      {
+        path: 'event-submissions',
+        name: 'EventSubmissionManage',
+        component: () => import('../views/event/SubmissionManage.vue'),
+        meta: { title: '作品管理', requiresAuth: true }
+      },
+      {
+        path: 'event-participations',
+        name: 'EventParticipationManage',
+        component: () => import('../views/event/ParticipationManage.vue'),
+        meta: { title: '报名管理', requiresAuth: true }
       }
     ]
   }

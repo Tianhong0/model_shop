@@ -463,17 +463,30 @@ const submitDesignerApply = async () => {
 </script>
 
 <style scoped lang="scss">
+$primary: #00bfff;
+$deep: #0099cc;
+$light: #5ce1ff;
+$danger: #ff4d6d;
+$bg: #f8f8f8;
+$card: #ffffff;
+$text1: #1a2030;
+$text2: #5a6a7a;
+$text3: #8a9aaa;
+$gradient: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+$shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+
 .page-container {
 	min-height: 100vh;
-	background-color: #f8fafc;
-	padding: 20rpx;
+	background: $bg;
+	padding: 28rpx;
 }
 
 .card {
-	background-color: #ffffff;
-	border-radius: 16rpx;
-	padding: 24rpx;
-	margin-bottom: 20rpx;
+	background-color: $card;
+	border-radius: 24rpx;
+	padding: 32rpx;
+	margin-bottom: 28rpx;
+	box-shadow: $shadow;
 }
 
 .status-card {
@@ -482,115 +495,82 @@ const submitDesignerApply = async () => {
 		justify-content: space-between;
 		align-items: center;
 	}
-	.status-label {
-		font-size: 26rpx;
-		color: #64748b;
-	}
+	.status-label { font-size: 28rpx; color: $text2; }
 	.status-value {
 		font-size: 28rpx;
 		font-weight: 600;
-		color: #1e293b;
+		color: $primary;
+		background: rgba(0, 191, 255, 0.08);
+		padding: 6rpx 20rpx;
+		border-radius: 999rpx;
 	}
-	.status-tip {
-		font-size: 24rpx;
-		color: #64748b;
-		margin-top: 14rpx;
-	}
+	.status-tip { font-size: 24rpx; color: $text2; margin-top: 16rpx; line-height: 1.6; }
 }
 
 .form-card {
-	.form-title {
-		font-size: 30rpx;
-		font-weight: 700;
-		color: #1e293b;
-		margin-bottom: 14rpx;
-	}
-	.form-tip {
-		font-size: 24rpx;
-		color: #64748b;
-		margin-bottom: 14rpx;
-	}
+	.form-title { font-size: 36rpx; font-weight: 700; color: $text1; margin-bottom: 12rpx; }
+	.form-tip { font-size: 24rpx; color: $text2; margin-bottom: 20rpx; line-height: 1.6; }
 	.form-item {
-		&.textarea-item {
-			border-bottom: none;
-		}
+		&.textarea-item { border-bottom: none; }
 		.textarea {
 			width: 100%;
-			min-height: 180rpx;
-			font-size: 26rpx;
-			color: #1e293b;
-			padding: 18rpx;
-			background-color: #f8fafc;
-			border-radius: 12rpx;
+			min-height: 200rpx;
+			font-size: 28rpx;
+			color: $text1;
+			padding: 20rpx;
+			background-color: $bg;
+			border-radius: 16rpx;
 		}
 	}
 	.attachment-panel {
-		margin-top: 16rpx;
-		margin-bottom: 20rpx;
-		padding: 14rpx;
-		background-color: #f8fafc;
-		border-radius: 12rpx;
+		margin-top: 20rpx;
+		margin-bottom: 28rpx;
+		padding: 20rpx;
+		background-color: $bg;
+		border-radius: 16rpx;
 		.attachment-header {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			margin-bottom: 10rpx;
+			margin-bottom: 12rpx;
 		}
-		.attachment-title {
-			font-size: 24rpx;
-			color: #334155;
-			font-weight: 600;
-		}
-		.attachment-empty {
-			font-size: 24rpx;
-			color: #94a3b8;
-		}
+		.attachment-title { font-size: 28rpx; color: $text1; font-weight: 600; }
+		.attachment-empty { font-size: 24rpx; color: $text3; }
 		.attachment-item {
 			display: flex;
 			justify-content: space-between;
 			gap: 12rpx;
-			margin-top: 8rpx;
-			padding: 10rpx 0;
-			border-bottom: 2rpx solid #e2e8f0;
-			&:last-child {
-				border-bottom: none;
-			}
+			margin-top: 10rpx;
+			padding: 12rpx 0;
+			& + .attachment-item { border-top: 1rpx solid rgba(0,0,0,0.04); }
 		}
-		.attachment-url {
-			font-size: 22rpx;
-			color: #475569;
-			flex: 1;
-		}
-		.attachment-remove {
-			font-size: 22rpx;
-			color: #ef4444;
-		}
+		.attachment-url { font-size: 22rpx; color: $text2; flex: 1; word-break: break-all; }
+		.attachment-remove { font-size: 22rpx; color: $danger; font-weight: 500; }
 	}
 	.mini-btn {
 		width: 180rpx;
-		height: 60rpx;
-		line-height: 60rpx;
-		font-size: 22rpx;
-		border-radius: 30rpx;
-		background-color: #4f46e5;
+		height: 64rpx;
+		line-height: 64rpx;
+		font-size: 24rpx;
+		border-radius: 999rpx;
+		background: $gradient;
 		color: #ffffff;
 		padding: 0;
 		margin: 0;
+		&:active { transform: scale(0.96); }
 	}
-	.mini-btn[disabled] {
-		background-color: #a5b4fc;
-	}
+	.mini-btn[disabled] { background-color: $bg; color: $text3; }
 	.submit-btn {
-		height: 84rpx;
-		line-height: 84rpx;
-		background-color: #4f46e5;
+		height: 88rpx;
+		line-height: 88rpx;
+		background: $gradient;
 		color: #ffffff;
-		border-radius: 42rpx;
-		font-size: 28rpx;
+		border-radius: 999rpx;
+		font-size: 30rpx;
 		font-weight: 600;
+		box-shadow: 0 8rpx 30rpx rgba(0, 191, 255, 0.25);
+		&:active { transform: scale(0.96); }
 	}
-	.submit-btn[disabled] {
-		background-color: #a5b4fc;
-	}
+	.submit-btn[disabled] { background: $bg; color: $text3; box-shadow: none; }
 }
 </style>

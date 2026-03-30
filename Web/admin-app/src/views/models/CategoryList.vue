@@ -17,6 +17,12 @@
 
       <div class="table-wrapper">
         <el-table :data="categoryData" stripe border highlight-current-row style="width: 100%" v-loading="loading" row-key="id" :tree-props="{ children: 'children', hasChildren: 'hasChildren' }">
+          <el-table-column prop="icon" label="图标" width="80" align="center">
+            <template #default="scope">
+              <el-avatar v-if="scope.row.icon" :src="scope.row.icon" :size="36" shape="square" />
+              <span v-else class="no-icon">-</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="id" label="分类ID" width="100" />
           <el-table-column prop="categoryName" label="分类名称" min-width="150" />
           <el-table-column prop="categoryCode" label="分类编码" width="120" />
@@ -76,6 +82,21 @@
         <el-form-item label="分类编码" required>
           <el-input v-model="form.categoryCode" placeholder="请输入分类编码，如: anime" />
         </el-form-item>
+        <el-form-item label="分类图标">
+          <div class="icon-upload-wrapper">
+            <el-upload
+              class="icon-uploader"
+              :show-file-list="false"
+              :auto-upload="false"
+              :on-change="handleIconChange"
+              accept="image/*"
+            >
+              <img v-if="form.icon" :src="form.icon" class="icon-preview" />
+              <el-icon v-else class="icon-uploader-icon"><Plus /></el-icon>
+            </el-upload>
+            <span class="icon-tip">建议尺寸: 64x64px 或 128x128px</span>
+          </div>
+        </el-form-item>
         <el-form-item label="上级分类" v-if="dialogType === 'add-main'">
           <span style="color: #909399;">主分类无上级分类</span>
         </el-form-item>
@@ -103,7 +124,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getModelCategories, createCategory, updateCategory, deleteCategory } from '../../api/model'
+import { getModelCategories, createCategory, updateCategory, deleteCategory, uploadFile } from '../../api/model'
 
 const loading = ref(false)
 const categoryData = ref([])
@@ -124,6 +145,7 @@ const form = reactive({
   id: null,
   categoryName: '',
   categoryCode: '',
+  icon: '',
   parentId: 0,
   sortNo: 0,
   status: 1
@@ -206,6 +228,7 @@ const handleAddMain = () => {
     id: null,
     categoryName: '',
     categoryCode: '',
+    icon: '',
     parentId: 0,
     sortNo: 0,
     status: 1
@@ -221,6 +244,7 @@ const handleAddChild = (row) => {
     id: null,
     categoryName: '',
     categoryCode: '',
+    icon: '',
     parentId: row.id,
     sortNo: 0,
     status: 1
@@ -235,6 +259,7 @@ const handleEdit = (row) => {
     id: row.id,
     categoryName: row.categoryName,
     categoryCode: row.categoryCode,
+    icon: row.icon || '',
     parentId: row.parentId || 0,
     sortNo: row.sortNo || 0,
     status: row.status
@@ -267,6 +292,7 @@ const handleStatusChange = async (row) => {
       id: row.id,
       categoryName: row.categoryName,
       categoryCode: row.categoryCode,
+      icon: row.icon,
       parentId: row.parentId || 0,
       sortNo: row.sortNo || 0,
       status: row.status
@@ -311,36 +337,114 @@ const submitForm = async () => {
 onMounted(() => {
   fetchCategories()
 })
+
+// 处理图标上传
+const handleIconChange = async (file) => {
+  const isImage = file.raw.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return
+  }
+  const isLt2M = file.raw.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB')
+    return
+  }
+
+  try {
+    const url = await uploadFile(file.raw, 'categoryIcon')
+    form.icon = url
+    ElMessage.success('图标上传成功')
+  } catch (error) {
+    console.error('图标上传失败:', error)
+    ElMessage.error('图标上传失败')
+  }
+}
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
+.page-container {
+  padding: 0;
+}
+
 .table-card {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
 }
+
 .header-actions {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
 }
+
 .table-wrapper {
   max-height: calc(100vh - 300px);
   overflow: auto;
 }
+
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
-  overflow-x: auto;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
   position: sticky;
   bottom: 0;
-  background: #fff;
+  background: var(--bg-primary);
   z-index: 5;
-  padding-top: 8px;
+}
+
+.icon-upload-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-uploader {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--border-dark);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background: var(--bg-secondary);
+}
+
+.icon-uploader:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-lighter);
+}
+
+.icon-uploader-icon {
+  font-size: 28px;
+  color: var(--text-muted);
+}
+
+.icon-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.icon-tip {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.no-icon {
+  color: var(--text-muted);
 }
 </style>

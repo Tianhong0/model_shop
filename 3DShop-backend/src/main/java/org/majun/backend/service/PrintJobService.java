@@ -37,4 +37,8 @@ public interface PrintJobService {
     void syncAndBroadcastRunningJobs();
 
     List<PrintJobEventVO> listJobEvents(Long jobId, Integer limit);
+
+    void runPipeline(Long jobId, Long preferredPrinterId);
+
+    void deleteJob(Long jobId);
 }

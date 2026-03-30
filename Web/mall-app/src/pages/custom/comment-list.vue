@@ -23,7 +23,7 @@
 				<view class="comment-action-row">
 					<text class="reply-count">追评 {{ Number(comment.replyCount || 0) }}</text>
 					<view class="comment-like" :class="{ active: !!comment.liked }" @click.stop="toggleCommentLike(comment)">
-						<uni-icons :type="comment.liked ? 'heart-filled' : 'heart'" size="18" :color="comment.liked ? '#ef4444' : '#64748b'" />
+						<uni-icons :type="comment.liked ? 'heart-filled' : 'heart'" size="18" :color="comment.liked ? '#ef4444' : '#5a6a7a'" />
 						<text class="comment-like-text">{{ Number(comment.likeCount || 0) }}</text>
 					</view>
 				</view>
@@ -169,37 +169,62 @@ const formatScore = (value) => {
 </script>
 
 <style scoped lang="scss">
+$sky-blue: #00bfff;
+$sky-light: #5ce1ff;
+$sky-deep: #0099cc;
+$surface: #f8f8f8;
+$surface-raised: #ffffff;
+$text-primary: #1a2030;
+$text-secondary: #5a6a7a;
+$text-muted: #94a3b8;
+$shadow-card: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+$danger: #ff4d6d;
+$gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
+
+@keyframes fadeInUp {
+	from { opacity: 0; transform: translateY(24rpx); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .comment-list-page {
 	min-height: 100vh;
-	background: #f8fafc;
-	padding: 20rpx;
+	background: $surface;
+	padding: 24rpx;
 	box-sizing: border-box;
 }
 
 .sort-row {
 	display: flex;
 	gap: 16rpx;
-	margin-bottom: 16rpx;
+	margin-bottom: 24rpx;
 }
 
 .sort-btn {
-	padding: 10rpx 24rpx;
+	padding: 12rpx 32rpx;
 	border-radius: 999rpx;
-	font-size: 24rpx;
-	color: #475569;
-	background: #e2e8f0;
+	font-size: 26rpx;
+	color: $text-secondary;
+	background: $surface-raised;
+	box-shadow: $shadow-card;
+
+	&:active {
+		transform: scale(0.96);
+	}
 
 	&.active {
-		background: #2563eb;
+		background: $gradient-primary;
 		color: #fff;
+		box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
 	}
 }
 
 .comment-item {
-	padding: 20rpx;
-	border-radius: 16rpx;
-	background: #fff;
-	margin-bottom: 14rpx;
+	padding: 28rpx 32rpx;
+	border-radius: 24rpx;
+	background: $surface-raised;
+	margin-bottom: 20rpx;
+	box-shadow: $shadow-card;
+	animation: fadeInUp 0.35s ease-out both;
 }
 
 .comment-head {
@@ -211,7 +236,7 @@ const formatScore = (value) => {
 	width: 64rpx;
 	height: 64rpx;
 	border-radius: 50%;
-	background-color: #e2e8f0;
+	background-color: $surface;
 }
 
 .comment-user-meta {
@@ -222,61 +247,61 @@ const formatScore = (value) => {
 }
 
 .comment-user {
-	font-size: 26rpx;
+	font-size: 28rpx;
 	font-weight: 600;
-	color: #0f172a;
+	color: $text-primary;
 }
 
 .comment-time {
-	font-size: 22rpx;
-	color: #94a3b8;
+	font-size: 24rpx;
+	color: $text-muted;
 }
 
 .comment-score-row {
-	margin-top: 12rpx;
+	margin-top: 16rpx;
 	display: flex;
 	align-items: center;
 	gap: 10rpx;
 }
 
 .comment-score-stars {
-	font-size: 24rpx;
+	font-size: 26rpx;
 	letter-spacing: 2rpx;
 	color: #f59e0b;
 }
 
 .comment-score-text {
-	font-size: 22rpx;
-	color: #64748b;
+	font-size: 24rpx;
+	color: $text-secondary;
 }
 
 .comment-text {
 	display: block;
-	margin-top: 12rpx;
-	font-size: 24rpx;
+	margin-top: 16rpx;
+	font-size: 28rpx;
 	line-height: 1.7;
-	color: #334155;
+	color: $text-primary;
 }
 
 .comment-action-row {
-	margin-top: 12rpx;
+	margin-top: 16rpx;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 }
 
 .reply-count {
-	font-size: 22rpx;
-	color: #64748b;
+	font-size: 24rpx;
+	color: $text-secondary;
 }
 
 .comment-like {
 	display: flex;
 	align-items: center;
 	gap: 8rpx;
-	padding: 6rpx 14rpx;
+	padding: 8rpx 16rpx;
 	border-radius: 999rpx;
-	background: #f8fafc;
+	background: $surface;
 
 	&.active {
 		background: #fff1f2;
@@ -284,28 +309,34 @@ const formatScore = (value) => {
 }
 
 .comment-like-text {
-	font-size: 22rpx;
-	color: #64748b;
+	font-size: 24rpx;
+	color: $text-secondary;
 }
 
 .load-more-wrap {
-	padding: 20rpx 0 30rpx;
+	padding: 28rpx 0 36rpx;
 	display: flex;
 	justify-content: center;
 }
 
 .load-more-btn {
-	padding: 12rpx 28rpx;
+	padding: 14rpx 36rpx;
 	border-radius: 999rpx;
-	background: #2563eb;
+	background: $gradient-primary;
 	color: #fff;
-	font-size: 24rpx;
+	font-size: 26rpx;
+	font-weight: 600;
+	box-shadow: 0 4rpx 16rpx rgba(0, 191, 255, 0.35);
+
+	&:active {
+		transform: scale(0.96);
+	}
 }
 
 .state-text {
-	font-size: 24rpx;
-	color: #94a3b8;
+	font-size: 26rpx;
+	color: $text-muted;
 	text-align: center;
-	padding: 30rpx 0;
+	padding: 36rpx 0;
 }
 </style>

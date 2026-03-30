@@ -28,6 +28,7 @@ import org.majun.backend.entity.SysOrder;
 import org.majun.backend.entity.SysOrderPayment;
 import org.majun.backend.entity.WalletAccount;
 import org.majun.backend.entity.WalletLedger;
+import org.majun.backend.entity.ModelMaterial;
 import org.majun.backend.enums.OrderStatus;
 import org.majun.backend.enums.PaymentStatus;
 import org.majun.backend.enums.WalletLedgerDirection;
@@ -37,6 +38,7 @@ import org.majun.backend.repository.SysOrderPaymentRepository;
 import org.majun.backend.repository.SysOrderRepository;
 import org.majun.backend.repository.WalletAccountRepository;
 import org.majun.backend.repository.WalletLedgerRepository;
+import org.majun.backend.repository.ModelMaterialRepository;
 import org.majun.backend.service.OrderPaymentService;
 import org.majun.backend.vo.OrderBatchPayCreateResponse;
 import org.majun.backend.vo.OrderBatchPayStatusVO;
@@ -91,6 +93,7 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     private final SysOrderPayBatchItemRepository orderPayBatchItemRepository;
     private final WalletAccountRepository walletAccountRepository;
     private final WalletLedgerRepository walletLedgerRepository;
+    private final ModelMaterialRepository modelMaterialRepository;
     private final ObjectMapper objectMapper;
     private final ResourceLoader resourceLoader;
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -151,6 +154,9 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
         }
 
         List<Long> orderIds = new ArrayList<>(new LinkedHashSet<>(rawOrderIds));
+        if (orderIds.isEmpty()) {
+            throw new BusinessException("订单列表不能为空");
+        }
         List<SysOrder> orders = orderRepository.selectBatchIds(orderIds);
         if (orders == null || orders.size() != orderIds.size()) {
             throw new BusinessException("存在无效订单，无法发起合并支付");
@@ -251,6 +257,9 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
         }
 
         List<Long> orderIds = new ArrayList<>(new LinkedHashSet<>(rawOrderIds));
+        if (orderIds.isEmpty()) {
+            throw new BusinessException("订单列表不能为空");
+        }
         List<SysOrder> orders = orderRepository.selectBatchIds(orderIds);
         if (orders == null || orders.size() != orderIds.size()) {
             throw new BusinessException("存在无效订单，无法发起余额支付");
@@ -744,6 +753,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                 );
                 if (updated > 0) {
                     pointService.rewardOrderPaid(order.getUserId(), order.getId(), order.getOrderSn(), order.getOrderPrice());
+                    // 环保材料积分奖励
+                    rewardEcoMaterialIfApplicable(order);
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(order.getId()));
                 }
             }
@@ -813,6 +824,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                 if (updated > 0) {
                     if (order != null) {
                         pointService.rewardOrderPaid(order.getUserId(), order.getId(), order.getOrderSn(), order.getOrderPrice());
+                        // 环保材料积分奖励
+                        rewardEcoMaterialIfApplicable(order);
                     }
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(item.getOrderId()));
                 }
@@ -1118,6 +1131,20 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
             return LocalDateTime.parse(gmtPayment, ALIPAY_TIME_FORMATTER);
         } catch (Exception ex) {
             return LocalDateTime.now();
+        }
+    }
+
+    private void rewardEcoMaterialIfApplicable(SysOrder order) {
+        if (order == null || order.getMaterialId() == null) {
+            return;
+        }
+        try {
+            ModelMaterial material = modelMaterialRepository.selectById(order.getMaterialId());
+            if (material != null && Boolean.TRUE.equals(material.getIsEco())) {
+                pointService.rewardEcoMaterial(order.getUserId(), order.getId(), order.getOrderSn());
+            }
+        } catch (Exception ex) {
+            log.warn("环保材料积分奖励失败 orderId={}", order.getId(), ex);
         }
     }
 

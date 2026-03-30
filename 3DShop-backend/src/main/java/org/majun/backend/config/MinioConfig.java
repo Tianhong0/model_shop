@@ -13,7 +13,10 @@ import java.util.Collections;
 public class MinioConfig {
 
     @Value("${minio.endpoint}")
-    private String endpoint;
+    private String endpoint; // 后端内部使用：127.0.0.1:9000
+
+    @Value("${minio.public-endpoint}")
+    private String publicEndpoint; // 前端访问：公网 IP:9000
 
     @Value("${minio.accessKey}")
     private String accessKey;
@@ -23,16 +26,28 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        // 1. 创建兼容 JDK 21 的 OkHttpClient，强制使用 HTTP/1.1
         OkHttpClient httpClient = new OkHttpClient.Builder()
                 .protocols(Collections.singletonList(Protocol.HTTP_1_1))
                 .build();
 
-        // 2. 构建 MinioClient
         return MinioClient.builder()
-                .endpoint(endpoint)
+                .endpoint(endpoint) // 后端内部用 internal endpoint
                 .httpClient(httpClient)
                 .credentials(accessKey, secretKey)
                 .build();
+    }
+
+    /**
+     * 获取后端内部使用的 endpoint（127.0.0.1）
+     */
+    public String getInternalEndpoint() {
+        return endpoint;
+    }
+
+    /**
+     * 获取前端公开访问的 endpoint（公网 IP）
+     */
+    public String getPublicEndpoint() {
+        return publicEndpoint;
     }
 }

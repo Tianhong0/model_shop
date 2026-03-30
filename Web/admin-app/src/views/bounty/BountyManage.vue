@@ -19,8 +19,11 @@
         <el-table-column prop="deadline" label="截止日期" width="150" />
         <el-table-column prop="status" label="状态" width="120">
           <template #default="scope">
-            <el-tag :type="scope.row.status === '招募中' ? 'warning' : 'primary'" effect="light" round>
+            <el-tag :type="getStatusType(scope.row.rawStatus)" effect="light" round>
               {{ scope.row.status }}
+            </el-tag>
+            <el-tag v-if="scope.row.cancelRequested === 1" type="warning" effect="dark" round size="small" style="margin-left: 6px">
+              取消待审
             </el-tag>
           </template>
         </el-table-column>
@@ -30,6 +33,7 @@
               <el-button type="primary" link @click="openDetail(scope.row)">详情</el-button>
               <el-button v-if="canReview(scope.row)" type="success" link @click="review(scope.row, 1)">审核通过</el-button>
               <el-button v-if="canReview(scope.row)" type="danger" link @click="review(scope.row, 2)">驳回</el-button>
+              <el-button v-if="scope.row.cancelRequested === 1" type="warning" link @click="reviewCancel(scope.row)">审核取消</el-button>
             </el-space>
           </template>
         </el-table-column>
@@ -65,16 +69,17 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getBountyTaskDetail, getBountyTaskPage, reviewBountyTask } from '../../api/bounty'
+import { getBountyTaskDetail, getBountyTaskPage, reviewBountyTask, reviewBountyCancelTask } from '../../api/bounty'
 
 const search = ref('')
 const loading = ref(false)
 const bountyData = ref([])
 const detailVisible = ref(false)
 const currentDetail = ref(null)
-const REVIEW_PENDING_STATUS = 0
+const REVIEW_PENDING_STATUS = -1
 
 const statusMap = {
+  '-1': '待审核',
   0: '待支付托管',
   1: '招募中',
   2: '已选标',
@@ -106,7 +111,8 @@ const loadList = async () => {
       publisher: item.publisherId,
       reward: `￥${item.finalAmount ?? item.budgetAmount ?? 0}`,
       deadline: item.deadlineTime || '-',
-      status: statusMap[item.status] || `状态${item.status}`
+      status: statusMap[item.status] || `状态${item.status}`,
+      cancelRequested: item.cancelRequested || 0
     }))
   } catch (error) {
     ElMessage.error(error?.message || '加载悬赏列表失败')
@@ -116,6 +122,16 @@ const loadList = async () => {
 }
 
 const canReview = (row) => Number(row?.rawStatus) === REVIEW_PENDING_STATUS
+
+const getStatusType = (status) => {
+  const statusNum = Number(status)
+  if (statusNum === -1) return 'warning'  // 待审核
+  if (statusNum === 0) return 'info'      // 待支付托管
+  if (statusNum === 1) return 'success'   // 招募中
+  if (statusNum === 5) return 'success'   // 已完成
+  if (statusNum === 6) return 'danger'    // 已关闭
+  return 'primary'
+}
 
 const openDetail = async (row) => {
   if (!row?.taskId) {
@@ -169,22 +185,83 @@ const review = async (row, decision) => {
   }
 }
 
+const reviewCancel = async (row) => {
+  if (!row?.taskId) {
+    ElMessage.error('任务ID无效')
+    return
+  }
+  try {
+    const action = await ElMessageBox.confirm(
+      '该发布者申请取消悬赏，同意后托管金将退回发布者钱包。',
+      '审核取消申请',
+      {
+        confirmButtonText: '同意取消（退款）',
+        cancelButtonText: '拒绝取消',
+        distinguishCancelAndClose: true,
+        type: 'warning'
+      }
+    )
+    // 用户点了"同意取消"
+    const { value: remark } = await ElMessageBox.prompt('请输入审核备注（可选）', '同意取消', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputType: 'textarea',
+      inputPlaceholder: '可不填'
+    })
+    await reviewBountyCancelTask({ taskId: row.taskId, decision: 1, remark: String(remark || '').trim() || undefined })
+    ElMessage.success('已同意取消，托管金已退回')
+    await loadList()
+  } catch (error) {
+    if (error === 'cancel') {
+      // 用户点了"拒绝取消"
+      try {
+        const { value: remark } = await ElMessageBox.prompt('请输入拒绝原因', '拒绝取消申请', {
+          confirmButtonText: '确认拒绝',
+          cancelButtonText: '返回',
+          inputType: 'textarea',
+          inputPlaceholder: '请填写拒绝原因',
+          inputValidator: (val) => String(val || '').trim() ? true : '拒绝原因不能为空'
+        })
+        await reviewBountyCancelTask({ taskId: row.taskId, decision: 2, remark: String(remark || '').trim() })
+        ElMessage.success('已拒绝取消申请')
+        await loadList()
+      } catch (innerErr) {
+        if (innerErr === 'cancel' || innerErr === 'close') return
+        ElMessage.error(innerErr?.message || '操作失败')
+      }
+      return
+    }
+    if (error === 'close') return
+    ElMessage.error(error?.message || '操作失败')
+  }
+}
+
 onMounted(() => {
   loadList()
 })
 </script>
 
 <style scoped>
-.page-container { padding: 0; }
-.table-card {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+.page-container {
+  padding: 0;
 }
+
+.table-card {
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
 .header-actions {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 </style>

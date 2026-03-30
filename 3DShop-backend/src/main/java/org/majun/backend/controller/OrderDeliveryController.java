@@ -10,6 +10,7 @@ import org.majun.backend.dto.DeliveryShipRequest;
 import org.majun.backend.dto.DeliveryStatusUpdateRequest;
 import org.majun.backend.dto.DeliveryTrackAddRequest;
 import org.majun.backend.dto.DeliveryTrackSimulateRequest;
+import org.majun.backend.dto.RetryAutoShipRequest;
 import org.majun.backend.dto.UserDeliveryQueryRequest;
 import org.majun.backend.security.LoginUser;
 import org.majun.backend.service.OrderDeliveryService;
@@ -90,5 +91,12 @@ public class OrderDeliveryController {
     public Result<Void> simulateTracks(@Valid @RequestBody DeliveryTrackSimulateRequest request) {
         orderDeliveryService.simulateTracks(request);
         return Result.success();
+    }
+
+    @Operation(summary = "Retry auto ship", description = "Manually trigger auto-ship for orders that failed to auto-ship")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/admin/retry-ship")
+    public Result<Long> retryAutoShip(@Valid @RequestBody RetryAutoShipRequest request) {
+        return Result.success(orderDeliveryService.retryAutoShip(request));
     }
 }
