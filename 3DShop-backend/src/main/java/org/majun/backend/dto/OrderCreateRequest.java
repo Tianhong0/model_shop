@@ -42,4 +42,7 @@ public class OrderCreateRequest {
 
     @Schema(description = "使用积分数量")
     private Integer usePoints;
+
+    @Schema(description = "使用优惠券ID")
+    private Long couponId;
 }

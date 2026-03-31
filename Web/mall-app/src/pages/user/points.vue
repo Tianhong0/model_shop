@@ -7,6 +7,9 @@
 				<text>累计获得 {{ account.totalEarned }}</text>
 				<text>累计消耗 {{ account.totalSpent }}</text>
 			</view>
+			<view class="exchange-btn" @click="goToCoupons">
+				兑换优惠券
+			</view>
 		</view>
 
 		<view class="list-card" v-if="list.length">
@@ -70,7 +73,13 @@ const formatBiz = (item) => {
 		ORDER_PAY: '订单支付奖励',
 		ORDER_POINT_DEDUCT: '订单积分抵扣',
 		ORDER_POINT_REFUND: '订单取消返还积分',
-		BOUNTY_RELEASE: '悬赏验收奖励'
+		BOUNTY_RELEASE: '悬赏验收奖励',
+		ECO_MATERIAL: '环保材料奖励',
+		COUPON_EXCHANGE: '兑换优惠券',
+		COUPON_REFUND: '优惠券返还',
+		POST_REPLY_ADOPTED: '回答被采纳奖励',
+		POST_REPLY_EXCELLENT: '优质回答奖励',
+		USED_ORDER_SELL: '二手交易奖励'
 	}
 	return map[item?.bizType] || item?.remark || item?.bizType || '积分变动'
 }
@@ -78,6 +87,10 @@ const formatBiz = (item) => {
 const formatTime = (value) => {
 	if (!value) return '--'
 	return String(value).replace('T', ' ').slice(0, 19)
+}
+
+const goToCoupons = () => {
+	uni.navigateTo({ url: '/pages/user/coupons' })
 }
 </script>
 
@@ -105,17 +118,30 @@ $shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
 	background: $gradient;
 	border-radius: 24rpx;
 	padding: 32rpx;
+	padding-bottom: 100rpx;
 	margin-bottom: 28rpx;
 	box-shadow: 0 12rpx 40rpx rgba(0, 191, 255, 0.2);
 	color: #ffffff;
+	position: relative;
 	.title { font-size: 24rpx; opacity: 0.9; }
 	.amount { display: block; margin-top: 14rpx; font-size: 56rpx; font-weight: 700; }
 	.meta-row {
 		margin-top: 18rpx;
 		display: flex;
-		justify-content: space-between;
+		gap: 48rpx;
 		font-size: 24rpx;
 		opacity: 0.85;
+	}
+	.exchange-btn {
+		position: absolute;
+		right: 32rpx;
+		bottom: 32rpx;
+		background: rgba(255, 255, 255, 0.2);
+		border: 1rpx solid rgba(255, 255, 255, 0.4);
+		color: #ffffff;
+		font-size: 24rpx;
+		padding: 12rpx 24rpx;
+		border-radius: 30rpx;
 	}
 }
 

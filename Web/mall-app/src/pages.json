@@ -147,6 +147,12 @@
 			}
 		},
 		{
+			"path": "pages/user/coupons",
+			"style": {
+				"navigationBarTitleText": "优惠券"
+			}
+		},
+		{
 			"path": "pages/user/profile",
 			"style": {
 				"navigationBarTitleText": "个人资料"

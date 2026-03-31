@@ -57,6 +57,14 @@
 					<text class="label">优惠减免</text>
 					<text class="val discount">-￥{{discount}}</text>
 				</view>
+				<view class="fee-row coupon-row" @click="showCouponPicker" v-if="orderItems.length === 1">
+					<text class="label">优惠券</text>
+					<view class="coupon-picker">
+						<text v-if="selectedCoupon" class="selected-coupon">{{ selectedCoupon.name }} (-￥{{couponDiscountAmount}})</text>
+						<text v-else class="no-coupon">{{ availableCoupons.length > 0 ? availableCoupons.length + '张可用' : '暂无可用' }}</text>
+						<uni-icons type="right" size="14" color="#94a3b8"></uni-icons>
+					</view>
+				</view>
 				<view class="fee-row points-row">
 					<text class="label">积分抵扣 (可用{{ availablePoints }})</text>
 					<input class="points-input" type="number" v-model="usePoints" @blur="sanitizeUsePoints" placeholder="输入积分" />
@@ -64,6 +72,38 @@
 				<view class="fee-row" v-if="Number(pointDiscountAmount) > 0">
 					<text class="label">积分减免</text>
 					<text class="val discount">-￥{{pointDiscountAmount}}</text>
+				</view>
+			</view>
+
+			<!-- 优惠券选择弹窗 -->
+			<view class="coupon-popup" v-if="showCouponPopup" @click="showCouponPopup = false">
+				<view class="coupon-popup-content" @click.stop>
+					<view class="popup-header">
+						<text class="popup-title">选择优惠券</text>
+						<text class="popup-close" @click="showCouponPopup = false">✕</text>
+					</view>
+					<scroll-view scroll-y class="coupon-list">
+						<view v-if="availableCoupons.length === 0" class="empty-coupon">暂无可用优惠券</view>
+						<view
+							class="coupon-item"
+							v-for="item in availableCoupons"
+							:key="item.id"
+							:class="{ selected: selectedCoupon?.id === item.id }"
+							@click="selectCoupon(item)"
+						>
+							<view class="coupon-left">
+								<text class="coupon-value">¥{{ item.value }}</text>
+								<text class="coupon-condition">满¥{{ item.minAmount || 0 }}可用</text>
+							</view>
+							<view class="coupon-right">
+								<text class="coupon-name">{{ item.name }}</text>
+								<text class="coupon-expire">{{ item.endTime?.slice(0, 10) }}到期</text>
+							</view>
+						</view>
+					</scroll-view>
+					<view class="popup-footer">
+						<text class="clear-btn" @click="clearCoupon">不使用优惠券</text>
+					</view>
 				</view>
 			</view>
 
@@ -80,11 +120,6 @@
 						<view class="pay-icon">🔵</view>
 						<text>支付宝</text>
 						<radio value="ali" color="#00bfff" />
-					</label>
-					<label class="pay-item">
-						<view class="pay-icon">⚫</view>
-						<text>抖音支付</text>
-						<radio value="douyin" color="#00bfff" />
 					</label>
 					<label class="pay-item">
 						<view class="pay-icon">💰</view>
@@ -116,8 +151,6 @@ import {
 	createOrderApi,
 	createAlipayAppPayApi,
 	createAlipayBatchPayApi,
-	createDouyinAppPayApi,
-	createDouyinBatchPayApi,
 	payOrderByWalletApi,
 	payBatchByWalletApi,
 	getOrderPayStatusApi,
@@ -128,6 +161,7 @@ import {
 import { getPointAccountApi } from '../../api/point'
 import { getWalletAccountApi } from '../../api/wallet'
 import { ensureLoginOrRedirect } from '../../utils/auth'
+import { getAvailableCouponsForOrderApi, calculateCouponDiscountApi } from '../../api/coupon'
 
 const ADDRESS_STORAGE_KEY = 'user_addresses'
 const CHECKOUT_SELECTED_ADDRESS_KEY = 'checkout_selected_address_id'
@@ -146,6 +180,10 @@ const payMethod = ref('ali')
 const availablePoints = ref(0)
 const availableBalance = ref('0.00')
 const usePoints = ref('0')
+const selectedCoupon = ref(null)
+const couponDiscountAmount = ref('0.00')
+const availableCoupons = ref([])
+const showCouponPopup = ref(false)
 const checkoutFrom = ref('buyNow')
 const paying = ref(false)
 const preparingOrder = ref(false)
@@ -242,6 +280,75 @@ const sanitizeUsePoints = () => {
 	if (!Number.isFinite(value) || value < 0) value = 0
 	if (value > availablePoints.value) value = availablePoints.value
 	usePoints.value = String(value)
+	if (orderItems.value.length === 1) {
+		pendingOrders.value = []
+		pendingBatchId.value = null
+		prepareOrderPricing()
+	}
+}
+
+const showCouponPicker = async () => {
+	// 如果订单正在准备中，等待完成
+	if (preparingOrder.value) {
+		uni.showLoading({ title: '正在加载...' })
+		// 等待订单准备完成
+		while (preparingOrder.value) {
+			await sleep(100)
+		}
+		uni.hideLoading()
+	}
+	await loadAvailableCoupons()
+	showCouponPopup.value = true
+}
+
+const loadAvailableCoupons = async () => {
+	try {
+		// 优先使用后端返回的金额，如果没有则根据商品列表计算
+		let amount = Number(goodsTotal.value) || 0
+		if (amount <= 0) {
+			// 根据商品列表计算预估金额
+			amount = orderItems.value.reduce((sum, item) => {
+				const price = Number(item?.price || 0)
+				const quantity = Number(item?.num || 1)
+				return sum + price * quantity
+			}, 0)
+		}
+		if (amount <= 0) {
+			availableCoupons.value = []
+			return
+		}
+		const data = await getAvailableCouponsForOrderApi(amount)
+		availableCoupons.value = Array.isArray(data) ? data : []
+	} catch (error) {
+		console.error('加载优惠券失败', error)
+		availableCoupons.value = []
+	}
+}
+
+const selectCoupon = async (coupon) => {
+	selectedCoupon.value = coupon
+	showCouponPopup.value = false
+
+	try {
+		const amount = Number(goodsTotal.value) || 0
+		const discount = await calculateCouponDiscountApi(coupon.id, amount)
+		couponDiscountAmount.value = normalizeMoney(discount || 0)
+	} catch (error) {
+		couponDiscountAmount.value = '0.00'
+	}
+
+	if (orderItems.value.length === 1) {
+		pendingOrders.value = []
+		pendingBatchId.value = null
+		prepareOrderPricing()
+	}
+}
+
+const clearCoupon = () => {
+	selectedCoupon.value = null
+	couponDiscountAmount.value = '0.00'
+	showCouponPopup.value = false
+
 	if (orderItems.value.length === 1) {
 		pendingOrders.value = []
 		pendingBatchId.value = null
@@ -464,6 +571,7 @@ const buildOrderRequest = (item) => {
 	}
 	const serializedCustomParams = Object.keys(customParamsObj).length > 0 ? JSON.stringify(customParamsObj) : ''
 	const pointsToUse = orderItems.value.length === 1 ? Number(usePoints.value || 0) : 0
+	const couponIdToUse = orderItems.value.length === 1 && selectedCoupon.value ? selectedCoupon.value.id : null
 	return {
 		modelId,
 		materialId: payload?.materialId || null,
@@ -472,6 +580,7 @@ const buildOrderRequest = (item) => {
 		color: payload?.color || '',
 		note: payload?.note || '',
 		usePoints: pointsToUse,
+		couponId: couponIdToUse,
 		customParams: serializedCustomParams,
 		custom_params: serializedCustomParams
 	}
@@ -538,7 +647,7 @@ const handlePay = async () => {
 		uni.showToast({ title: '订单金额确认中，请稍候', icon: 'none' })
 		return
 	}
-	if (payMethod.value !== 'ali' && payMethod.value !== 'wallet' && payMethod.value !== 'douyin') {
+	if (payMethod.value !== 'ali' && payMethod.value !== 'wallet') {
 		uni.showToast({ title: '当前支付方式不支持', icon: 'none' })
 		return
 	}
@@ -1097,6 +1206,145 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 
 		&:active {
 			transform: scale(0.96);
+		}
+	}
+}
+
+.coupon-row {
+	.coupon-picker {
+		display: flex;
+		align-items: center;
+
+		.selected-coupon {
+			font-size: 26rpx;
+			color: $sky-blue;
+		}
+
+		.no-coupon {
+			font-size: 26rpx;
+			color: $text-muted;
+		}
+	}
+}
+
+.coupon-popup {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1000;
+	display: flex;
+	align-items: flex-end;
+
+	.coupon-popup-content {
+		width: 100%;
+		max-height: 70vh;
+		background: $surface-raised;
+		border-radius: 32rpx 32rpx 0 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.popup-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 32rpx;
+		border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+
+		.popup-title {
+			font-size: 32rpx;
+			font-weight: 700;
+			color: $text-primary;
+		}
+
+		.popup-close {
+			font-size: 32rpx;
+			color: $text-muted;
+		}
+	}
+
+	.coupon-list {
+		flex: 1;
+		padding: 24rpx;
+		max-height: 50vh;
+	}
+
+	.empty-coupon {
+		text-align: center;
+		padding: 60rpx;
+		font-size: 28rpx;
+		color: $text-muted;
+	}
+
+	.coupon-item {
+		display: flex;
+		background: $surface;
+		border-radius: 16rpx;
+		margin-bottom: 20rpx;
+		overflow: hidden;
+		border: 2rpx solid transparent;
+
+		&.selected {
+			border-color: $sky-blue;
+		}
+
+		.coupon-left {
+			width: 160rpx;
+			background: $gradient-primary;
+			padding: 24rpx;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			color: #fff;
+
+			.coupon-value {
+				font-size: 40rpx;
+				font-weight: 700;
+			}
+
+			.coupon-condition {
+				font-size: 20rpx;
+				opacity: 0.9;
+				margin-top: 8rpx;
+			}
+		}
+
+		.coupon-right {
+			flex: 1;
+			padding: 20rpx;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+
+			.coupon-name {
+				font-size: 28rpx;
+				color: $text-primary;
+				font-weight: 500;
+			}
+
+			.coupon-expire {
+				font-size: 22rpx;
+				color: $text-muted;
+				margin-top: 8rpx;
+			}
+		}
+	}
+
+	.popup-footer {
+		padding: 24rpx 32rpx;
+		padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+		border-top: 1rpx solid rgba(0, 0, 0, 0.05);
+
+		.clear-btn {
+			display: block;
+			text-align: center;
+			font-size: 28rpx;
+			color: $text-secondary;
+			padding: 20rpx 0;
 		}
 	}
 }

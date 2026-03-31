@@ -13,16 +13,27 @@ import org.majun.backend.common.exception.BusinessException;
 import org.majun.backend.dto.OrderCreateRequest;
 import org.majun.backend.dto.OrderQueryRequest;
 import org.majun.backend.dto.OrderStatusUpdateRequest;
+import org.majun.backend.entity.CouponTemplate;
 import org.majun.backend.entity.ModelMaterial;
+import org.majun.backend.entity.PointLedger;
+import org.majun.backend.entity.PrintJob;
 import org.majun.backend.entity.SysModel;
 import org.majun.backend.entity.SysModelImage;
 import org.majun.backend.entity.SysOrder;
+import org.majun.backend.entity.UserCoupon;
+import org.majun.backend.enums.PrintJobStatus;
 import org.majun.backend.enums.OrderStatus;
+import org.majun.backend.repository.CouponTemplateRepository;
 import org.majun.backend.repository.ModelMaterialRepository;
+import org.majun.backend.repository.PointLedgerRepository;
+import org.majun.backend.repository.PrintJobRepository;
 import org.majun.backend.repository.SysModelImageRepository;
 import org.majun.backend.repository.SysModelRepository;
 import org.majun.backend.repository.SysOrderRepository;
+import org.majun.backend.repository.UserCouponRepository;
+import org.majun.backend.service.CouponService;
 import org.majun.backend.service.OrderService;
+import org.majun.backend.service.PointService;
 import org.majun.backend.vo.OrderCreateResponse;
 import org.majun.backend.vo.OrderDetailVO;
 import org.majun.backend.vo.OrderListVO;
@@ -64,6 +75,11 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
     private final ModelMaterialRepository modelMaterialRepository;
     private final SysModelImageRepository modelImageRepository;
     private final PointService pointService;
+    private final CouponService couponService;
+    private final PointLedgerRepository pointLedgerRepository;
+    private final UserCouponRepository userCouponRepository;
+    private final CouponTemplateRepository couponTemplateRepository;
+    private final PrintJobRepository printJobRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -85,7 +101,7 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
 
         PriceBreakdown priceBreakdown = calculatePriceBreakdown(model, material, request, userId);
         String orderSn = generateOrderSn();
-        String customParams = buildCustomParams(request, priceBreakdown.getUsedPoints(), priceBreakdown.getPointDiscountAmount());
+        String customParams = buildCustomParams(request, priceBreakdown.getUsedPoints(), priceBreakdown.getPointDiscountAmount(), priceBreakdown.getCouponId(), priceBreakdown.getCouponDiscountAmount());
 
         SysOrder order = new SysOrder();
         order.setOrderSn(orderSn);
@@ -171,9 +187,20 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
             throw new BusinessException("Only pending payment orders can be canceled");
         }
 
+        // 返还积分
         int usedPoints = parseUsedPointsFromCustomParams(order.getCustomParams());
         if (usedPoints > 0) {
             pointService.refundOrderPoints(order.getUserId(), order.getId(), order.getOrderSn(), usedPoints);
+        }
+
+        // 返还优惠券
+        Long couponId = parseCouponIdFromCustomParams(order.getCustomParams());
+        if (couponId != null) {
+            try {
+                couponService.returnCoupon(couponId, userId);
+            } catch (Exception e) {
+                log.warn("返还优惠券失败: couponId={}, error={}", couponId, e.getMessage());
+            }
         }
 
         order.setOrderStatus(OrderStatus.CANCELED.getCode());
@@ -315,7 +342,80 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         vo.setCustomParams(order.getCustomParams());
         vo.setCreateTime(order.getCreateTime());
         vo.setUpdateTime(order.getUpdateTime());
+
+        // 解析积分和优惠券信息
+        parsePointsAndCouponInfo(order, vo);
+
+        // 查询打印任务状态
+        fillPrintJobStatus(order.getId(), vo);
+
         return vo;
+    }
+
+    private void parsePointsAndCouponInfo(SysOrder order, OrderDetailVO vo) {
+        String customParams = order.getCustomParams();
+        if (!StringUtils.hasText(customParams)) {
+            return;
+        }
+
+        try {
+            JsonNode node = objectMapper.readTree(customParams);
+
+            // 积分信息
+            JsonNode usedPointsNode = node.get("usedPoints");
+            if (usedPointsNode != null && !usedPointsNode.isNull()) {
+                vo.setUsedPoints(usedPointsNode.asInt(0));
+            }
+            JsonNode pointDiscountNode = node.get("pointDiscountAmount");
+            if (pointDiscountNode != null && !pointDiscountNode.isNull()) {
+                vo.setPointDiscountAmount(new BigDecimal(pointDiscountNode.asText("0")));
+            }
+
+            // 优惠券信息
+            JsonNode couponIdNode = node.get("couponId");
+            if (couponIdNode != null && !couponIdNode.isNull()) {
+                Long couponId = couponIdNode.asLong();
+                vo.setCouponId(couponId);
+                // 查询优惠券名称
+                if (couponId != null && couponId > 0) {
+                    UserCoupon userCoupon = userCouponRepository.selectById(couponId);
+                    if (userCoupon != null) {
+                        CouponTemplate template = couponTemplateRepository.selectById(userCoupon.getTemplateId());
+                        if (template != null) {
+                            vo.setCouponName(template.getName());
+                        }
+                    }
+                }
+            }
+            JsonNode couponDiscountNode = node.get("couponDiscountAmount");
+            if (couponDiscountNode != null && !couponDiscountNode.isNull()) {
+                vo.setCouponDiscountAmount(new BigDecimal(couponDiscountNode.asText("0")));
+            }
+
+            // 价格明细
+            JsonNode basePriceNode = node.get("basePrice");
+            if (basePriceNode != null && !basePriceNode.isNull()) {
+                vo.setBasePrice(new BigDecimal(basePriceNode.asText("0")));
+            }
+            JsonNode materialCostNode = node.get("materialCost");
+            if (materialCostNode != null && !materialCostNode.isNull()) {
+                vo.setMaterialCost(new BigDecimal(materialCostNode.asText("0")));
+            }
+
+            // 查询订单获得的积分
+            PointLedger rewardLedger = pointLedgerRepository.selectOne(
+                new LambdaQueryWrapper<PointLedger>()
+                    .eq(PointLedger::getRefId, order.getId())
+                    .eq(PointLedger::getBizType, PointService.BIZ_ORDER_PAY)
+                    .last("LIMIT 1")
+            );
+            if (rewardLedger != null) {
+                vo.setEarnedPoints(rewardLedger.getPoints());
+            }
+
+        } catch (Exception e) {
+            log.warn("解析订单积分优惠券信息失败: orderId={}, error={}", order.getId(), e.getMessage());
+        }
     }
 
     private Map<Long, SysModel> loadModelMap(List<Long> modelIds) {
@@ -368,6 +468,7 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         BigDecimal shippingFee = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         BigDecimal discountAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
+        // 积分抵扣
         int requestedPoints = request.getUsePoints() == null ? 0 : Math.max(request.getUsePoints(), 0);
         int availablePoints = 0;
         if (requestedPoints > 0) {
@@ -385,6 +486,31 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         }
         discountAmount = discountAmount.add(pointDiscountAmount);
 
+        // 优惠券抵扣
+        Long couponId = request.getCouponId();
+        BigDecimal couponDiscountAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal amountAfterPointDiscount = goodsAmount.add(shippingFee).subtract(discountAmount);
+        if (couponId != null) {
+            try {
+                couponDiscountAmount = couponService.calculateCouponDiscount(couponId, amountAfterPointDiscount, userId);
+                if (couponDiscountAmount != null && couponDiscountAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    // 优惠券折扣不能超过剩余金额减去最低支付金额
+                    BigDecimal maxCouponDiscount = amountAfterPointDiscount.subtract(MIN_PAY_AMOUNT).max(BigDecimal.ZERO);
+                    if (couponDiscountAmount.compareTo(maxCouponDiscount) > 0) {
+                        couponDiscountAmount = maxCouponDiscount;
+                    }
+                    discountAmount = discountAmount.add(couponDiscountAmount);
+                } else {
+                    couponDiscountAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                    couponId = null;
+                }
+            } catch (Exception e) {
+                log.warn("优惠券计算失败: {}", e.getMessage());
+                couponId = null;
+                couponDiscountAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            }
+        }
+
         BigDecimal payAmount = goodsAmount.add(shippingFee).subtract(discountAmount).setScale(2, RoundingMode.HALF_UP);
         if (payAmount.compareTo(MIN_PAY_AMOUNT) < 0) {
             payAmount = MIN_PAY_AMOUNT;
@@ -399,6 +525,8 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         breakdown.setPayAmount(payAmount);
         breakdown.setUsedPoints(usedPoints);
         breakdown.setPointDiscountAmount(pointDiscountAmount);
+        breakdown.setCouponId(couponId);
+        breakdown.setCouponDiscountAmount(couponDiscountAmount);
         return breakdown;
     }
 
@@ -412,9 +540,11 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         private BigDecimal payAmount;
         private Integer usedPoints;
         private BigDecimal pointDiscountAmount;
+        private Long couponId;
+        private BigDecimal couponDiscountAmount;
     }
 
-    private String buildCustomParams(OrderCreateRequest request, Integer usedPoints, BigDecimal pointDiscountAmount) {
+    private String buildCustomParams(OrderCreateRequest request, Integer usedPoints, BigDecimal pointDiscountAmount, Long couponId, BigDecimal couponDiscountAmount) {
         Map<String, Object> params = new LinkedHashMap<>();
 
         if (StringUtils.hasText(request.getCustomParams())) {
@@ -437,6 +567,8 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         params.put("note", request.getNote());
         params.put("usedPoints", usedPoints == null ? 0 : Math.max(usedPoints, 0));
         params.put("pointDiscountAmount", pointDiscountAmount == null ? BigDecimal.ZERO : pointDiscountAmount);
+        params.put("couponId", couponId);
+        params.put("couponDiscountAmount", couponDiscountAmount == null ? BigDecimal.ZERO : couponDiscountAmount);
 
         try {
             return objectMapper.writeValueAsString(params);
@@ -479,6 +611,22 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         }
     }
 
+    private Long parseCouponIdFromCustomParams(String customParams) {
+        if (!StringUtils.hasText(customParams)) {
+            return null;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(customParams);
+            JsonNode couponIdNode = node.get("couponId");
+            if (couponIdNode == null || couponIdNode.isNull()) {
+                return null;
+            }
+            return couponIdNode.asLong();
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
     private String generateOrderSn() {
         String prefix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         for (int i = 0; i < ORDER_SN_RETRY_LIMIT; i++) {
@@ -505,5 +653,32 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
                         .eq(ModelMaterial::getMaterialId, materialId)
                         .last("LIMIT 1")
         );
+    }
+
+    private void fillPrintJobStatus(Long orderId, OrderDetailVO vo) {
+        if (orderId == null) {
+            return;
+        }
+        PrintJob printJob = printJobRepository.selectOne(
+                new LambdaQueryWrapper<PrintJob>()
+                        .eq(PrintJob::getOrderId, orderId)
+                        .eq(PrintJob::getIsDelete, 0)
+                        .last("LIMIT 1")
+        );
+        if (printJob == null) {
+            return;
+        }
+        vo.setPrintJobStatus(printJob.getStatus());
+        vo.setPrintJobStatusDesc(getPrintJobStatusDesc(printJob.getStatus()));
+        vo.setPrintProgress(printJob.getProgress());
+        vo.setPrintErrorMessage(printJob.getErrorMessage());
+    }
+
+    private String getPrintJobStatusDesc(Integer status) {
+        if (status == null) {
+            return null;
+        }
+        PrintJobStatus jobStatus = PrintJobStatus.fromCode(status);
+        return jobStatus != null ? jobStatus.getDescription() : null;
     }
 }

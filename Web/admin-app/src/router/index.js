@@ -230,6 +230,12 @@ const routes = [
         name: 'BatchDiscountConfig',
         component: () => import('../views/group-buy/BatchDiscount.vue'),
         meta: { title: '批量打印折扣', requiresAuth: true }
+      },
+      {
+        path: 'coupon/templates',
+        name: 'CouponTemplateList',
+        component: () => import('../views/coupon/CouponTemplateList.vue'),
+        meta: { title: '优惠券管理', requiresAuth: true }
       }
     ]
   }

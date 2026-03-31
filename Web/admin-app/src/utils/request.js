@@ -6,8 +6,8 @@ const JSONBig = JSONBigFactory({ storeAsString: true })
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://120.48.50.30:9999',
-    // baseURL: 'http://127.0.0.1:9999',
+  // baseURL: 'http://120.48.50.30:9999',
+    baseURL: 'http://127.0.0.1:9999',
   timeout: 600000, // 10分钟，大文件上传需要更长超时
   headers: {
     'Content-Type': 'application/json'

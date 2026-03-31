@@ -25,6 +25,7 @@ import org.majun.backend.dto.*;
 import org.majun.backend.entity.*;
 import org.majun.backend.enums.*;
 import org.majun.backend.repository.*;
+import org.majun.backend.service.PointService;
 import org.majun.backend.service.UserNotificationService;
 import org.majun.backend.service.UsedMessageWebSocketService;
 import org.majun.backend.service.UsedTradeService;

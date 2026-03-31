@@ -27,18 +27,51 @@
     <view class="card progress" v-if="order.status === 1 || printProgress.hasValue">
       <view class="card-head">
         <text class="head-title">打印进度</text>
-        <text class="chip">{{ printProgress.statusDesc || '生产中' }}</text>
+        <text class="chip" :class="{ 'fault-chip': isPrintFailed }">{{ printProgress.statusDesc || '生产中' }}</text>
       </view>
-      <view class="progress-row">
+      <view class="progress-row" v-if="!isPrintFailed">
         <view class="bar">
           <view class="bar-inner" :style="{ width: `${printPercent}%` }" />
         </view>
         <text class="percent">{{ printPercent }}%</text>
       </view>
-      <view class="meta-grid">
+      <view class="meta-grid" v-if="!isPrintFailed">
         <text>剩余时间：{{ remainText }}</text>
         <text>喷头温度：{{ tempText(printProgress.toolTempActual, printProgress.toolTempTarget) }}</text>
         <text>热床温度：{{ tempText(printProgress.bedTempActual, printProgress.bedTempTarget) }}</text>
+      </view>
+    </view>
+
+    <!-- 故障诊断面板 -->
+    <view class="card fault-diagnosis" v-if="showFaultDiagnosis">
+      <view class="card-head">
+        <text class="head-title">故障诊断</text>
+        <text class="chip fault">{{ faultDiagnosis.faultCategoryName || '故障' }}</text>
+      </view>
+      <view class="fault-content">
+        <view class="fault-item">
+          <text class="fault-label">故障类型</text>
+          <text class="fault-value">{{ faultDiagnosis.faultName }}</text>
+        </view>
+        <view class="fault-item" v-if="faultDiagnosis.description">
+          <text class="fault-label">故障描述</text>
+          <text class="fault-value">{{ faultDiagnosis.description }}</text>
+        </view>
+        <view class="suggestions" v-if="faultDiagnosis.suggestions?.length">
+          <text class="suggestions-title">处理建议</text>
+          <view class="suggestion-item" v-for="(item, idx) in faultDiagnosis.suggestions" :key="idx">
+            <text class="suggestion-index">{{ idx + 1 }}</text>
+            <text class="suggestion-text">{{ item }}</text>
+          </view>
+        </view>
+      </view>
+      <view class="fault-actions">
+        <button class="action-btn retry" v-if="faultDiagnosis.canRetry && faultDiagnosis.retryCount < faultDiagnosis.maxRetryCount" @click="handleRetry">
+          重新打印 ({{ faultDiagnosis.retryCount }}/{{ faultDiagnosis.maxRetryCount }})
+        </button>
+        <button class="action-btn contact" @click="goCustomerService">
+          联系客服
+        </button>
       </view>
     </view>
 
@@ -64,9 +97,23 @@
           </view>
         </view>
       </view>
+      <view class="sum-row" v-if="order.basePrice"><text>基础价格</text><text>￥{{ order.basePrice }}</text></view>
+      <view class="sum-row" v-if="order.materialCost"><text>材料费用</text><text>￥{{ order.materialCost }}</text></view>
       <view class="sum-row"><text>商品总额</text><text>￥{{ order.totalPrice }}</text></view>
       <view class="sum-row"><text>运费</text><text>￥0.00</text></view>
+      <view class="sum-row discount" v-if="order.usedPoints > 0">
+        <text>积分抵扣 ({{ order.usedPoints }}积分)</text>
+        <text class="discount-val">-￥{{ order.pointDiscountAmount || '0.00' }}</text>
+      </view>
+      <view class="sum-row discount" v-if="order.couponId && order.couponDiscountAmount > 0">
+        <text>优惠券{{ order.couponName ? '(' + order.couponName + ')' : '' }}</text>
+        <text class="discount-val">-￥{{ order.couponDiscountAmount || '0.00' }}</text>
+      </view>
       <view class="sum-row total"><text>实付款</text><text class="amount">￥{{ order.totalPrice }}</text></view>
+      <view class="sum-row reward" v-if="order.earnedPoints > 0">
+        <text>获得积分</text>
+        <text class="reward-val">+{{ order.earnedPoints }}积分</text>
+      </view>
     </view>
 
     <view class="card info">
@@ -99,7 +146,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
-import { cancelOrderApi, confirmOrderReceiveApi, createAlipayAppPayApi, getMyAfterSaleListApi, getMyDeliveryDetailApi, getMyOrderCommentsApi, getOrderDetailApi, getOrderDetailBySnApi, getOrderPayStatusApi, payOrderByWalletApi, syncOrderPayStatusApi } from '../../api/order'
+import { cancelOrderApi, confirmOrderReceiveApi, createAlipayAppPayApi, getMyAfterSaleListApi, getMyDeliveryDetailApi, getMyOrderCommentsApi, getOrderDetailApi, getOrderDetailBySnApi, getOrderPayStatusApi, payOrderByWalletApi, syncOrderPayStatusApi, getPrintFaultDiagnosisApi, userRetryPrintApi } from '../../api/order'
 import { getWalletAccountApi } from '../../api/wallet'
 import { getApiBaseUrl } from '../../utils/apiBase'
 
@@ -116,11 +163,20 @@ const order = ref({
   updateTimeText: '-',
   remark: '',
   customParams: '',
+  basePrice: null,
+  materialCost: null,
+  usedPoints: 0,
+  pointDiscountAmount: '0.00',
+  couponId: null,
+  couponName: '',
+  couponDiscountAmount: '0.00',
+  earnedPoints: 0,
   items: [{ name: '模型订单', params: '-', price: '0.00', num: 1, image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=200' }]
 })
 
 const deliverySummary = ref(null)
 const afterSaleEntry = ref(null)
+const faultDiagnosis = ref(null)
 const printProgress = reactive({
   hasValue: false,
   statusDesc: '',
@@ -164,6 +220,15 @@ const printPercent = computed(() => {
   const value = Number(printProgress.progress || 0)
   if (!Number.isFinite(value)) return 0
   return Math.max(0, Math.min(100, Math.round(value)))
+})
+
+const isPrintFailed = computed(() => {
+  const statusDesc = printProgress.statusDesc || ''
+  return statusDesc.includes('失败') || statusDesc.includes('错误') || statusDesc.includes('异常')
+})
+
+const showFaultDiagnosis = computed(() => {
+  return order.value.status === 1 && printProgress.hasValue && isPrintFailed.value && faultDiagnosis.value
 })
 
 const remainText = computed(() => {
@@ -267,6 +332,14 @@ const mapOrderDetail = (record) => {
     updateTimeText: formatDateTime(safeUpdateTime),
     remark,
     customParams: record?.customParams || '',
+    basePrice: record?.basePrice ? Number(record.basePrice).toFixed(2) : null,
+    materialCost: record?.materialCost ? Number(record.materialCost).toFixed(2) : null,
+    usedPoints: record?.usedPoints || 0,
+    pointDiscountAmount: record?.pointDiscountAmount ? Number(record.pointDiscountAmount).toFixed(2) : '0.00',
+    couponId: record?.couponId || null,
+    couponName: record?.couponName || '',
+    couponDiscountAmount: record?.couponDiscountAmount ? Number(record.couponDiscountAmount).toFixed(2) : '0.00',
+    earnedPoints: record?.earnedPoints || 0,
     items: [{
       name: record?.modelName || '模型订单',
       params: paramsText,
@@ -274,6 +347,16 @@ const mapOrderDetail = (record) => {
       num: 1,
       image: record?.mainImageUrl || 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=200'
     }]
+  }
+
+  // 初始化打印任务状态
+  if (record?.printJobStatus != null) {
+    printProgress.hasValue = true
+    printProgress.statusDesc = record?.printJobStatusDesc || ''
+    printProgress.progress = Number(record?.printProgress || 0)
+    if (record?.printErrorMessage) {
+      printProgress.statusDesc = record.printJobStatusDesc || '打印失败'
+    }
   }
 }
 
@@ -288,6 +371,11 @@ const loadOrderDetail = async () => {
     return
   }
   mapOrderDetail(detail)
+
+  // 如果打印失败，自动加载故障诊断
+  if (order.value.status === 1 && printProgress.hasValue && isPrintFailed.value) {
+    await loadFaultDiagnosis()
+  }
 }
 
 const loadDeliverySummary = async () => {
@@ -359,6 +447,12 @@ const connectPrintSocket = () => {
       printProgress.toolTempTarget = payload?.toolTempTarget ?? null
       printProgress.bedTempActual = payload?.bedTempActual ?? null
       printProgress.bedTempTarget = payload?.bedTempTarget ?? null
+
+      // 检测打印失败，自动加载故障诊断
+      const statusDesc = payload?.statusDesc || ''
+      if (statusDesc.includes('失败') || statusDesc.includes('错误') || statusDesc.includes('异常')) {
+        loadFaultDiagnosis()
+      }
     } catch (_) {
       // ignore
     }
@@ -643,6 +737,44 @@ const goAfterSaleList = () => {
   uni.navigateTo({ url: '/pages/user/after-sale-list' })
 }
 
+const goCustomerService = () => {
+  uni.navigateTo({ url: '/pages/custom/customer-service' })
+}
+
+const loadFaultDiagnosis = async () => {
+  if (!order.value.id) return
+  try {
+    faultDiagnosis.value = await getPrintFaultDiagnosisApi(order.value.id)
+  } catch (error) {
+    console.error('获取故障诊断失败', error)
+  }
+}
+
+const handleRetry = async () => {
+  if (!order.value.id) {
+    uni.showToast({ title: '订单信息无效', icon: 'none' })
+    return
+  }
+  uni.showModal({
+    title: '确认重试',
+    content: '确定要重新尝试打印吗？',
+    success: async (res) => {
+      if (!res.confirm) return
+      try {
+        uni.showLoading({ title: '正在重试...' })
+        await userRetryPrintApi(order.value.id)
+        uni.hideLoading()
+        uni.showToast({ title: '已重新提交打印', icon: 'success' })
+        faultDiagnosis.value = null
+        connectPrintSocket()
+      } catch (error) {
+        uni.hideLoading()
+        uni.showToast({ title: error.message || '重试失败', icon: 'none' })
+      }
+    }
+  })
+}
+
 const goAfterSaleDetail = () => {
   if (!afterSaleEntry.value) {
     uni.showToast({ title: '暂无售后记录', icon: 'none' })
@@ -766,6 +898,10 @@ $shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
 .price { color: $text1; font-size: 30rpx; font-weight: 700; }
 .count { color: $text3; font-size: 24rpx; }
 .sum-row { display: flex; justify-content: space-between; color: $text2; font-size: 24rpx; margin-top: 10rpx; }
+.sum-row.discount { color: $success; }
+.sum-row.reward { color: $primary; margin-top: 16rpx; padding-top: 12rpx; border-top: 1rpx dashed rgba(0,0,0,0.06); }
+.discount-val { color: $success; font-weight: 600; }
+.reward-val { color: $primary; font-weight: 600; }
 .sum-row.total { color: $text1; margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid rgba(0,0,0,0.04); }
 .amount { color: $danger; font-size: 34rpx; font-weight: 700; }
 .info-row { display: flex; justify-content: space-between; color: $text2; font-size: 24rpx; margin-bottom: 16rpx; }
@@ -804,5 +940,109 @@ $shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
 	background: $gradient;
 	color: #fff;
 	box-shadow: 0 6rpx 20rpx rgba(0, 191, 255, 0.25);
+}
+
+.chip.fault {
+	background: rgba(255, 77, 109, 0.1);
+	color: $danger;
+}
+
+.fault-chip {
+	background: rgba(255, 77, 109, 0.1) !important;
+	color: $danger !important;
+}
+
+.fault-diagnosis {
+	border: 2rpx solid rgba(255, 77, 109, 0.3);
+	background: linear-gradient(135deg, rgba(255, 245, 245, 0.95) 0%, #ffffff 100%);
+}
+
+.fault-content {
+	margin-top: 16rpx;
+}
+
+.fault-item {
+	display: flex;
+	margin-bottom: 12rpx;
+
+	.fault-label {
+		color: $text3;
+		font-size: 24rpx;
+		width: 140rpx;
+		flex-shrink: 0;
+	}
+
+	.fault-value {
+		color: $text1;
+		font-size: 24rpx;
+		flex: 1;
+	}
+}
+
+.suggestions {
+	margin-top: 20rpx;
+	padding: 20rpx;
+	background: rgba(0, 0, 0, 0.02);
+	border-radius: 12rpx;
+
+	.suggestions-title {
+		display: block;
+		color: $text1;
+		font-size: 26rpx;
+		font-weight: 600;
+		margin-bottom: 12rpx;
+	}
+
+	.suggestion-item {
+		display: flex;
+		align-items: flex-start;
+		margin-bottom: 10rpx;
+
+		.suggestion-index {
+			width: 32rpx;
+			height: 32rpx;
+			background: $primary;
+			color: #fff;
+			border-radius: 50%;
+			font-size: 20rpx;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-right: 12rpx;
+			flex-shrink: 0;
+		}
+
+		.suggestion-text {
+			color: $text2;
+			font-size: 24rpx;
+			line-height: 1.5;
+		}
+	}
+}
+
+.fault-actions {
+	display: flex;
+	gap: 16rpx;
+	margin-top: 24rpx;
+
+	.action-btn {
+		flex: 1;
+		height: 72rpx;
+		line-height: 72rpx;
+		border-radius: 36rpx;
+		font-size: 26rpx;
+		text-align: center;
+
+		&.retry {
+			background: $gradient;
+			color: #fff;
+		}
+
+		&.contact {
+			background: #fff;
+			color: $primary;
+			border: 2rpx solid $primary;
+		}
+	}
 }
 </style>

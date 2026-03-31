@@ -47,23 +47,6 @@ export const createAlipayBatchPayApi = (data) => {
   })
 }
 
-// 抖音支付
-export const createDouyinAppPayApi = (data) => {
-  return request({
-    url: '/api/orders/pay/douyin/create',
-    method: 'POST',
-    data
-  })
-}
-
-export const createDouyinBatchPayApi = (data) => {
-  return request({
-    url: '/api/orders/pay/douyin/create-batch',
-    method: 'POST',
-    data
-  })
-}
-
 export const payOrderByWalletApi = (data) => {
   return request({
     url: '/api/orders/pay/wallet/pay',
@@ -373,5 +356,21 @@ export const uploadAfterSaleMediaApi = (filePath, mediaKind = 'image') => {
         reject(new Error(`${errMsg}（statusCode:${statusCode}）`))
       }
     })
+  })
+}
+
+// 打印故障诊断
+export const getPrintFaultDiagnosisApi = (orderId) => {
+  return request({
+    url: `/api/orders/print/fault/diagnosis/${orderId}`,
+    method: 'GET'
+  })
+}
+
+// 用户重试打印
+export const userRetryPrintApi = (orderId) => {
+  return request({
+    url: `/api/orders/print/fault/retry/${orderId}`,
+    method: 'POST'
   })
 }

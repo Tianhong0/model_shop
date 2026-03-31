@@ -13,6 +13,7 @@ import org.majun.backend.enums.WalletLedgerDirection;
 import org.majun.backend.repository.BountyEscrowRepository;
 import org.majun.backend.repository.WalletAccountRepository;
 import org.majun.backend.repository.WalletLedgerRepository;
+import org.majun.backend.service.PointService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

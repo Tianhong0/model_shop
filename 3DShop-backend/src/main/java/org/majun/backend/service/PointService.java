@@ -1,4 +1,4 @@
-package org.majun.backend.service.impl;
+package org.majun.backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -31,10 +31,16 @@ public class PointService {
     public static final String BIZ_ORDER_POINT_REFUND = "ORDER_POINT_REFUND";
     public static final String BIZ_BOUNTY_RELEASE = "BOUNTY_RELEASE";
     public static final String BIZ_ECO_MATERIAL = "ECO_MATERIAL";
+    public static final String BIZ_COUPON_EXCHANGE = "COUPON_EXCHANGE";
+    public static final String BIZ_COUPON_REFUND = "COUPON_REFUND";
+    public static final String BIZ_POST_REPLY_ADOPTED = "POST_REPLY_ADOPTED";
+    public static final String BIZ_POST_REPLY_EXCELLENT = "POST_REPLY_EXCELLENT";
 
     private static final int ORDER_REWARD_RATE = 1;
     private static final int BOUNTY_REWARD_RATE = 1;
     private static final int ECO_MATERIAL_REWARD_POINTS = 5;  // 环保材料奖励积分
+    private static final int POST_REPLY_ADOPTED_POINTS = 3;   // 回答被采纳奖励积分
+    private static final int POST_REPLY_EXCELLENT_POINTS = 3; // 优质回答奖励积分
 
     private final PointAccountRepository pointAccountRepository;
     private final PointLedgerRepository pointLedgerRepository;
@@ -101,6 +107,18 @@ public class PointService {
     public void rewardEcoMaterial(Long userId, Long orderId, String orderSn) {
         String bizNo = "ECO_" + orderSn;
         increase(userId, ECO_MATERIAL_REWARD_POINTS, BIZ_ECO_MATERIAL, bizNo, orderId, "选择环保材料奖励积分");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void rewardReplyAdopted(Long userId, Long replyId, Long postId) {
+        String bizNo = "ADOPTED_" + replyId;
+        increase(userId, POST_REPLY_ADOPTED_POINTS, BIZ_POST_REPLY_ADOPTED, bizNo, postId, "社区回答被采纳奖励积分");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void rewardReplyExcellent(Long userId, Long replyId, Long postId) {
+        String bizNo = "EXCELLENT_" + replyId;
+        increase(userId, POST_REPLY_EXCELLENT_POINTS, BIZ_POST_REPLY_EXCELLENT, bizNo, postId, "社区优质回答奖励积分");
     }
 
     @Transactional(rollbackFor = Exception.class)

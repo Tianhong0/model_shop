@@ -41,6 +41,8 @@ import org.majun.backend.repository.WalletLedgerRepository;
 import org.majun.backend.repository.ModelMaterialRepository;
 import org.majun.backend.service.OrderPaymentService;
 import org.majun.backend.service.GroupBuyService;
+import org.majun.backend.service.CouponService;
+import org.majun.backend.service.PointService;
 import org.majun.backend.vo.OrderBatchPayCreateResponse;
 import org.majun.backend.vo.OrderBatchPayStatusVO;
 import org.majun.backend.vo.OrderPayCreateResponse;
@@ -100,6 +102,7 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final PointService pointService;
     private final GroupBuyService groupBuyService;
+    private final CouponService couponService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -759,6 +762,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                     rewardEcoMaterialIfApplicable(order);
                     // 处理拼团支付成功
                     handleGroupBuyPaid(order);
+                    // 标记优惠券已使用
+                    useCouponIfApplicable(order);
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(order.getId()));
                 }
             }
@@ -832,6 +837,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                         rewardEcoMaterialIfApplicable(order);
                         // 处理拼团支付成功
                         handleGroupBuyPaid(order);
+                        // 标记优惠券已使用
+                        useCouponIfApplicable(order);
                     }
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(item.getOrderId()));
                 }
@@ -1179,6 +1186,43 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
         } catch (Exception ex) {
             log.warn("处理拼团支付成功失败 orderId={}, participantId={}",
                     order.getId(), order.getGroupBuyParticipantId(), ex);
+        }
+    }
+
+    /**
+     * 标记优惠券已使用
+     */
+    private void useCouponIfApplicable(SysOrder order) {
+        if (order == null) {
+            return;
+        }
+        Long couponId = parseCouponIdFromCustomParams(order.getCustomParams());
+        if (couponId == null) {
+            return;
+        }
+        try {
+            couponService.useCoupon(couponId, order.getId(), order.getUserId());
+        } catch (Exception ex) {
+            log.warn("标记优惠券使用失败 orderId={}, couponId={}", order.getId(), couponId, ex);
+        }
+    }
+
+    /**
+     * 从 customParams 解析 couponId
+     */
+    private Long parseCouponIdFromCustomParams(String customParams) {
+        if (!StringUtils.hasText(customParams)) {
+            return null;
+        }
+        try {
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(customParams);
+            com.fasterxml.jackson.databind.JsonNode couponIdNode = node.get("couponId");
+            if (couponIdNode == null || couponIdNode.isNull()) {
+                return null;
+            }
+            return couponIdNode.asLong();
+        } catch (Exception ex) {
+            return null;
         }
     }
 }

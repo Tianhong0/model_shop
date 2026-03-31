@@ -30,6 +30,7 @@ import org.majun.backend.repository.SysPostReplyInteractionRepository;
 import org.majun.backend.repository.SysPostRepository;
 import org.majun.backend.repository.SysUserRepository;
 import org.majun.backend.service.CommunityAdminService;
+import org.majun.backend.service.PointService;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.PostCategoryVO;
 import org.majun.backend.vo.PostDetailVO;
@@ -58,6 +59,7 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
     private final SysPostCategoryRepository postCategoryRepository;
     private final SysPostReplyInteractionRepository postReplyInteractionRepository;
     private final SysUserRepository userRepository;
+    private final PointService pointService;
 
     @Override
     public PageResult<PostListVO> getAdminPostPage(PostAdminQueryRequest request) {
@@ -239,6 +241,7 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateReplyExcellent(PostReplyExcellentRequest request) {
         if (request.getIsExcellent() != 0 && request.getIsExcellent() != 1) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "优质状态仅支持0/1");
@@ -247,8 +250,18 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
         if (reply == null) {
             throw new BusinessException(ResultCode.NOT_FOUND, "回复不存在");
         }
+
+        // 只有从未标记为优质变为优质时才奖励积分
+        boolean wasExcellent = Objects.equals(reply.getIsExcellent(), 1);
+        boolean willBeExcellent = Objects.equals(request.getIsExcellent(), 1);
+
         reply.setIsExcellent(request.getIsExcellent());
         postReplyRepository.updateById(reply);
+
+        // 设置为优质回答时奖励积分
+        if (!wasExcellent && willBeExcellent) {
+            pointService.rewardReplyExcellent(reply.getUserId(), reply.getId(), reply.getPostId());
+        }
     }
 
     @Override

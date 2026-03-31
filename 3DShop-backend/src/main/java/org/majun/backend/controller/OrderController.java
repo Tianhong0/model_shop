@@ -10,10 +10,12 @@ import org.majun.backend.dto.OrderQueryRequest;
 import org.majun.backend.dto.OrderStatusUpdateRequest;
 import org.majun.backend.security.LoginUser;
 import org.majun.backend.service.OrderService;
+import org.majun.backend.service.PrintFaultService;
 import org.majun.backend.vo.OrderCreateResponse;
 import org.majun.backend.vo.OrderDetailVO;
 import org.majun.backend.vo.OrderListVO;
 import org.majun.backend.vo.PageResult;
+import org.majun.backend.vo.PrintFaultDiagnosisVO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     private final OrderService orderService;
+    private final PrintFaultService printFaultService;
 
     @Operation(summary = "Create order", description = "Create a custom order")
     @PostMapping("/create")
@@ -98,5 +101,22 @@ public class OrderController {
     public Result<Void> updateOrderStatus(@Valid @RequestBody OrderStatusUpdateRequest request) {
         orderService.updateOrderStatus(request);
         return Result.success();
+    }
+
+    // ========== 打印故障诊断接口 ==========
+
+    @Operation(summary = "Get print fault diagnosis", description = "Get fault diagnosis for a failed print job")
+    @GetMapping("/print/fault/diagnosis/{orderId}")
+    public Result<PrintFaultDiagnosisVO> getFaultDiagnosis(@AuthenticationPrincipal LoginUser loginUser,
+                                                            @PathVariable Long orderId) {
+        return Result.success(printFaultService.diagnoseByOrderId(orderId, loginUser.getId()));
+    }
+
+    @Operation(summary = "Retry print job", description = "User retry a failed print job")
+    @PostMapping("/print/fault/retry/{orderId}")
+    public Result<Void> userRetryPrint(@AuthenticationPrincipal LoginUser loginUser,
+                                        @PathVariable Long orderId) {
+        printFaultService.userRetryPrint(orderId, loginUser.getId());
+        return Result.success("已重新提交打印");
     }
 }

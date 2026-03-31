@@ -170,6 +170,10 @@
               <el-icon><notification /></el-icon>
               <span>公告管理</span>
             </el-menu-item>
+            <el-menu-item index="/coupon/templates">
+              <el-icon><ticket /></el-icon>
+              <span>优惠券管理</span>
+            </el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="group-buy-mgmt">

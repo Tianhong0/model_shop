@@ -32,6 +32,7 @@ import org.majun.backend.repository.SysPostReplyInteractionRepository;
 import org.majun.backend.repository.SysPostRepository;
 import org.majun.backend.repository.SysUserRepository;
 import org.majun.backend.service.CommunityService;
+import org.majun.backend.service.PointService;
 import org.majun.backend.service.UserNotificationService;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.PostCategoryVO;
@@ -67,6 +68,7 @@ public class CommunityServiceImpl implements CommunityService {
     private final SysPostInteractionRepository postInteractionRepository;
     private final SysUserRepository userRepository;
     private final UserNotificationService userNotificationService;
+    private final PointService pointService;
 
     @Override
     public List<PostCategoryVO> getCategoryList() {
@@ -292,6 +294,11 @@ public class CommunityServiceImpl implements CommunityService {
 
         reply.setIsAdopted(1);
         postReplyRepository.updateById(reply);
+
+        // 奖励积分给回答者
+        if (!Objects.equals(reply.getUserId(), userId)) {
+            pointService.rewardReplyAdopted(reply.getUserId(), reply.getId(), reply.getPostId());
+        }
     }
 
     @Override

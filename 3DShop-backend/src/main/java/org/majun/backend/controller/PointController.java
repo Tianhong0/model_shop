@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.PointLedgerQueryRequest;
 import org.majun.backend.security.LoginUser;
-import org.majun.backend.service.impl.PointService;
+import org.majun.backend.service.PointService;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.PointAccountVO;
 import org.majun.backend.vo.PointLedgerVO;
