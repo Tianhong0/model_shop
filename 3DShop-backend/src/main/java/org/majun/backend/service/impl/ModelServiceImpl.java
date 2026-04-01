@@ -20,6 +20,7 @@ import org.majun.backend.entity.SysMaterial;
 import org.majun.backend.entity.SysModelCategory;
 import org.majun.backend.entity.SysUser;
 import org.majun.backend.entity.ModelMaterial;
+import org.majun.backend.entity.ModelImageWatermark;
 import org.majun.backend.repository.SysModelRepository;
 import org.majun.backend.repository.SysModelFavoriteRepository;
 import org.majun.backend.repository.SysModelImageRepository;
@@ -27,10 +28,13 @@ import org.majun.backend.repository.SysMaterialRepository;
 import org.majun.backend.repository.SysModelCategoryRepository;
 import org.majun.backend.repository.SysUserRepository;
 import org.majun.backend.repository.ModelMaterialRepository;
+import org.majun.backend.repository.ModelImageWatermarkRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.majun.backend.service.ModelService;
+import org.majun.backend.service.ModelDownloadService;
+import org.majun.backend.service.ImageWatermarkService;
 import org.majun.backend.util.RedisUtil;
 import org.majun.backend.vo.*;
 import org.springframework.stereotype.Service;
@@ -63,6 +67,9 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
     private final SysUserRepository userRepository;
     private final RedisUtil redisUtil;
     private final ModelMaterialRepository modelMaterialRepository;
+    private final ModelDownloadService modelDownloadService;
+    private final ImageWatermarkService imageWatermarkService;
+    private final ModelImageWatermarkRepository watermarkRepository;
 
     @Override
     public PageResult<?> getModelList(ModelQueryRequest queryRequest) {
@@ -204,6 +211,11 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
 
     @Override
     public ModelDetailVO getModelDetail(Long id) {
+        return getModelDetail(id, null);
+    }
+
+    @Override
+    public ModelDetailVO getModelDetail(Long id, Long userId) {
         // 1. 查询模型基本信息
         SysModel model = modelRepository.selectById(id);
         if (model == null || model.getIsDelete() == 1) {
@@ -239,7 +251,21 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         SysUser designer = userRepository.selectById(model.getDesignerId());
         String designerName = designer != null ? designer.getNickname() : "未知设计者";
 
-        // 7. 构建返回结果
+        // 7. 检查购买状态
+        Boolean purchased = false;
+        if (userId != null) {
+            purchased = modelDownloadService.canDownloadModel(id, userId);
+        }
+
+        // 8. 生成预览URL
+        String previewUrl = null;
+        try {
+            previewUrl = modelDownloadService.generatePreviewUrl(id);
+        } catch (Exception e) {
+            log.warn("生成预览URL失败: modelId={}", id);
+        }
+
+        // 9. 构建返回结果（不再返回filePath）
         return ModelDetailVO.builder()
                 .id(model.getId())
                 .modelName(model.getModelName())
@@ -252,11 +278,15 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
                 .basePrice(model.getBasePrice())
                 .baseVolume(model.getBaseVolume())
                 .baseSize(model.getBaseSize())
+                .mainImageUrl(resolveDetailMainImageUrl(imageVOList, model.getMainImage()))
                 .filePath(model.getFilePath())
-                .mainImageUrl(resolveDetailMainImageUrl(imageVOList, model.getFilePath()))
                 .status(model.getStatus())
                 .images(imageVOList)
                 .materials(materialVOList)
+                .purchased(purchased)
+                .previewUrl(previewUrl)
+                .fileSize(model.getFileSize())
+                .downloadCount(model.getDownloadCount())
                 .build();
     }
 
@@ -283,7 +313,7 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
      */
     private ModelListVO convertToModelListVO(SysModel model) {
         // 获取主图
-        String mainImageUrl = model.getFilePath();
+        String mainImageUrl = model.getMainImage();
 
         // 获取分类名称
         String categoryName = "";
@@ -318,9 +348,21 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
      * 转换模型图片为VO
      */
     private ModelImageVO convertToModelImageVO(SysModelImage image) {
+        // 查找水印URL
+        String watermarkedUrl = null;
+        try {
+            watermarkedUrl = modelDownloadService.getWatermarkedImageUrl(image.getModelId(), image.getId());
+            if (watermarkedUrl != null) {
+                log.debug("图片水印URL: imageId={}, watermarkedUrl={}", image.getId(), watermarkedUrl);
+            }
+        } catch (Exception e) {
+            log.warn("查询水印URL失败: imageId={}, error={}", image.getId(), e.getMessage());
+        }
+
         return ModelImageVO.builder()
                 .id(image.getId())
                 .imageUrl(image.getImageUrl())
+                .watermarkedUrl(watermarkedUrl)
                 .isMain(image.getIsMain())
                 .imgType(image.getImgType())
                 .sortOrder(image.getSortOrder())
@@ -857,6 +899,15 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         modelImageRepository.insert(image);
         log.info("添加模型图片成功, imageId: {}, modelId: {}", image.getId(), modelId);
 
+        // 自动生成水印（异步处理，不阻塞主流程）
+        try {
+            imageWatermarkService.getOrAddWatermark(modelId, image.getId(), finalImageUrl);
+            log.info("模型图片水印生成成功, imageId: {}", image.getId());
+        } catch (Exception e) {
+            log.warn("模型图片水印生成失败, imageId: {}, error: {}", image.getId(), e.getMessage());
+            // 水印生成失败不影响图片添加
+        }
+
         // 清除模型缓存
         clearAllModelCache();
 
@@ -1144,5 +1195,40 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
                 .map(SysModelFavorite::getModelId)
                 .filter(validModelIds::contains)
                 .toList();
+    }
+
+    @Override
+    public WatermarkStatusVO getWatermarkStatus(Long modelId) {
+        // 获取模型信息
+        SysModel model = modelRepository.selectById(modelId);
+        if (model == null || model.getIsDelete() == 1) {
+            throw new RuntimeException("模型不存在");
+        }
+
+        // 获取模型图片总数
+        Long totalImages = modelImageRepository.selectCount(
+                new LambdaQueryWrapper<SysModelImage>()
+                        .eq(SysModelImage::getModelId, modelId)
+        );
+
+        // 获取已生成水印的图片数
+        Long watermarkedImages = watermarkRepository.selectCount(
+                new LambdaQueryWrapper<ModelImageWatermark>()
+                        .eq(ModelImageWatermark::getModelId, modelId)
+                        .eq(ModelImageWatermark::getIsDelete, 0)
+        );
+
+        int total = totalImages != null ? totalImages.intValue() : 0;
+        int watermarked = watermarkedImages != null ? watermarkedImages.intValue() : 0;
+        int coverage = total > 0 ? (watermarked * 100 / total) : 0;
+
+        return WatermarkStatusVO.builder()
+                .modelId(modelId)
+                .modelName(model.getModelName())
+                .totalImages(total)
+                .watermarkedImages(watermarked)
+                .coveragePercent(coverage)
+                .isComplete(total > 0 && watermarked >= total)
+                .build();
     }
 }

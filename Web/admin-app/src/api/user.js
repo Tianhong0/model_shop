@@ -128,3 +128,22 @@ export const updateUserStatus = (userId, status) => {
     params: { userId, status }
   })
 }
+
+// 批量审核设计者申请
+export const batchReviewDesignerApply = (data) => {
+  return request({
+    url: '/api/users/designer-apply/batch/review',
+    method: 'post',
+    data
+  })
+}
+
+// 导出用户数据
+export const exportUsers = (data) => {
+  return request({
+    url: '/api/users/export',
+    method: 'post',
+    data,
+    responseType: 'blob'
+  })
+}

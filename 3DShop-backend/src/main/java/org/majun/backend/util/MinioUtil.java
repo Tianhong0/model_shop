@@ -1,10 +1,12 @@
 package org.majun.backend.util;
 
 import io.minio.GetObjectArgs;
+import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
+import io.minio.http.Method;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class MinioUtil {
@@ -150,6 +153,15 @@ public class MinioUtil {
     }
 
     /**
+     * 直接获取 MinIO 对象的 InputStream（用于后端内部处理）
+     */
+    public InputStream getObjectStream(String objectName) throws Exception {
+        return minioClient.getObject(
+                GetObjectArgs.builder().bucket(bucketName).object(objectName).build()
+        );
+    }
+
+    /**
      * 检查 MinIO 对象是否存在
      */
     public boolean objectExists(String objectName) {
@@ -160,6 +172,27 @@ public class MinioUtil {
             return false;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /**
+     * 生成预签名下载URL（带过期时间）
+     * @param objectName 对象名称
+     * @param expireSeconds 过期时间（秒）
+     * @return 预签名URL
+     */
+    public String generatePresignedDownloadUrl(String objectName, int expireSeconds) {
+        try {
+            return minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .method(Method.GET)
+                            .expiry(expireSeconds, TimeUnit.SECONDS)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("生成预签名URL失败: " + e.getMessage(), e);
         }
     }
 

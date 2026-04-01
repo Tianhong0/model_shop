@@ -1,0 +1,407 @@
+/* ===================================
+   Page Agent 自定义样式
+   覆盖默认样式以符合系统设计规范
+   =================================== */
+
+/* 面板容器样式 */
+.page-agent-panel,
+[data-page-agent-panel] {
+  font-family: var(--font-family) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-xl) !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-primary) !important;
+}
+
+/* 面板头部 */
+.page-agent-panel .panel-header,
+.page-agent-panel [class*="header"],
+[data-page-agent-panel] [class*="header"] {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%) !important;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+  padding: 16px 20px !important;
+}
+
+.page-agent-panel .panel-header .title,
+.page-agent-panel [class*="header"] [class*="title"],
+[data-page-agent-panel] [class*="header"] [class*="title"] {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+/* 面板内容区 */
+.page-agent-panel .panel-content,
+.page-agent-panel [class*="content"],
+[data-page-agent-panel] [class*="content"] {
+  background: var(--bg-primary) !important;
+  padding: 16px !important;
+}
+
+/* 输入框样式 */
+.page-agent-panel input,
+.page-agent-panel textarea,
+.page-agent-panel [class*="input"],
+[data-page-agent-panel] input,
+[data-page-agent-panel] textarea,
+[data-page-agent-panel] [class*="input"] {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-family) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.page-agent-panel input:focus,
+.page-agent-panel textarea:focus,
+.page-agent-panel [class*="input"]:focus,
+[data-page-agent-panel] input:focus,
+[data-page-agent-panel] textarea:focus,
+[data-page-agent-panel] [class*="input"]:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px var(--primary-lighter) !important;
+  outline: none !important;
+}
+
+.page-agent-panel input::placeholder,
+.page-agent-panel textarea::placeholder,
+[data-page-agent-panel] input::placeholder,
+[data-page-agent-panel] textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* 按钮样式 */
+.page-agent-panel button,
+.page-agent-panel [class*="btn"],
+[data-page-agent-panel] button,
+[data-page-agent-panel] [class*="btn"] {
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+  font-family: var(--font-family) !important;
+  transition: all var(--transition-fast) !important;
+  cursor: pointer !important;
+}
+
+.page-agent-panel button.primary,
+.page-agent-panel button[type="submit"],
+.page-agent-panel [class*="primary"],
+[data-page-agent-panel] button.primary,
+[data-page-agent-panel] button[type="submit"],
+[data-page-agent-panel] [class*="primary"] {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.page-agent-panel button.primary:hover,
+.page-agent-panel button[type="submit"]:hover,
+.page-agent-panel [class*="primary"]:hover,
+[data-page-agent-panel] button.primary:hover,
+[data-page-agent-panel] button[type="submit"]:hover,
+[data-page-agent-panel] [class*="primary"]:hover {
+  background: var(--primary-light) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.page-agent-panel button.secondary,
+.page-agent-panel button.close,
+.page-agent-panel [class*="secondary"],
+[data-page-agent-panel] button.secondary,
+[data-page-agent-panel] button.close,
+[data-page-agent-panel] [class*="secondary"] {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.page-agent-panel button.secondary:hover,
+.page-agent-panel button.close:hover,
+.page-agent-panel [class*="secondary"]:hover,
+[data-page-agent-panel] button.secondary:hover,
+[data-page-agent-panel] button.close:hover,
+[data-page-agent-panel] [class*="secondary"]:hover {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 停止按钮 */
+.page-agent-panel button.stop,
+.page-agent-panel [class*="stop"],
+[data-page-agent-panel] button.stop,
+[data-page-agent-panel] [class*="stop"] {
+  background: var(--danger-color) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.page-agent-panel button.stop:hover,
+.page-agent-panel [class*="stop"]:hover,
+[data-page-agent-panel] button.stop:hover,
+[data-page-agent-panel] [class*="stop"]:hover {
+  background: #dc2626 !important;
+}
+
+/* 消息气泡样式 */
+.page-agent-panel [class*="message"],
+.page-agent-panel [class*="bubble"],
+.page-agent-panel [class*="chat"],
+[data-page-agent-panel] [class*="message"],
+[data-page-agent-panel] [class*="bubble"],
+[data-page-agent-panel] [class*="chat"] {
+  border-radius: var(--radius-lg) !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+/* AI 消息 */
+.page-agent-panel [class*="assistant"],
+.page-agent-panel [class*="ai-message"],
+[data-page-agent-panel] [class*="assistant"],
+[data-page-agent-panel] [class*="ai-message"] {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* 用户消息 */
+.page-agent-panel [class*="user"],
+.page-agent-panel [class*="user-message"],
+[data-page-agent-panel] [class*="user"],
+[data-page-agent-panel] [class*="user-message"] {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+/* 历史记录样式 */
+.page-agent-panel [class*="history"],
+.page-agent-panel [class*="step"],
+[data-page-agent-panel] [class*="history"],
+[data-page-agent-panel] [class*="step"] {
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-light) !important;
+  padding: 12px !important;
+  margin: 8px 0 !important;
+}
+
+.page-agent-panel [class*="step-number"],
+[data-page-agent-panel] [class*="step-number"] {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  border-radius: var(--radius-full) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  padding: 2px 8px !important;
+}
+
+/* 状态指示器 */
+.page-agent-panel [class*="status"],
+.page-agent-panel [class*="indicator"],
+[data-page-agent-panel] [class*="status"],
+[data-page-agent-panel] [class*="indicator"] {
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 4px 12px !important;
+}
+
+.page-agent-panel [class*="status-idle"],
+[data-page-agent-panel] [class*="status-idle"] {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+}
+
+.page-agent-panel [class*="status-running"],
+.page-agent-panel [class*="status-thinking"],
+[data-page-agent-panel] [class*="status-running"],
+[data-page-agent-panel] [class*="status-thinking"] {
+  background: var(--info-light) !important;
+  color: var(--info-color) !important;
+}
+
+.page-agent-panel [class*="status-completed"],
+.page-agent-panel [class*="status-success"],
+[data-page-agent-panel] [class*="status-completed"],
+[data-page-agent-panel] [class*="status-success"] {
+  background: var(--success-light) !important;
+  color: var(--success-color) !important;
+}
+
+.page-agent-panel [class*="status-error"],
+[data-page-agent-panel] [class*="status-error"] {
+  background: var(--danger-light) !important;
+  color: var(--danger-color) !important;
+}
+
+/* 加载动画 */
+.page-agent-panel [class*="loading"],
+.page-agent-panel [class*="spinner"],
+[data-page-agent-panel] [class*="loading"],
+[data-page-agent-panel] [class*="spinner"] {
+  color: var(--primary-color) !important;
+}
+
+/* 滚动条样式 */
+.page-agent-panel ::-webkit-scrollbar,
+[data-page-agent-panel] ::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.page-agent-panel ::-webkit-scrollbar-track,
+[data-page-agent-panel] ::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.page-agent-panel ::-webkit-scrollbar-thumb,
+[data-page-agent-panel] ::-webkit-scrollbar-thumb {
+  background: var(--border-dark) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.page-agent-panel ::-webkit-scrollbar-thumb:hover,
+[data-page-agent-panel] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted) !important;
+}
+
+/* 工具提示 */
+.page-agent-panel [class*="tooltip"],
+[data-page-agent-panel] [class*="tooltip"] {
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-dark) !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+}
+
+/* 代码块样式 */
+.page-agent-panel code,
+.page-agent-panel pre,
+[data-page-agent-panel] code,
+[data-page-agent-panel] pre {
+  font-family: var(--font-mono) !important;
+  background: var(--bg-tertiary) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 2px 6px !important;
+  font-size: 13px !important;
+}
+
+.page-agent-panel pre,
+[data-page-agent-panel] pre {
+  padding: 12px !important;
+  overflow-x: auto !important;
+}
+
+/* 链接样式 */
+.page-agent-panel a,
+[data-page-agent-panel] a {
+  color: var(--primary-color) !important;
+  text-decoration: none !important;
+}
+
+.page-agent-panel a:hover,
+[data-page-agent-panel] a:hover {
+  color: var(--primary-light) !important;
+  text-decoration: underline !important;
+}
+
+/* 分割线 */
+.page-agent-panel hr,
+.page-agent-panel [class*="divider"],
+[data-page-agent-panel] hr,
+[data-page-agent-panel] [class*="divider"] {
+  border: none !important;
+  border-top: 1px solid var(--border-light) !important;
+  margin: 12px 0 !important;
+}
+
+/* 图标样式 */
+.page-agent-panel [class*="icon"],
+[data-page-agent-panel] [class*="icon"] {
+  color: var(--text-secondary) !important;
+}
+
+/* 展开收起按钮 */
+.page-agent-panel [class*="expand"],
+.page-agent-panel [class*="collapse"],
+[data-page-agent-panel] [class*="expand"],
+[data-page-agent-panel] [class*="collapse"] {
+  color: var(--text-muted) !important;
+  transition: color var(--transition-fast) !important;
+}
+
+.page-agent-panel [class*="expand"]:hover,
+.page-agent-panel [class*="collapse"]:hover,
+[data-page-agent-panel] [class*="expand"]:hover,
+[data-page-agent-panel] [class*="collapse"]:hover {
+  color: var(--primary-color) !important;
+}
+
+/* 错误消息 */
+.page-agent-panel [class*="error"],
+.page-agent-panel [class*="warning"],
+[data-page-agent-panel] [class*="error"],
+[data-page-agent-panel] [class*="warning"] {
+  color: var(--danger-color) !important;
+  background: var(--danger-light) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 8px 12px !important;
+}
+
+/* 成功消息 */
+.page-agent-panel [class*="success"],
+.page-agent-panel [class*="done"],
+[data-page-agent-panel] [class*="success"],
+[data-page-agent-panel] [class*="done"] {
+  color: var(--success-color) !important;
+  background: var(--success-light) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 8px 12px !important;
+}
+
+/* 动画效果 */
+.page-agent-panel [class*="fade"],
+.page-agent-panel [class*="animate"],
+[data-page-agent-panel] [class*="fade"],
+[data-page-agent-panel] [class*="animate"] {
+  transition: all var(--transition-normal) !important;
+}
+
+/* 浮动按钮样式（如果有） */
+.page-agent-panel [class*="fab"],
+.page-agent-panel [class*="float-button"],
+[data-page-agent-panel] [class*="fab"],
+[data-page-agent-panel] [class*="float-button"] {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
+  border-radius: var(--radius-full) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.page-agent-panel [class*="fab"]:hover,
+.page-agent-panel [class*="float-button"]:hover,
+[data-page-agent-panel] [class*="fab"]:hover,
+[data-page-agent-panel] [class*="float-button"]:hover {
+  transform: scale(1.05) !important;
+  box-shadow: var(--shadow-xl) !important;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .page-agent-panel,
+  [data-page-agent-panel] {
+    border-radius: var(--radius-lg) !important;
+  }
+
+  .page-agent-panel .panel-header,
+  [data-page-agent-panel] [class*="header"] {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+  }
+}

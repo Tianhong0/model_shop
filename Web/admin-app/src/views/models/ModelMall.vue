@@ -20,6 +20,7 @@
             <el-option label="价格降序" value="price_desc" />
           </el-select>
           <el-button type="primary" icon="Search" @click="handleSearch">查询</el-button>
+          <el-button type="success" icon="Download" @click="handleExport" :loading="exportLoading">导出</el-button>
         </el-space>
         <el-button type="primary" icon="Plus" @click="handleAdd">新增模型</el-button>
       </div>
@@ -58,9 +59,11 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="220" fixed="right">
+          <el-table-column label="操作" width="280" fixed="right">
             <template #default="scope">
               <el-button link type="primary" @click="handleViewDetail(scope.row)">详情</el-button>
+              <el-divider direction="vertical" />
+              <el-button link type="info" @click="handleWatermark(scope.row)">水印</el-button>
               <el-divider direction="vertical" />
               <el-button link type="warning" @click="handleEdit(scope.row)">编辑</el-button>
               <el-divider direction="vertical" />
@@ -374,6 +377,58 @@
         <el-button @click="preview3DVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 水印管理弹窗 -->
+    <el-dialog v-model="watermarkDialogVisible" title="水印管理" width="500px">
+      <div v-if="watermarkModel" class="watermark-content">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="模型名称">{{ watermarkModel.modelName }}</el-descriptions-item>
+          <el-descriptions-item label="模型ID">{{ watermarkModel.id }}</el-descriptions-item>
+        </el-descriptions>
+
+        <div v-if="watermarkStatus" class="watermark-status">
+          <el-row :gutter="20" style="margin-top: 20px">
+            <el-col :span="8">
+              <div class="status-card">
+                <div class="status-value">{{ watermarkStatus.totalImages || 0 }}</div>
+                <div class="status-label">图片总数</div>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="status-card">
+                <div class="status-value" style="color: #67c23a">{{ watermarkStatus.watermarkedImages || 0 }}</div>
+                <div class="status-label">已生成水印</div>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="status-card">
+                <div class="status-value">{{ watermarkStatus.coveragePercent || 0 }}%</div>
+                <div class="status-label">覆盖率</div>
+              </div>
+            </el-col>
+          </el-row>
+
+          <el-progress
+            :percentage="watermarkStatus.coveragePercent || 0"
+            :stroke-width="10"
+            style="margin-top: 20px"
+            :status="watermarkStatus.isComplete ? 'success' : ''"
+          />
+        </div>
+
+        <el-skeleton v-else :rows="3" animated style="margin-top: 20px" />
+      </div>
+
+      <template #footer>
+        <el-button @click="watermarkDialogVisible = false">关闭</el-button>
+        <el-button type="warning" @click="handleRegenerateWatermark" :loading="watermarkLoading">
+          重新生成
+        </el-button>
+        <el-button type="primary" @click="handleGenerateWatermark" :loading="watermarkLoading">
+          生成水印
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -399,7 +454,11 @@ import {
   addMaterial,
   updateMaterial as apiUpdateMaterial,
   deleteMaterial as apiDeleteMaterial,
-  getModelMaterials
+  getModelMaterials,
+  exportModels,
+  generateWatermark,
+  regenerateWatermark,
+  getWatermarkStatus
 } from '../../api/model'
 
 const loading = ref(false)
@@ -423,6 +482,13 @@ const imageUploadProgress = ref(0)
 const modelFileUploadProgress = ref(0)
 const materialDialogVisible = ref(false)
 const editingMaterialIndex = ref(-1)
+const exportLoading = ref(false)
+
+// 水印管理相关
+const watermarkDialogVisible = ref(false)
+const watermarkModel = ref(null)
+const watermarkStatus = ref(null)
+const watermarkLoading = ref(false)
 
 const queryParams = reactive({
   modelName: '',
@@ -1224,6 +1290,97 @@ const submitForm = async () => {
   }
 }
 
+// 导出模型数据
+const handleExport = async () => {
+  exportLoading.value = true
+  try {
+    const params = {}
+    if (queryParams.modelName) params.modelName = queryParams.modelName
+    if (queryParams.categoryId) params.categoryId = queryParams.categoryId
+    if (queryParams.status !== null) params.status = queryParams.status
+
+    const blob = await exportModels(params)
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `模型数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+// ==================== 水印管理 ====================
+
+// 打开水印管理弹窗
+const handleWatermark = async (row) => {
+  watermarkModel.value = row
+  watermarkStatus.value = null
+  watermarkDialogVisible.value = true
+
+  // 加载水印状态
+  try {
+    const status = await getWatermarkStatus(row.id)
+    watermarkStatus.value = status
+  } catch (error) {
+    console.error('获取水印状态失败:', error)
+    ElMessage.error('获取水印状态失败')
+  }
+}
+
+// 生成水印
+const handleGenerateWatermark = async () => {
+  if (!watermarkModel.value) return
+
+  watermarkLoading.value = true
+  try {
+    const result = await generateWatermark(watermarkModel.value.id)
+    ElMessage.success(`成功生成 ${result.processedCount || 0} 张图片的水印`)
+
+    // 刷新状态
+    const status = await getWatermarkStatus(watermarkModel.value.id)
+    watermarkStatus.value = status
+  } catch (error) {
+    console.error('生成水印失败:', error)
+    ElMessage.error('生成水印失败')
+  } finally {
+    watermarkLoading.value = false
+  }
+}
+
+// 重新生成水印
+const handleRegenerateWatermark = async () => {
+  if (!watermarkModel.value) return
+
+  try {
+    await ElMessageBox.confirm('重新生成会删除现有水印，确定继续？', '提示', { type: 'warning' })
+  } catch {
+    return
+  }
+
+  watermarkLoading.value = true
+  try {
+    const result = await regenerateWatermark(watermarkModel.value.id)
+    ElMessage.success(`成功重新生成 ${result.processedCount || 0} 张图片的水印`)
+
+    // 刷新状态
+    const status = await getWatermarkStatus(watermarkModel.value.id)
+    watermarkStatus.value = status
+  } catch (error) {
+    console.error('重新生成水印失败:', error)
+    ElMessage.error('重新生成水印失败')
+  } finally {
+    watermarkLoading.value = false
+  }
+}
+
 onMounted(() => {
   fetchCategories()
   fetchModelList()
@@ -1552,5 +1709,34 @@ watch(preview3DVisible, (val) => {
 .preview-tip {
   width: 100%;
   padding: 40px 0;
+}
+
+/* 水印管理样式 */
+.watermark-content {
+  padding: 10px 0;
+}
+
+.watermark-status {
+  margin-top: 10px;
+}
+
+.status-card {
+  text-align: center;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.status-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.status-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
 }
 </style>

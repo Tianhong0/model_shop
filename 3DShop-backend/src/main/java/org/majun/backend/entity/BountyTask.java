@@ -71,6 +71,9 @@ public class BountyTask implements Serializable {
     @TableField("cancel_requested")
     private Integer cancelRequested;
 
+    @TableField("delivery_time")
+    private LocalDateTime deliveryTime;
+
     @TableField("is_delete")
     @TableLogic
     private Integer isDelete;

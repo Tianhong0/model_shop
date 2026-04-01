@@ -50,6 +50,9 @@ public class BountyEscrow implements Serializable {
     @TableField("version")
     private Integer version;
 
+    @TableField("pay_deadline")
+    private LocalDateTime payDeadline;
+
     @TableField("is_delete")
     @TableLogic
     private Integer isDelete;

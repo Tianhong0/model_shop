@@ -29,6 +29,12 @@ public class ModelImageVO {
     private String imageUrl;
 
     /**
+     * 水印图片URL（预览用）
+     */
+    @Schema(description = "水印图片URL")
+    private String watermarkedUrl;
+
+    /**
      * 是否为主图: 1-是, 0-否
      */
     @Schema(description = "是否为主图")

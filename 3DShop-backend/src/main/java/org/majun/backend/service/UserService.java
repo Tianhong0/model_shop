@@ -6,6 +6,9 @@ import org.majun.backend.dto.DesignerApplyReviewRequest;
 import org.majun.backend.dto.DesignerApplySubmitRequest;
 import org.majun.backend.dto.UserQueryRequest;
 import org.majun.backend.dto.UserUpdateRequest;
+import org.majun.backend.dto.BatchReviewRequest;
+import org.majun.backend.vo.AdminStatsVO;
+import org.majun.backend.vo.BatchOperationResultVO;
 import org.majun.backend.vo.DeletionRequestVO;
 import org.majun.backend.vo.DesignerApplyRequestVO;
 import org.majun.backend.vo.DesignerVO;
@@ -123,4 +126,20 @@ public interface UserService {
      * @return 更新结果
      */
     boolean updateUserStatus(Long userId, Integer status);
+
+    /**
+     * 获取管理员统计信息
+     *
+     * @return 管理员统计
+     */
+    AdminStatsVO getAdminStats();
+
+    /**
+     * 批量审核设计者申请
+     *
+     * @param operatorId 操作人ID
+     * @param request    批量审核请求
+     * @return 批量操作结果
+     */
+    BatchOperationResultVO batchReviewDesignerApply(Long operatorId, BatchReviewRequest request);
 }

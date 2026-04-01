@@ -15,7 +15,7 @@
 
 		<view v-if="modelList.length" class="model-list">
 			<view class="model-card" v-for="item in modelList" :key="item.id" @click="goDetail(item.id)">
-				<image v-if="item.mainImageUrl || item.mainImage" class="model-image" :src="item.mainImageUrl || item.mainImage" mode="aspectFill" />
+				<image v-if="item.mainImageUrl || item.mainImage" class="model-image" :src="item.watermarkedMainImageUrl || item.mainImageUrl || item.mainImage" mode="aspectFill" />
 				<view v-else class="model-image empty-image">暂无图片</view>
 				<view class="model-content">
 					<view class="model-name">{{ item.modelName || '未命名模型' }}</view>

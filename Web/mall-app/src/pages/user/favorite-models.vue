@@ -86,6 +86,16 @@ const isImageLikeUrl = (url) => {
 }
 
 const resolveImage = (item) => {
+	// 优先使用水印图片URL
+	const watermarkedRaw = pickFirstString(
+		item?.watermarkedMainImageUrl,
+		item?.watermarked_main_image_url
+	)
+	if (watermarkedRaw) {
+		const watermarkedUrl = toAbsoluteAssetUrl(watermarkedRaw)
+		if (isImageLikeUrl(watermarkedUrl)) return watermarkedUrl
+	}
+	// 回退到原图
 	const raw = pickFirstString(
 		item?.displayImageUrl,
 		item?.mainImageUrl,

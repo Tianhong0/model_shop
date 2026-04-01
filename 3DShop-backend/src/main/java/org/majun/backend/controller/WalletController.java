@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.WalletLedgerQueryRequest;
 import org.majun.backend.dto.WalletRechargeRequest;
@@ -109,6 +110,7 @@ public class WalletController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "REVIEW", module = "财务管理", description = "提现审核", targetType = "WITHDRAW")
     @PostMapping("/admin/withdraw/audit")
     @Operation(summary = "管理员-提现审核")
     public Result<Void> auditWithdraw(@AuthenticationPrincipal LoginUser loginUser,
@@ -118,6 +120,7 @@ public class WalletController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "PAY", module = "财务管理", description = "提现打款", targetType = "WITHDRAW")
     @PostMapping("/admin/withdraw/pay")
     @Operation(summary = "管理员-提现打款")
     public Result<Void> payWithdraw(@AuthenticationPrincipal LoginUser loginUser,

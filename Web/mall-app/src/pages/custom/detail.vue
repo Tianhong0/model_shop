@@ -283,7 +283,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import ThreeDViewer from '@/components/ThreeDViewer.vue'
 import { getModelDetailApi, getMyFavoriteModelIdsApi, toggleModelFavoriteApi } from '../../api/model'
 import { getModelOrderCommentsApi, toggleModelCommentLikeApi, getMyOrdersApi } from '../../api/order'
@@ -358,9 +358,29 @@ onLoad((options) => {
 		return
 	}
 
+	// 保存模型ID供刷新使用
+	modelInfo.value.id = modelId
 	loadModelDetail(modelId)
 	loadFavoriteState(modelId)
 })
+
+// 下拉刷新
+onPullDownRefresh(async () => {
+	try {
+		const modelId = modelInfo.value.id
+		if (modelId) {
+			// 强制刷新模型详情（跳过缓存）
+			await loadModelDetail(modelId, true)
+			loadFavoriteState(modelId)
+			uni.showToast({ title: '刷新成功', icon: 'success' })
+		}
+	} catch (error) {
+		uni.showToast({ title: '刷新失败', icon: 'none' })
+	} finally {
+		uni.stopPullDownRefresh()
+	}
+})
+
 const topComments = computed(() => (Array.isArray(modelComments.value) ? modelComments.value.slice(0, 2) : []))
 
 const isVideoMedia = (url) => {
@@ -742,9 +762,9 @@ const confirmColorPanel = () => {
 	showColorPanel.value = false
 }
 
-const loadModelDetail = async (modelId) => {
+const loadModelDetail = async (modelId, forceUpdate = false) => {
 	try {
-		const detail = await getModelDetailApi(modelId)
+		const detail = await getModelDetailApi(modelId, forceUpdate)
 		const rawModelUrl = pickFirstString(
 			detail?.filePath,
 			detail?.file_path,
@@ -778,8 +798,21 @@ const loadModelDetail = async (modelId) => {
 			modelType
 		}
 		modelFileSize.value = formatFileSize(detail?.fileSize || detail?.file_size || detail?.size)
+		// 优先使用水印图片，如果没有则使用原图
+		// 添加时间戳参数防止图片缓存
+		const cacheBuster = `t=${Date.now()}`
 		const imageList = Array.isArray(detail?.images)
-			? detail.images.map(item => toAbsoluteAssetUrl(pickFirstString(item?.imageUrl, item?.image_url, item?.url))).filter(Boolean)
+			? detail.images.map(item => {
+				// 优先使用水印图片URL
+				const watermarkedUrl = pickFirstString(item?.watermarkedUrl, item?.watermarked_url)
+				if (watermarkedUrl) {
+					const fullUrl = toAbsoluteAssetUrl(watermarkedUrl)
+					return fullUrl.includes('?') ? `${fullUrl}&${cacheBuster}` : `${fullUrl}?${cacheBuster}`
+				}
+				// 回退到原图
+				const originalUrl = toAbsoluteAssetUrl(pickFirstString(item?.imageUrl, item?.image_url, item?.url))
+				return originalUrl.includes('?') ? `${originalUrl}&${cacheBuster}` : `${originalUrl}?${cacheBuster}`
+			}).filter(Boolean)
 			: []
 		modelImages.value = imageList.length ? imageList : [mainImage]
 		showReal3D.value = false

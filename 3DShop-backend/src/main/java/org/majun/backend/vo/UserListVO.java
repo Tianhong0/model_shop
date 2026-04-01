@@ -43,6 +43,12 @@ public class UserListVO {
     @Schema(description = "角色ID列表")
     private List<Long> roleIds;
 
+    @Schema(description = "角色名称列表")
+    private List<String> roleNames;
+
+    @Schema(description = "是否管理员")
+    private Boolean isAdmin;
+
     @Schema(description = "模型ID列表（设计者专属）")
     private List<Long> modelIds;
 }

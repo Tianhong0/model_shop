@@ -1,11 +1,11 @@
 import request, { cachedRequest } from '../utils/request'
 
 // 缓存时间常量
-const CACHE_30MIN = 30 * 60 * 1000
+const CACHE_5MIN = 5 * 60 * 1000
 const CACHE_24H = 24 * 60 * 60 * 1000
 
 /**
- * 模型列表（缓存 30 分钟）
+ * 模型列表（缓存 5 分钟）
  * @param {Object}  data        请求参数
  * @param {boolean} forceUpdate 强制刷新（下拉刷新时传 true）
  */
@@ -14,13 +14,13 @@ export const getModelListApi = (data, forceUpdate = false) => {
     url: '/api/model/list',
     method: 'POST',
     data,
-    cacheTime: CACHE_30MIN,
+    cacheTime: CACHE_5MIN,
     forceUpdate
   })
 }
 
 /**
- * 模型详情（缓存 30 分钟）
+ * 模型详情（缓存 5 分钟）
  * @param {string}  id          模型 ID
  * @param {boolean} forceUpdate 强制刷新
  */
@@ -28,7 +28,7 @@ export const getModelDetailApi = (id, forceUpdate = false) => {
   return cachedRequest({
     url: `/api/model/detail/${id}`,
     method: 'GET',
-    cacheTime: CACHE_30MIN,
+    cacheTime: CACHE_5MIN,
     forceUpdate
   })
 }

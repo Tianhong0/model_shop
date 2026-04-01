@@ -4,11 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.OrderCreateRequest;
+import org.majun.backend.dto.OrderExportRequest;
 import org.majun.backend.dto.OrderQueryRequest;
 import org.majun.backend.dto.OrderStatusUpdateRequest;
 import org.majun.backend.security.LoginUser;
+import org.majun.backend.service.DataExportService;
 import org.majun.backend.service.OrderService;
 import org.majun.backend.service.PrintFaultService;
 import org.majun.backend.vo.OrderCreateResponse;
@@ -19,6 +22,8 @@ import org.majun.backend.vo.PrintFaultDiagnosisVO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Order controller.
@@ -31,6 +36,7 @@ public class OrderController {
 
     private final OrderService orderService;
     private final PrintFaultService printFaultService;
+    private final DataExportService dataExportService;
 
     @Operation(summary = "Create order", description = "Create a custom order")
     @PostMapping("/create")
@@ -97,10 +103,19 @@ public class OrderController {
 
     @Operation(summary = "Admin update status", description = "Admin update order status")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "STATUS_CHANGE", module = "订单管理", description = "更新订单状态", targetType = "ORDER")
     @PutMapping("/admin/status")
     public Result<Void> updateOrderStatus(@Valid @RequestBody OrderStatusUpdateRequest request) {
         orderService.updateOrderStatus(request);
         return Result.success();
+    }
+
+    @Operation(summary = "Export orders", description = "Admin export orders to Excel")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "EXPORT", module = "订单管理", description = "导出订单数据", targetType = "ORDER")
+    @PostMapping("/export")
+    public void exportOrders(@RequestBody OrderExportRequest request, HttpServletResponse response) {
+        dataExportService.exportOrders(request, response);
     }
 
     // ========== 打印故障诊断接口 ==========

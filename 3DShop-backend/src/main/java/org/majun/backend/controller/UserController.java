@@ -4,20 +4,25 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.*;
 import org.majun.backend.security.LoginUser;
+import org.majun.backend.service.DataExportService;
 import org.majun.backend.service.UserService;
+import org.majun.backend.vo.AdminStatsVO;
 import org.majun.backend.vo.DeletionRequestVO;
 import org.majun.backend.vo.DesignerApplyRequestVO;
 import org.majun.backend.vo.DesignerVO;
 import org.majun.backend.vo.MyDesignerApplyStatusVO;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.UserListVO;
+import org.majun.backend.vo.BatchOperationResultVO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -30,6 +35,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final DataExportService dataExportService;
 
     /**
      * 用户列表查询（仅管理员可用）
@@ -128,6 +134,7 @@ public class UserController {
 
     @Operation(summary = "审核设计者申请", description = "管理员审核普通用户设计者申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "REVIEW", module = "用户管理", description = "审核设计者申请", targetType = "DESIGNER_APPLY")
     @PutMapping("/designer-apply/review")
     public Result<Void> reviewDesignerApply(@AuthenticationPrincipal LoginUser loginUser,
                                             @Valid @RequestBody DesignerApplyReviewRequest request) {
@@ -165,6 +172,7 @@ public class UserController {
      */
     @Operation(summary = "审批注销申请", description = "管理员审批用户注销申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "APPROVE", module = "用户管理", description = "审批用户注销申请", targetType = "USER")
     @PutMapping("/deletion-approval")
     public Result<Void> approveDeletion(@Valid @RequestBody DeletionApprovalRequest request) {
         boolean result = userService.approveDeletion(request);
@@ -176,9 +184,46 @@ public class UserController {
      */
     @Operation(summary = "更新用户状态", description = "管理员更新用户状态：启用/禁用")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "STATUS_CHANGE", module = "用户管理", description = "更新用户状态", targetType = "USER")
     @PutMapping("/status")
     public Result<Void> updateUserStatus(@RequestParam Long userId, @RequestParam Integer status) {
         boolean result = userService.updateUserStatus(userId, status);
         return result ? Result.success("状态更新成功") : Result.fail("状态更新失败");
+    }
+
+    /**
+     * 获取管理员统计信息（仅管理员可访问）
+     */
+    @Operation(summary = "管理员统计", description = "获取管理员数量统计信息")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/admin/stats")
+    public Result<AdminStatsVO> getAdminStats() {
+        AdminStatsVO stats = userService.getAdminStats();
+        return Result.success(stats);
+    }
+
+    /**
+     * 批量审核设计者申请（仅管理员可操作）
+     */
+    @Operation(summary = "批量审核设计者申请", description = "管理员批量审核设计者申请")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "BATCH_REVIEW", module = "用户管理", description = "批量审核设计者申请", targetType = "DESIGNER_APPLY")
+    @PostMapping("/designer-apply/batch/review")
+    public Result<BatchOperationResultVO> batchReviewDesignerApply(
+            @AuthenticationPrincipal LoginUser loginUser,
+            @Valid @RequestBody BatchReviewRequest request) {
+        BatchOperationResultVO result = userService.batchReviewDesignerApply(loginUser.getId(), request);
+        return Result.success(result);
+    }
+
+    /**
+     * 导出用户数据（仅管理员可操作）
+     */
+    @Operation(summary = "导出用户数据", description = "管理员导出用户列表数据为Excel")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "EXPORT", module = "用户管理", description = "导出用户数据", targetType = "USER")
+    @PostMapping("/export")
+    public void exportUsers(@RequestBody UserExportRequest request, HttpServletResponse response) {
+        dataExportService.exportUsers(request, response);
     }
 }

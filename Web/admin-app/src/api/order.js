@@ -157,3 +157,13 @@ export const sendAfterSaleMessage = (data) => {
     data
   })
 }
+
+// 导出订单数据
+export const exportOrders = (data) => {
+  return request({
+    url: '/api/orders/export',
+    method: 'post',
+    data,
+    responseType: 'blob'
+  })
+}

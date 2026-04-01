@@ -4,9 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.*;
 import org.majun.backend.security.LoginUser;
+import org.majun.backend.service.DataExportService;
 import org.majun.backend.service.ModelService;
 import org.majun.backend.vo.CategoryVO;
 import org.majun.backend.vo.MaterialVO;
@@ -18,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -31,6 +34,7 @@ import java.util.List;
 public class ModelController {
 
     private final ModelService modelService;
+    private final DataExportService dataExportService;
 
     /**
      * 获取当前登录用户ID
@@ -53,10 +57,16 @@ public class ModelController {
     /**
      * 根据ID查询模型详情
      */
-    @Operation(summary = "查询模型详情", description = "根据模型ID查询模型的详细信息")
+    @Operation(summary = "查询模型详情", description = "根据模型ID查询模型的详细信息，包含购买状态")
     @GetMapping("/detail/{id}")
     public Result<?> getModelDetail(@PathVariable Long id) {
-        return Result.success(modelService.getModelDetail(id));
+        Long userId = null;
+        try {
+            userId = getCurrentUserId();
+        } catch (Exception ignored) {
+            // 未登录用户，userId为null
+        }
+        return Result.success(modelService.getModelDetail(id, userId));
     }
 
     @Operation(summary = "收藏模型切换", description = "再次点击取消收藏")
@@ -116,6 +126,7 @@ public class ModelController {
      */
     @Operation(summary = "创建模型", description = "设计者创建新模型")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_DESIGNER')")
+    @OperationLog(type = "CREATE", module = "模型管理", description = "创建模型", targetType = "MODEL")
     @PostMapping("/create")
     public Result<Long> createModel(@Valid @RequestBody ModelCreateRequest request) {
         Long designerId = getCurrentUserId();
@@ -128,6 +139,7 @@ public class ModelController {
      */
     @Operation(summary = "更新模型", description = "设计者更新模型信息")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or #request.id == modelService.getModelDesignerId(#request.id)")
+    @OperationLog(type = "UPDATE", module = "模型管理", description = "更新模型", targetType = "MODEL")
     @PostMapping("/update")
     public Result<Void> updateModel(@Valid @RequestBody ModelUpdateRequest request) {
         modelService.updateModel(request, getCurrentUserId());
@@ -139,6 +151,7 @@ public class ModelController {
      */
     @Operation(summary = "删除模型", description = "设计者删除模型（逻辑删除）")
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or #id == modelService.getModelDesignerId(#id)")
+    @OperationLog(type = "DELETE", module = "模型管理", description = "删除模型", targetType = "MODEL")
     @DeleteMapping("/delete/{id}")
     public Result<Void> deleteModel(@PathVariable Long id) {
         modelService.deleteModel(id, getCurrentUserId());
@@ -278,5 +291,16 @@ public class ModelController {
         request.setMaterialId(materialId);
         modelService.updateMaterialInModel(modelId, request);
         return Result.success();
+    }
+
+    /**
+     * 导出模型数据
+     */
+    @Operation(summary = "导出模型数据", description = "管理员导出模型列表数据为Excel")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "EXPORT", module = "模型管理", description = "导出模型数据", targetType = "MODEL")
+    @PostMapping("/export")
+    public void exportModels(@RequestBody ModelExportRequest request, HttpServletResponse response) {
+        dataExportService.exportModels(request, response);
     }
 }

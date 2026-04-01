@@ -3,12 +3,15 @@ package org.majun.backend.service;
 import jakarta.servlet.http.HttpServletRequest;
 import org.majun.backend.dto.AdminRegisterApplyRequest;
 import org.majun.backend.dto.AdminRegisterReviewRequest;
+import org.majun.backend.dto.BatchReviewRequest;
 import org.majun.backend.dto.EmailResetPasswordRequest;
 import org.majun.backend.dto.LoginRequest;
 import org.majun.backend.dto.RegisterRequest;
 import org.majun.backend.vo.AdminRegisterRequestVO;
+import org.majun.backend.vo.BatchOperationResultVO;
 import org.majun.backend.vo.PageResult;
 import org.majun.backend.vo.LoginResponse;
+import org.majun.backend.vo.UserPermissionVO;
 
 /**
  * 认证服务接口
@@ -65,6 +68,15 @@ public interface AuthService {
     void reviewAdminRegisterRequest(Long reviewerId, AdminRegisterReviewRequest request);
 
     /**
+     * 批量审核后台管理员注册申请
+     *
+     * @param reviewerId 审核人ID
+     * @param request    批量审核请求
+     * @return 批量操作结果
+     */
+    BatchOperationResultVO batchReviewAdminRegisterRequest(Long reviewerId, BatchReviewRequest request);
+
+    /**
      * 发送忘记密码邮箱验证码
      */
     void sendForgotPasswordEmailCode(String userName, String email);
@@ -83,4 +95,12 @@ public interface AuthService {
      * 用户退出登录
      */
     void logout(String token);
+
+    /**
+     * 获取用户权限信息
+     *
+     * @param userId 用户ID
+     * @return 用户权限信息
+     */
+    UserPermissionVO getUserPermissions(Long userId);
 }

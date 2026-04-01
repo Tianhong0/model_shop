@@ -225,3 +225,56 @@ export const getModelMaterials = (modelId) => {
     method: 'get'
   })
 }
+
+// 导出模型数据
+export const exportModels = (data) => {
+  return request({
+    url: '/api/model/export',
+    method: 'post',
+    data,
+    responseType: 'blob'
+  })
+}
+
+// ==================== 水印管理 ====================
+
+// 为模型生成水印
+export const generateWatermark = (modelId) => {
+  return request({
+    url: `/api/admin/watermark/generate/${modelId}`,
+    method: 'post'
+  })
+}
+
+// 重新生成水印
+export const regenerateWatermark = (modelId) => {
+  return request({
+    url: `/api/admin/watermark/regenerate/${modelId}`,
+    method: 'post'
+  })
+}
+
+// 查询水印状态
+export const getWatermarkStatus = (modelId) => {
+  return request({
+    url: `/api/admin/watermark/status/${modelId}`,
+    method: 'get'
+  })
+}
+
+// 批量生成水印
+export const batchGenerateWatermark = (modelIds) => {
+  return request({
+    url: '/api/admin/watermark/batch-generate',
+    method: 'post',
+    data: { modelIds }
+  })
+}
+
+// 删除水印
+export const deleteWatermark = (modelId) => {
+  return request({
+    url: `/api/admin/watermark/delete/${modelId}`,
+    method: 'delete'
+  })
+}

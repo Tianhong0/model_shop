@@ -24,6 +24,7 @@ import org.majun.backend.dto.BountyTaskCreateRequest;
 import org.majun.backend.dto.BountyTaskQueryRequest;
 import org.majun.backend.dto.BountyTaskResubmitRequest;
 import org.majun.backend.dto.BountyTaskReviewRequest;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.security.LoginUser;
 import org.majun.backend.service.BountyPaymentService;
 import org.majun.backend.service.BountyService;
@@ -36,6 +37,7 @@ import org.majun.backend.vo.BountyTaskDetailVO;
 import org.majun.backend.vo.BountyTaskListVO;
 import org.majun.backend.vo.DesignerReputationVO;
 import org.majun.backend.vo.PageResult;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -91,12 +93,9 @@ public class BountyController {
     }
 
     @Operation(summary = "管理员分页查询悬赏任务")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/task/page")
-    public Result<PageResult<BountyTaskListVO>> adminPageTasks(@AuthenticationPrincipal LoginUser loginUser,
-                                                                @RequestBody(required = false) BountyTaskQueryRequest request) {
-        if (!isAdmin(loginUser)) {
-            return Result.fail(403, "无管理员权限");
-        }
+    public Result<PageResult<BountyTaskListVO>> adminPageTasks(@RequestBody(required = false) BountyTaskQueryRequest request) {
         if (request == null) {
             request = new BountyTaskQueryRequest();
         }
@@ -104,33 +103,28 @@ public class BountyController {
     }
 
     @Operation(summary = "管理员查看悬赏任务详情")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/task/detail/{taskId}")
-    public Result<BountyTaskDetailVO> adminTaskDetail(@AuthenticationPrincipal LoginUser loginUser,
-                                                       @PathVariable Long taskId) {
-        if (!isAdmin(loginUser)) {
-            return Result.fail(403, "无管理员权限");
-        }
+    public Result<BountyTaskDetailVO> adminTaskDetail(@PathVariable Long taskId) {
         return Result.success(bountyService.getTaskDetailForAdmin(taskId));
     }
 
     @Operation(summary = "管理员审核悬赏任务")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "REVIEW", module = "悬赏管理", description = "审核悬赏任务", targetType = "BOUNTY_TASK")
     @PostMapping("/admin/task/review")
     public Result<Void> reviewTask(@AuthenticationPrincipal LoginUser loginUser,
                                    @Valid @RequestBody BountyTaskReviewRequest request) {
-        if (!isAdmin(loginUser)) {
-            return Result.fail(403, "无管理员权限");
-        }
         bountyService.reviewTask(request, loginUser.getId());
         return Result.success();
     }
 
     @Operation(summary = "管理员审核取消悬赏")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "REVIEW", module = "悬赏管理", description = "审核取消悬赏", targetType = "BOUNTY_TASK")
     @PostMapping("/admin/task/cancel-review")
     public Result<Void> reviewCancelTask(@AuthenticationPrincipal LoginUser loginUser,
                                          @Valid @RequestBody BountyCancelReviewRequest request) {
-        if (!isAdmin(loginUser)) {
-            return Result.fail(403, "无管理员权限");
-        }
         bountyService.reviewCancelTask(request, loginUser.getId());
         return Result.success();
     }
@@ -348,24 +342,20 @@ public class BountyController {
     }
 
     @Operation(summary = "管理员获取申诉列表")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/rating/appeal/list")
-    public Result<PageResult<BountyRatingAppealVO>> getAllAppeals(@AuthenticationPrincipal LoginUser loginUser,
-                                                                   @RequestParam(defaultValue = "1") Integer pageNum,
+    public Result<PageResult<BountyRatingAppealVO>> getAllAppeals(@RequestParam(defaultValue = "1") Integer pageNum,
                                                                    @RequestParam(defaultValue = "10") Integer pageSize,
                                                                    @RequestParam(required = false) Integer status) {
-        if (!isAdmin(loginUser)) {
-            return Result.fail(403, "无管理员权限");
-        }
         return Result.success(bountyService.getAllAppeals(pageNum, pageSize, status));
     }
 
     @Operation(summary = "管理员审核申诉")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "REVIEW", module = "悬赏管理", description = "审核评价申诉", targetType = "RATING_APPEAL")
     @PostMapping("/admin/rating/appeal/review")
     public Result<Void> reviewRatingAppeal(@AuthenticationPrincipal LoginUser loginUser,
                                            @Valid @RequestBody BountyRatingAppealReviewRequest request) {
-        if (!isAdmin(loginUser)) {
-            return Result.fail(403, "无管理员权限");
-        }
         bountyService.reviewRatingAppeal(request, loginUser.getId());
         return Result.success();
     }

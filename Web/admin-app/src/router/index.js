@@ -50,6 +50,12 @@ const routes = [
             name: 'DesignerApplyRequests',
             component: () => import('../views/users/DesignerApplyRequests.vue'),
             meta: { title: '设计者申请审核', requiresAuth: true }
+          },
+          {
+            path: 'admins',
+            name: 'AdminList',
+            component: () => import('../views/users/AdminList.vue'),
+            meta: { title: '管理员管理', requiresAuth: true }
           }
         ]
       },
@@ -181,7 +187,25 @@ const routes = [
         path: 'config',
         name: 'SystemConfig',
         component: () => import('../views/system/Config.vue'),
+        meta: { title: '界面配置', requiresAuth: true }
+      },
+      {
+        path: 'system/config',
+        name: 'ConfigManage',
+        component: () => import('../views/system/SystemConfig.vue'),
         meta: { title: '系统配置', requiresAuth: true }
+      },
+      {
+        path: 'system/roles',
+        name: 'RoleManage',
+        component: () => import('../views/system/RoleManage.vue'),
+        meta: { title: '角色管理', requiresAuth: true }
+      },
+      {
+        path: 'system/logs',
+        name: 'OperationLog',
+        component: () => import('../views/system/OperationLog.vue'),
+        meta: { title: '操作日志', requiresAuth: true }
       },
       {
         path: 'operation/banners',
@@ -236,6 +260,44 @@ const routes = [
         name: 'CouponTemplateList',
         component: () => import('../views/coupon/CouponTemplateList.vue'),
         meta: { title: '优惠券管理', requiresAuth: true }
+      },
+      {
+        path: 'statistics',
+        name: 'StatisticsCenter',
+        meta: { title: '统计报表', requiresAuth: true },
+        redirect: '/statistics/orders',
+        children: [
+          {
+            path: 'orders',
+            name: 'OrderStatistics',
+            component: () => import('../views/statistics/OrderStatistics.vue'),
+            meta: { title: '订单统计', requiresAuth: true }
+          },
+          {
+            path: 'users',
+            name: 'UserStatistics',
+            component: () => import('../views/statistics/UserStatistics.vue'),
+            meta: { title: '用户统计', requiresAuth: true }
+          },
+          {
+            path: 'models',
+            name: 'ModelStatistics',
+            component: () => import('../views/statistics/ModelStatistics.vue'),
+            meta: { title: '模型统计', requiresAuth: true }
+          },
+          {
+            path: 'finance',
+            name: 'FinanceStatistics',
+            component: () => import('../views/statistics/FinanceStatistics.vue'),
+            meta: { title: '财务统计', requiresAuth: true }
+          },
+          {
+            path: 'bounty',
+            name: 'BountyStatistics',
+            component: () => import('../views/statistics/BountyStatistics.vue'),
+            meta: { title: '悬赏统计', requiresAuth: true }
+          }
+        ]
       }
     ]
   }
@@ -251,15 +313,39 @@ router.beforeEach(async (to, from, next) => {
   const pinia = createPinia()
   const authStore = useAuthStore(pinia)
 
-  // 检查是否需要登录
-  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
-    next('/login')
-  } else if (to.path === '/login' && authStore.isLoggedIn) {
-    // 已登录用户访问登录页，重定向到首页
-    next('/dashboard')
-  } else {
-    next()
+  // 白名单路由（无需登录）
+  const whiteList = ['/login', '/register', '/forgot-password']
+
+  if (whiteList.includes(to.path)) {
+    // 已登录访问登录页，重定向到首页
+    if (authStore.isLoggedIn) {
+      next('/dashboard')
+    } else {
+      next()
+    }
+    return
   }
+
+  // 需要登录的路由
+  if (to.meta.requiresAuth) {
+    if (!authStore.isLoggedIn) {
+      next('/login')
+      return
+    }
+
+    // 检查权限（如果有配置）
+    const permission = to.meta.permission
+    if (permission && !authStore.hasPermission(permission)) {
+      // 无权限，跳转到首页
+      next('/dashboard')
+      return
+    }
+
+    next()
+    return
+  }
+
+  next()
 })
 
 export default router;

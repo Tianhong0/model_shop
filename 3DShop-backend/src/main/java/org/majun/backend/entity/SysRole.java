@@ -48,6 +48,13 @@ public class SysRole implements Serializable {
     private Integer status;
 
     /**
+     * 数据范围：1-全部数据，5-仅本人数据
+     */
+    @TableField("data_scope")
+    @Schema(description = "数据范围：1-全部数据，5-仅本人数据")
+    private Integer dataScope;
+
+    /**
      * 逻辑删除：1-已删, 0-未删
      */
     @TableField("is_delete")

@@ -25,6 +25,12 @@ public class UserQueryRequest {
     @Schema(description = "性别：1-男，0-女")
     private Integer sex;
 
+    @Schema(description = "角色ID（筛选指定角色的用户）")
+    private Long roleId;
+
+    @Schema(description = "是否管理员（快捷筛选，true-仅管理员）")
+    private Boolean isAdmin;
+
     @Schema(description = "页码")
     private Integer page = 1;
 

@@ -40,6 +40,14 @@ export const reviewAdminRegisterRequestApi = (data) => {
   })
 }
 
+export const batchReviewAdminRegisterRequestApi = (data) => {
+  return request({
+    url: '/api/auth/admin/register-request/batch/review',
+    method: 'post',
+    data
+  })
+}
+
 export const sendForgotPasswordEmailCodeApi = (data) => {
   return request({
     url: '/api/auth/email-code/forgot-password',
@@ -53,5 +61,13 @@ export const resetPasswordByEmailApi = (data) => {
     url: '/api/auth/password/reset-by-email',
     method: 'post',
     data
+  })
+}
+
+// 获取当前用户权限
+export const getPermissions = () => {
+  return request({
+    url: '/api/auth/permissions',
+    method: 'get'
   })
 }

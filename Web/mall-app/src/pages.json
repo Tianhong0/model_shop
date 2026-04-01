@@ -76,7 +76,9 @@
 		{
 			"path": "pages/custom/detail",
 			"style": {
-				"navigationBarTitleText": "模型定制"
+				"navigationBarTitleText": "模型定制",
+				"enablePullDownRefresh": true,
+				"backgroundTextStyle": "dark"
 			}
 		},
 		{

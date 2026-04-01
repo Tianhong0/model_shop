@@ -624,6 +624,7 @@ public class BountyServiceImpl implements BountyService {
 
         Integer beforeStatus = task.getStatus();
         task.setStatus(BountyTaskStatus.WAIT_ACCEPTANCE.getCode());
+        task.setDeliveryTime(LocalDateTime.now());
         bountyTaskRepository.updateById(task);
         appendStatusLog(task.getId(), beforeStatus, task.getStatus(), userId, "DESIGNER", "提交交付");
 

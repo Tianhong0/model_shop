@@ -31,6 +31,7 @@ import org.majun.backend.vo.DeliveryListVO;
 import org.majun.backend.vo.DeliveryTrackVO;
 import org.majun.backend.vo.PageResult;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
@@ -282,6 +283,7 @@ public class OrderDeliveryServiceImpl implements OrderDeliveryService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Long autoShipByOrderId(Long orderId, Long printJobId) {
         if (orderId == null) {
             return null;

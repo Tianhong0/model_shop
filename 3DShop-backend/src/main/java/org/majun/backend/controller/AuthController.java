@@ -8,8 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.AdminRegisterApplyRequest;
 import org.majun.backend.dto.AdminRegisterReviewRequest;
+import org.majun.backend.dto.BatchReviewRequest;
 import org.majun.backend.dto.EmailCodeSendRequest;
 import org.majun.backend.dto.EmailResetPasswordRequest;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.dto.ForgotPasswordCodeSendRequest;
 import org.majun.backend.dto.LoginRequest;
 import org.majun.backend.dto.RegisterRequest;
@@ -18,6 +20,8 @@ import org.majun.backend.service.AuthService;
 import org.majun.backend.vo.AdminRegisterRequestVO;
 import org.majun.backend.vo.LoginResponse;
 import org.majun.backend.vo.PageResult;
+import org.majun.backend.vo.BatchOperationResultVO;
+import org.majun.backend.vo.UserPermissionVO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +41,7 @@ public class AuthController {
      * 用户登录
      */
     @Operation(summary = "用户登录", description = "根据登录账户(用户名或邮箱)和密码进行登录")
+    @org.majun.backend.annotation.OperationLog(type = "LOGIN", module = "认证管理", description = "用户登录")
     @PostMapping("/login")
     public Result<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
@@ -47,6 +52,7 @@ public class AuthController {
      * 管理员登录
      */
     @Operation(summary = "管理员登录", description = "仅管理员角色可登录后台管理系统，支持用户名或邮箱")
+    @org.majun.backend.annotation.OperationLog(type = "LOGIN", module = "认证管理", description = "管理员登录")
     @PostMapping("/admin/login")
     public Result<LoginResponse> adminLogin(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.adminLogin(request);
@@ -96,11 +102,23 @@ public class AuthController {
 
     @Operation(summary = "审核后台管理员注册申请", description = "管理员审核后台管理员注册申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @org.majun.backend.annotation.OperationLog(type = "REVIEW", module = "认证管理", description = "审核管理员注册申请", targetType = "ADMIN_REGISTER")
     @PutMapping("/admin/register-request/review")
     public Result<Void> reviewAdminRegisterRequest(@AuthenticationPrincipal LoginUser loginUser,
                                                    @Valid @RequestBody AdminRegisterReviewRequest request) {
         authService.reviewAdminRegisterRequest(loginUser.getId(), request);
         return Result.success("审核完成");
+    }
+
+    @Operation(summary = "批量审核后台管理员注册申请", description = "管理员批量审核后台管理员注册申请")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @org.majun.backend.annotation.OperationLog(type = "BATCH_REVIEW", module = "认证管理", description = "批量审核管理员注册申请", targetType = "ADMIN_REGISTER")
+    @PostMapping("/admin/register-request/batch/review")
+    public Result<BatchOperationResultVO> batchReviewAdminRegisterRequest(
+            @AuthenticationPrincipal LoginUser loginUser,
+            @Valid @RequestBody BatchReviewRequest request) {
+        BatchOperationResultVO result = authService.batchReviewAdminRegisterRequest(loginUser.getId(), request);
+        return Result.success(result);
     }
 
     @Operation(summary = "发送忘记密码邮箱验证码", description = "根据账号和邮箱发送找回密码验证码")
@@ -126,5 +144,15 @@ public class AuthController {
         String token = authService.getTokenFromRequest(request);
         authService.logout(token);
         return Result.success("退出登录成功");
+    }
+
+    /**
+     * 获取当前用户权限
+     */
+    @Operation(summary = "获取当前用户权限", description = "获取当前登录用户的权限列表和菜单树")
+    @GetMapping("/permissions")
+    public Result<UserPermissionVO> getCurrentUserPermissions(@AuthenticationPrincipal LoginUser loginUser) {
+        UserPermissionVO permissions = authService.getUserPermissions(loginUser.getId());
+        return Result.success(permissions);
     }
 }

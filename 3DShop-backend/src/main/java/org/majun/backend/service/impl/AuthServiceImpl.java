@@ -10,6 +10,7 @@ import org.majun.backend.common.ResultCode;
 import org.majun.backend.config.JwtProperties;
 import org.majun.backend.dto.AdminRegisterApplyRequest;
 import org.majun.backend.dto.AdminRegisterReviewRequest;
+import org.majun.backend.dto.BatchReviewRequest;
 import org.majun.backend.dto.EmailResetPasswordRequest;
 import org.majun.backend.dto.LoginRequest;
 import org.majun.backend.dto.RegisterRequest;
@@ -26,11 +27,15 @@ import org.majun.backend.repository.SysUserRoleRepository;
 import org.majun.backend.security.LoginUser;
 import org.majun.backend.service.AuthService;
 import org.majun.backend.service.EmailCodeService;
+import org.majun.backend.service.RoleService;
 import org.majun.backend.util.JwtUtil;
 import org.majun.backend.util.RedisUtil;
 import org.majun.backend.vo.AdminRegisterRequestVO;
+import org.majun.backend.vo.BatchOperationResultVO;
 import org.majun.backend.vo.LoginResponse;
 import org.majun.backend.vo.PageResult;
+import org.majun.backend.vo.PermissionVO;
+import org.majun.backend.vo.UserPermissionVO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -67,6 +72,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserDetailsService userDetailsService;
     private final EmailCodeService emailCodeService;
     private final JavaMailSender mailSender;
+    private final RoleService roleService;
 
     @Value("${spring.mail.username:}")
     private String mailFrom;
@@ -108,7 +114,11 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
 
-        // 4. 构建返回结果
+        // 4. 获取用户权限和菜单
+        List<String> permissions = roleService.getUserPermissionCodes(user.getId());
+        List<PermissionVO> menus = roleService.getUserMenus(user.getId());
+
+        // 5. 构建返回结果
         return LoginResponse.builder()
                 .userId(user.getId())
                 .userName(user.getUserName())
@@ -117,7 +127,9 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .token(token)
                 .tokenExpireTime(System.currentTimeMillis() + jwtProperties.getExpiration())
-            .roles(roles)
+                .roles(roles)
+                .permissions(permissions)
+                .menus(menus)
                 .build();
     }
 
@@ -456,6 +468,17 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public UserPermissionVO getUserPermissions(Long userId) {
+        List<String> permissions = roleService.getUserPermissionCodes(userId);
+        List<PermissionVO> menus = roleService.getUserMenus(userId);
+
+        UserPermissionVO vo = new UserPermissionVO();
+        vo.setPermissions(permissions);
+        vo.setMenus(menus);
+        return vo;
+    }
+
     private AdminRegisterRequestVO convertAdminRegisterRequestVO(AdminRegisterRequest request) {
         AdminRegisterRequestVO vo = new AdminRegisterRequestVO();
         vo.setId(request.getId());
@@ -518,5 +541,50 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             log.warn("发送管理员注册审核结果邮件失败, email={}", email, e);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchOperationResultVO batchReviewAdminRegisterRequest(Long reviewerId, BatchReviewRequest request) {
+        List<BatchOperationResultVO.FailureDetail> failures = new java.util.ArrayList<>();
+        int successCount = 0;
+
+        for (Long requestId : request.getIds()) {
+            try {
+                AdminRegisterRequest registerRequest = adminRegisterRequestRepository.selectById(requestId);
+                if (registerRequest == null) {
+                    failures.add(BatchOperationResultVO.FailureDetail.builder()
+                            .id(requestId)
+                            .reason("申请不存在")
+                            .build());
+                    continue;
+                }
+                if (!AdminRegisterStatus.PENDING.getCode().equals(registerRequest.getStatus())) {
+                    failures.add(BatchOperationResultVO.FailureDetail.builder()
+                            .id(requestId)
+                            .reason("申请状态不允许审核")
+                            .build());
+                    continue;
+                }
+
+                // 执行审核逻辑
+                AdminRegisterReviewRequest reviewRequest = new AdminRegisterReviewRequest();
+                reviewRequest.setId(requestId);
+                reviewRequest.setStatus("APPROVED".equals(request.getReviewStatus())
+                        ? AdminRegisterStatus.APPROVED
+                        : AdminRegisterStatus.REJECTED);
+                reviewRequest.setReviewRemark(request.getReviewRemark());
+
+                reviewAdminRegisterRequest(reviewerId, reviewRequest);
+                successCount++;
+            } catch (Exception e) {
+                failures.add(BatchOperationResultVO.FailureDetail.builder()
+                        .id(requestId)
+                        .reason(e.getMessage())
+                        .build());
+            }
+        }
+
+        return BatchOperationResultVO.partial(request.getIds().size(), successCount, failures);
     }
 }

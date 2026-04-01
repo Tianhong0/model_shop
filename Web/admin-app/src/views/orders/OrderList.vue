@@ -15,6 +15,7 @@
           </el-select>
           <el-button type="primary" @click="fetchOrderList">查询</el-button>
           <el-button @click="resetQuery">重置</el-button>
+          <el-button type="success" icon="Download" @click="handleExport" :loading="exportLoading">导出</el-button>
         </el-space>
       </div>
 
@@ -149,11 +150,12 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getAdminOrderDetail, getAdminOrderList, updateAdminOrderStatus, retryAutoShip } from '../../api/order'
+import { getAdminOrderDetail, getAdminOrderList, updateAdminOrderStatus, retryAutoShip, exportOrders } from '../../api/order'
 
 const loading = ref(false)
 const total = ref(0)
 const orderData = ref([])
+const exportLoading = ref(false)
 
 const detailVisible = ref(false)
 const currentOrder = ref(null)
@@ -321,6 +323,32 @@ const submitShip = async () => {
     ElMessage.error(error.message || '重新发货失败')
   } finally {
     shipSubmitting.value = false
+  }
+}
+
+const handleExport = async () => {
+  exportLoading.value = true
+  try {
+    const blob = await exportOrders({
+      orderSn: queryParams.orderSn || undefined,
+      modelId: queryParams.modelId || undefined,
+      userId: queryParams.userId || undefined,
+      orderStatus: queryParams.orderStatus ?? undefined
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `订单数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  } finally {
+    exportLoading.value = false
   }
 }
 

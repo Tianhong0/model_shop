@@ -44,8 +44,8 @@
     prefix: "Bearer "
 
   minio:
-#    endpoint: http://127.0.0.1:9000
-    endpoint: http://120.48.50.30:9000
+    endpoint: http://127.0.0.1:9000
+#    endpoint: http://120.48.50.30:9000
     public-endpoint: http://120.48.50.30:9000
     accessKey: admin
     secretKey: a1900574183

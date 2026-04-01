@@ -37,7 +37,7 @@
 				<view class="grid-list">
 					<view class="grid-item" v-for="(item, idx) in models" :key="item.id || idx" @click="goDetail(item.id)" :style="{ animationDelay: `${idx * 0.05}s` }">
 						<view class="grid-img-wrap">
-							<image :src="item.mainImageUrl || defaultBanner" mode="aspectFill"></image>
+							<image :src="item.watermarkedMainImageUrl || item.mainImageUrl || defaultBanner" mode="aspectFill"></image>
 						</view>
 						<view class="grid-info">
 							<text class="name">{{item.modelName}}</text>

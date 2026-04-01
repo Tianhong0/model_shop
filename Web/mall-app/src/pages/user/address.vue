@@ -131,16 +131,7 @@ onMounted(() => {
 		addresses.value = normalizeAddresses(saved)
 	} else {
 		addresses.value = [
-			{
-				id: `addr_${Date.now()}_0`,
-				name: '马军',
-				phone: '13800138000',
-				province: '四川省',
-				city: '成都市',
-				district: '武侯区',
-				detail: '科华北路 100 号',
-				isDefault: true
-			}
+		
 		]
 	}
 	saveLocalAddresses()

@@ -25,24 +25,34 @@ public class PrintJobDoneDeliveryListener {
     @Async("printTaskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PrintJobDoneEvent event) {
+        log.info("收到打印完成事件: jobId={}, orderId={}, orderSn={}",
+                event != null ? event.getJobId() : null,
+                event != null ? event.getOrderId() : null,
+                event != null ? event.getOrderSn() : null);
+
         if (event == null || event.getOrderId() == null || event.getJobId() == null) {
+            log.warn("打印完成事件参数无效，跳过处理: event={}", event);
             return;
         }
         if (!autoShipEnabled) {
+            log.info("自动发货已禁用，跳过处理: orderId={}", event.getOrderId());
             saveJobEvent(event.getJobId(), "AUTO_SHIP_SKIPPED", "自动发货已禁用", null);
             return;
         }
 
         try {
+            log.info("开始执行自动发货: orderId={}, jobId={}", event.getOrderId(), event.getJobId());
             Long deliveryId = orderDeliveryService.autoShipByOrderId(event.getOrderId(), event.getJobId());
             if (deliveryId != null) {
+                log.info("自动发货成功: orderId={}, jobId={}, deliveryId={}", event.getOrderId(), event.getJobId(), deliveryId);
                 saveJobEvent(event.getJobId(), "AUTO_SHIPPED", "打印完成自动发货成功", String.valueOf(deliveryId));
             } else {
+                log.info("自动发货跳过（订单已存在物流单）: orderId={}, jobId={}", event.getOrderId(), event.getJobId());
                 saveJobEvent(event.getJobId(), "AUTO_SHIP_SKIPPED", "订单已存在物流单，自动发货跳过", null);
             }
         } catch (Exception ex) {
+            log.error("打印完成自动发货失败, orderId={}, jobId={}, error={}", event.getOrderId(), event.getJobId(), ex.getMessage(), ex);
             saveJobEvent(event.getJobId(), "AUTO_SHIP_FAILED", "打印完成自动发货失败", ex.getMessage());
-            log.error("打印完成自动发货失败, orderId={}, jobId={}", event.getOrderId(), event.getJobId(), ex);
         }
     }
 

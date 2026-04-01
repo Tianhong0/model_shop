@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.common.Result;
 import org.majun.backend.common.ResultCode;
 import org.majun.backend.common.exception.BusinessException;
@@ -142,6 +143,7 @@ public class OrderAfterSaleController {
 
     @Operation(summary = "Admin audit after-sale")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "REVIEW", module = "售后管理", description = "审核售后申请", targetType = "AFTER_SALE")
     @PostMapping("/admin/audit")
     public Result<Void> auditAfterSale(@Valid @RequestBody AfterSaleAuditRequest request) {
         afterSaleService.auditAfterSale(request);
@@ -150,6 +152,7 @@ public class OrderAfterSaleController {
 
     @Operation(summary = "Admin execute refund")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "REFUND", module = "售后管理", description = "执行退款", targetType = "AFTER_SALE")
     @PostMapping("/admin/refund")
     public Result<Void> executeRefund(@Valid @RequestBody AfterSaleRefundRequest request) {
         afterSaleService.executeRefund(request);

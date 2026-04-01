@@ -3,6 +3,7 @@ package org.majun.backend.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.majun.backend.common.exception.BusinessException;
 import org.majun.backend.dto.PointLedgerQueryRequest;
 import org.majun.backend.entity.PointAccount;
@@ -16,11 +17,14 @@ import org.majun.backend.vo.PointLedgerVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PointService {
@@ -36,14 +40,21 @@ public class PointService {
     public static final String BIZ_POST_REPLY_ADOPTED = "POST_REPLY_ADOPTED";
     public static final String BIZ_POST_REPLY_EXCELLENT = "POST_REPLY_EXCELLENT";
 
-    private static final int ORDER_REWARD_RATE = 1;
-    private static final int BOUNTY_REWARD_RATE = 1;
-    private static final int ECO_MATERIAL_REWARD_POINTS = 5;  // 环保材料奖励积分
-    private static final int POST_REPLY_ADOPTED_POINTS = 3;   // 回答被采纳奖励积分
-    private static final int POST_REPLY_EXCELLENT_POINTS = 3; // 优质回答奖励积分
+    // 配置键名
+    public static final String CONFIG_ECO_MATERIAL_REWARD_POINTS = "ECO_MATERIAL_REWARD_POINTS";
+    public static final String CONFIG_ECO_MATERIAL_ACTIVITY_MULTIPLIER = "ECO_MATERIAL_ACTIVITY_MULTIPLIER";
+    public static final String CONFIG_POST_REPLY_ADOPTED_POINTS = "POST_REPLY_ADOPTED_POINTS";
+    public static final String CONFIG_POST_REPLY_EXCELLENT_POINTS = "POST_REPLY_EXCELLENT_POINTS";
+
+    // 默认值
+    private static final int DEFAULT_ORDER_REWARD_RATE = 1;
+    private static final int DEFAULT_BOUNTY_REWARD_RATE = 1;
+    private static final int DEFAULT_ECO_MATERIAL_REWARD_POINTS = 5;
+    private static final int DEFAULT_POST_REPLY_POINTS = 3;
 
     private final PointAccountRepository pointAccountRepository;
     private final PointLedgerRepository pointLedgerRepository;
+    private final ConfigService configService;
 
     public PointAccountVO getAccount(Long userId) {
         PointAccount account = getOrCreateAccount(userId);
@@ -82,7 +93,7 @@ public class PointService {
 
     @Transactional(rollbackFor = Exception.class)
     public void rewardOrderPaid(Long userId, Long orderId, String orderSn, java.math.BigDecimal payAmount) {
-        int points = toRewardPoints(payAmount, ORDER_REWARD_RATE);
+        int points = toRewardPoints(payAmount, DEFAULT_ORDER_REWARD_RATE);
         if (points <= 0) return;
         String bizNo = orderSn;
         increase(userId, points, BIZ_ORDER_PAY, bizNo, orderId, "订单支付奖励积分");
@@ -90,7 +101,7 @@ public class PointService {
 
     @Transactional(rollbackFor = Exception.class)
     public void rewardBountyRelease(Long userId, Long taskId, String taskSn, java.math.BigDecimal amount) {
-        int points = toRewardPoints(amount, BOUNTY_REWARD_RATE);
+        int points = toRewardPoints(amount, DEFAULT_BOUNTY_REWARD_RATE);
         if (points <= 0) return;
         String bizNo = taskSn;
         increase(userId, points, BIZ_BOUNTY_RELEASE, bizNo, taskId, "悬赏验收结算奖励积分");
@@ -98,27 +109,93 @@ public class PointService {
 
     @Transactional(rollbackFor = Exception.class)
     public void rewardUsedOrderSell(Long userId, Long orderId, String orderSn, java.math.BigDecimal amount) {
-        int points = toRewardPoints(amount, ORDER_REWARD_RATE);
+        int points = toRewardPoints(amount, DEFAULT_ORDER_REWARD_RATE);
         if (points <= 0) return;
         increase(userId, points, BIZ_USED_ORDER_SELL, orderSn, orderId, "二手交易卖出奖励积分");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void rewardEcoMaterial(Long userId, Long orderId, String orderSn) {
+        int basePoints = getEcoMaterialRewardPoints();
+        BigDecimal multiplier = getEcoMaterialActivityMultiplier();
+        int finalPoints = BigDecimal.valueOf(basePoints)
+                .multiply(multiplier)
+                .setScale(0, RoundingMode.DOWN)
+                .intValue();
+
+        if (finalPoints <= 0) return;
+
         String bizNo = "ECO_" + orderSn;
-        increase(userId, ECO_MATERIAL_REWARD_POINTS, BIZ_ECO_MATERIAL, bizNo, orderId, "选择环保材料奖励积分");
+        String remark = "选择环保材料奖励积分";
+        if (multiplier.compareTo(BigDecimal.ONE) > 0) {
+            remark += "(活动加成x" + multiplier + ")";
+        }
+        increase(userId, finalPoints, BIZ_ECO_MATERIAL, bizNo, orderId, remark);
+    }
+
+    /**
+     * 获取环保材料奖励积分（从配置读取）
+     */
+    private int getEcoMaterialRewardPoints() {
+        String value = configService.getConfigValue(CONFIG_ECO_MATERIAL_REWARD_POINTS, String.valueOf(DEFAULT_ECO_MATERIAL_REWARD_POINTS));
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            log.warn("解析环保材料奖励积分配置失败，使用默认值: {}", DEFAULT_ECO_MATERIAL_REWARD_POINTS);
+            return DEFAULT_ECO_MATERIAL_REWARD_POINTS;
+        }
+    }
+
+    /**
+     * 获取环保材料活动加成倍率
+     */
+    private BigDecimal getEcoMaterialActivityMultiplier() {
+        String value = configService.getConfigValue(CONFIG_ECO_MATERIAL_ACTIVITY_MULTIPLIER, "1.0");
+        try {
+            return new BigDecimal(value);
+        } catch (NumberFormatException e) {
+            return BigDecimal.ONE;
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void rewardReplyAdopted(Long userId, Long replyId, Long postId) {
+        int points = getReplyAdoptedPoints();
+        if (points <= 0) return;
         String bizNo = "ADOPTED_" + replyId;
-        increase(userId, POST_REPLY_ADOPTED_POINTS, BIZ_POST_REPLY_ADOPTED, bizNo, postId, "社区回答被采纳奖励积分");
+        increase(userId, points, BIZ_POST_REPLY_ADOPTED, bizNo, postId, "社区回答被采纳奖励积分");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void rewardReplyExcellent(Long userId, Long replyId, Long postId) {
+        int points = getReplyExcellentPoints();
+        if (points <= 0) return;
         String bizNo = "EXCELLENT_" + replyId;
-        increase(userId, POST_REPLY_EXCELLENT_POINTS, BIZ_POST_REPLY_EXCELLENT, bizNo, postId, "社区优质回答奖励积分");
+        increase(userId, points, BIZ_POST_REPLY_EXCELLENT, bizNo, postId, "社区优质回答奖励积分");
+    }
+
+    /**
+     * 获取回答被采纳奖励积分（从配置读取）
+     */
+    private int getReplyAdoptedPoints() {
+        String value = configService.getConfigValue(CONFIG_POST_REPLY_ADOPTED_POINTS, String.valueOf(DEFAULT_POST_REPLY_POINTS));
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return DEFAULT_POST_REPLY_POINTS;
+        }
+    }
+
+    /**
+     * 获取优质回答奖励积分（从配置读取）
+     */
+    private int getReplyExcellentPoints() {
+        String value = configService.getConfigValue(CONFIG_POST_REPLY_EXCELLENT_POINTS, String.valueOf(DEFAULT_POST_REPLY_POINTS));
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return DEFAULT_POST_REPLY_POINTS;
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)

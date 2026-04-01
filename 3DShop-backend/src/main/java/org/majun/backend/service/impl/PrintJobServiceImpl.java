@@ -501,6 +501,8 @@ public class PrintJobServiceImpl implements PrintJobService {
                 printJobRepository.updateById(job);
                 if (!Objects.equals(previousStatus, PrintJobStatus.DONE.getCode())
                         && Objects.equals(job.getStatus(), PrintJobStatus.DONE.getCode())) {
+                    log.info("打印任务完成，发布PrintJobDoneEvent: jobId={}, orderId={}, orderSn={}",
+                            job.getId(), job.getOrderId(), job.getOrderSn());
                     applicationEventPublisher.publishEvent(new PrintJobDoneEvent(job.getId(), job.getOrderId(), job.getOrderSn()));
                 }
                 if (Objects.equals(job.getStatus(), PrintJobStatus.DONE.getCode()) || Objects.equals(job.getStatus(), PrintJobStatus.FAILED.getCode())) {

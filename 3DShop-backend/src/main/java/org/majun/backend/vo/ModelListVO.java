@@ -36,6 +36,12 @@ public class ModelListVO {
     private String mainImageUrl;
 
     /**
+     * 水印主图URL（预览用）
+     */
+    @Schema(description = "水印主图URL")
+    private String watermarkedMainImageUrl;
+
+    /**
      * 设计者昵称
      */
     @Schema(description = "设计者昵称")

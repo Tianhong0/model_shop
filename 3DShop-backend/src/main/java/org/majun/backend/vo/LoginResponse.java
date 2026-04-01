@@ -65,4 +65,16 @@ public class LoginResponse {
      */
     @Schema(description = "角色编码列表")
     private List<String> roles;
+
+    /**
+     * 权限编码列表
+     */
+    @Schema(description = "权限编码列表")
+    private List<String> permissions;
+
+    /**
+     * 用户菜单树
+     */
+    @Schema(description = "用户菜单树")
+    private List<PermissionVO> menus;
 }

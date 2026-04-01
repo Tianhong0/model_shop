@@ -15,6 +15,7 @@ import org.majun.backend.vo.ModelFavoriteToggleVO;
 import org.majun.backend.vo.ModelDetailVO;
 import org.majun.backend.vo.ModelListVO;
 import org.majun.backend.vo.PageResult;
+import org.majun.backend.vo.WatermarkStatusVO;
 
 import java.util.List;
 
@@ -32,6 +33,13 @@ public interface ModelService {
      * 根据ID查询模型详情
      */
     ModelDetailVO getModelDetail(Long id);
+
+    /**
+     * 根据ID查询模型详情（包含购买状态）
+     * @param id 模型ID
+     * @param userId 用户ID（可为null）
+     */
+    ModelDetailVO getModelDetail(Long id, Long userId);
 
     
     // ==================== 模型增删改 ====================
@@ -146,4 +154,9 @@ public interface ModelService {
      * 查询我的收藏模型ID列表
      */
     List<Long> getMyFavoriteModelIds(Long userId);
+
+    /**
+     * 获取模型水印状态
+     */
+    WatermarkStatusVO getWatermarkStatus(Long modelId);
 }

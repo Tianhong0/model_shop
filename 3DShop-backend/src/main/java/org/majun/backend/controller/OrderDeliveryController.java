@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.DeliveryQueryRequest;
 import org.majun.backend.dto.DeliveryShipRequest;
@@ -42,6 +43,7 @@ public class OrderDeliveryController {
     }
 
     @Operation(summary = "Confirm receive", description = "User confirms receive by order serial number")
+    @OperationLog(type = "SIGN", module = "物流管理", description = "用户签收", targetType = "ORDER")
     @PostMapping("/my/sign/{orderSn}")
     public Result<Void> signMyOrder(@AuthenticationPrincipal LoginUser loginUser,
                                     @PathVariable String orderSn) {
@@ -51,6 +53,7 @@ public class OrderDeliveryController {
 
     @Operation(summary = "Ship order", description = "Create delivery order and mark as shipped")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "SHIP", module = "物流管理", description = "发货", targetType = "ORDER")
     @PostMapping("/admin/ship")
     public Result<Long> shipOrder(@Valid @RequestBody DeliveryShipRequest request) {
         return Result.success(orderDeliveryService.shipOrder(request));

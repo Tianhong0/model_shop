@@ -6,7 +6,8 @@ import {
   sendAdminRegisterEmailCodeApi,
   submitAdminRegisterRequestApi,
   sendForgotPasswordEmailCodeApi,
-  resetPasswordByEmailApi
+  resetPasswordByEmailApi,
+  getPermissions
 } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', {
@@ -20,11 +21,42 @@ export const useAuthStore = defineStore('auth', {
         return null
       }
     })(),
-    isAuthenticated: !!localStorage.getItem('token')
+    isAuthenticated: !!localStorage.getItem('token'),
+    // 权限列表
+    permissions: (() => {
+      try {
+        const raw = localStorage.getItem('permissions')
+        return raw ? JSON.parse(raw) : []
+      } catch (_) {
+        return []
+      }
+    })(),
+    // 菜单树
+    menus: (() => {
+      try {
+        const raw = localStorage.getItem('menus')
+        return raw ? JSON.parse(raw) : []
+      } catch (_) {
+        return []
+      }
+    })()
   }),
 
   getters: {
-    isLoggedIn: (state) => state.isAuthenticated
+    isLoggedIn: (state) => state.isAuthenticated,
+    // 判断是否有某个权限
+    hasPermission: (state) => (permission) => {
+      if (!permission) return true
+      // 超级管理员拥有所有权限
+      if (state.user?.roles?.includes('ROLE_ADMIN')) return true
+      return state.permissions.includes(permission)
+    },
+    // 判断是否有任一权限
+    hasAnyPermission: (state) => (permissionList) => {
+      if (!permissionList || permissionList.length === 0) return true
+      if (state.user?.roles?.includes('ROLE_ADMIN')) return true
+      return permissionList.some(p => state.permissions.includes(p))
+    }
   },
 
   actions: {
@@ -41,9 +73,20 @@ export const useAuthStore = defineStore('auth', {
           userId: response.userId,
           userName: response.userName,
           nickname: response.nickname,
-          avatar: response.avatar
+          avatar: response.avatar,
+          roles: response.roles || []
         }
         this.isAuthenticated = true
+
+        // 存储权限信息
+        if (response.permissions) {
+          this.permissions = response.permissions
+          localStorage.setItem('permissions', JSON.stringify(response.permissions))
+        }
+        if (response.menus) {
+          this.menus = response.menus
+          localStorage.setItem('menus', JSON.stringify(response.menus))
+        }
 
         // 存储到 localStorage
         localStorage.setItem('token', response.token)
@@ -125,15 +168,19 @@ export const useAuthStore = defineStore('auth', {
       try {
         // 调用后端退出登录接口
         await request.post('/api/auth/logout')
-        
+
         // 清除前端状态
         this.token = ''
         this.user = null
         this.isAuthenticated = false
+        this.permissions = []
+        this.menus = []
 
         // 清除 localStorage
         localStorage.removeItem('token')
         localStorage.removeItem('user')
+        localStorage.removeItem('permissions')
+        localStorage.removeItem('menus')
 
         // 如果需要清除记住的登录信息
         if (clearRemembered) {
@@ -145,19 +192,38 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         console.error('退出登录失败:', error)
         ElMessage.error(error.response?.data?.message || '退出登录失败')
-        
+
         // 即使接口调用失败，也清除本地状态
         this.token = ''
         this.user = null
         this.isAuthenticated = false
+        this.permissions = []
+        this.menus = []
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-        
+        localStorage.removeItem('permissions')
+        localStorage.removeItem('menus')
+
         // 如果需要清除记住的登录信息
         if (clearRemembered) {
           this.clearRememberedCredentials()
         }
-        
+
+        return false
+      }
+    },
+
+    // 获取用户权限（用于刷新）
+    async fetchPermissions() {
+      try {
+        const response = await getPermissions()
+        this.permissions = response.permissions || []
+        this.menus = response.menus || []
+        localStorage.setItem('permissions', JSON.stringify(this.permissions))
+        localStorage.setItem('menus', JSON.stringify(this.menus))
+        return true
+      } catch (error) {
+        console.error('获取权限失败:', error)
         return false
       }
     },

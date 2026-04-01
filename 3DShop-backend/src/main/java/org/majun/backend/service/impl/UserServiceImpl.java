@@ -12,6 +12,7 @@ import org.majun.backend.dto.DesignerApplyReviewRequest;
 import org.majun.backend.dto.DesignerApplySubmitRequest;
 import org.majun.backend.dto.UserQueryRequest;
 import org.majun.backend.dto.UserUpdateRequest;
+import org.majun.backend.dto.BatchReviewRequest;
 import org.majun.backend.entity.DesignerApplyRequest;
 import org.majun.backend.entity.SysRole;
 import org.majun.backend.entity.SysUser;
@@ -29,6 +30,8 @@ import org.majun.backend.repository.SysUserRoleRepository;
 import org.majun.backend.repository.UserDeletionRequestRepository;
 import org.majun.backend.service.EmailCodeService;
 import org.majun.backend.service.UserService;
+import org.majun.backend.vo.AdminStatsVO;
+import org.majun.backend.vo.BatchOperationResultVO;
 import org.majun.backend.vo.DeletionRequestVO;
 import org.majun.backend.vo.DesignerApplyRequestVO;
 import org.majun.backend.vo.DesignerVO;
@@ -93,9 +96,71 @@ public class UserServiceImpl implements UserService {
             wrapper.eq(SysUser::getSex, request.getSex());
         }
 
+        // 按角色筛选
+        List<Long> roleUserIds = null;
+        if (request.getRoleId() != null || Boolean.TRUE.equals(request.getIsAdmin())) {
+            Long targetRoleId = request.getRoleId();
+            if (Boolean.TRUE.equals(request.getIsAdmin())) {
+                // 快捷筛选管理员
+                SysRole adminRole = roleRepository.selectOne(
+                        new LambdaQueryWrapper<SysRole>()
+                                .eq(SysRole::getRoleName, "ROLE_ADMIN")
+                                .eq(SysRole::getStatus, 1));
+                if (adminRole == null) {
+                    return PageResult.<UserListVO>builder()
+                            .records(Collections.emptyList())
+                            .total(0L)
+                            .pageNum(pageNum)
+                            .pageSize(pageSize)
+                            .pages(0)
+                            .build();
+                }
+                targetRoleId = adminRole.getId();
+            }
+
+            List<SysUserRole> userRoles = userRoleRepository.selectList(
+                    new LambdaQueryWrapper<SysUserRole>()
+                            .eq(SysUserRole::getRoleId, targetRoleId));
+            roleUserIds = userRoles.stream()
+                    .map(SysUserRole::getUserId)
+                    .collect(Collectors.toList());
+
+            if (roleUserIds.isEmpty()) {
+                return PageResult.<UserListVO>builder()
+                        .records(Collections.emptyList())
+                        .total(0L)
+                        .pageNum(pageNum)
+                        .pageSize(pageSize)
+                        .pages(0)
+                        .build();
+            }
+            wrapper.in(SysUser::getId, roleUserIds);
+        }
+
         Page<SysUser> page = new Page<>(pageNum, pageSize);
         userRepository.selectPage(page, wrapper);
         List<UserListVO> records = page.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
+
+        // 填充角色信息
+        for (UserListVO vo : records) {
+            List<SysUserRole> userRoles = userRoleRepository.selectList(
+                    new LambdaQueryWrapper<SysUserRole>()
+                            .eq(SysUserRole::getUserId, vo.getId()));
+
+            if (!userRoles.isEmpty()) {
+                List<Long> roleIds = userRoles.stream()
+                        .map(SysUserRole::getRoleId)
+                        .collect(Collectors.toList());
+                vo.setRoleIds(roleIds);
+
+                List<SysRole> roles = roleRepository.selectBatchIds(roleIds);
+                List<String> roleNames = roles.stream()
+                        .map(SysRole::getRoleName)
+                        .collect(Collectors.toList());
+                vo.setRoleNames(roleNames);
+                vo.setIsAdmin(roleNames.contains("ROLE_ADMIN"));
+            }
+        }
 
         return PageResult.<UserListVO>builder()
                 .records(records)
@@ -633,5 +698,110 @@ public class UserServiceImpl implements UserService {
             mailSender.send(message);
         } catch (Exception ignored) {
         }
+    }
+
+    @Override
+    public AdminStatsVO getAdminStats() {
+        AdminStatsVO vo = new AdminStatsVO();
+
+        // 获取管理员角色ID
+        SysRole adminRole = roleRepository.selectOne(
+                new LambdaQueryWrapper<SysRole>()
+                        .eq(SysRole::getRoleName, "ROLE_ADMIN")
+                        .eq(SysRole::getStatus, 1));
+
+        if (adminRole == null) {
+            vo.setTotalAdmins(0L);
+            vo.setActiveAdmins(0L);
+            vo.setDisabledAdmins(0L);
+            vo.setWeeklyLoginCount(0L);
+            return vo;
+        }
+
+        // 查询管理员用户ID列表
+        List<SysUserRole> adminUserRoles = userRoleRepository.selectList(
+                new LambdaQueryWrapper<SysUserRole>()
+                        .eq(SysUserRole::getRoleId, adminRole.getId()));
+
+        List<Long> adminUserIds = adminUserRoles.stream()
+                .map(SysUserRole::getUserId)
+                .collect(Collectors.toList());
+
+        if (adminUserIds.isEmpty()) {
+            vo.setTotalAdmins(0L);
+            vo.setActiveAdmins(0L);
+            vo.setDisabledAdmins(0L);
+            vo.setWeeklyLoginCount(0L);
+            return vo;
+        }
+
+        // 查询管理员总数
+        vo.setTotalAdmins((long) adminUserIds.size());
+
+        // 查询启用的管理员数
+        Long activeCount = userRepository.selectCount(
+                new LambdaQueryWrapper<SysUser>()
+                        .in(SysUser::getId, adminUserIds)
+                        .eq(SysUser::getStatus, 1)
+                        .eq(SysUser::getIsDelete, 0));
+        vo.setActiveAdmins(activeCount);
+
+        // 查询禁用的管理员数
+        Long disabledCount = userRepository.selectCount(
+                new LambdaQueryWrapper<SysUser>()
+                        .in(SysUser::getId, adminUserIds)
+                        .eq(SysUser::getStatus, 0)
+                        .eq(SysUser::getIsDelete, 0));
+        vo.setDisabledAdmins(disabledCount);
+
+        // 暂不统计登录数，返回0
+        vo.setWeeklyLoginCount(0L);
+
+        return vo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchOperationResultVO batchReviewDesignerApply(Long operatorId, BatchReviewRequest request) {
+        List<BatchOperationResultVO.FailureDetail> failures = new java.util.ArrayList<>();
+        int successCount = 0;
+
+        for (Long applyId : request.getIds()) {
+            try {
+                DesignerApplyRequest apply = designerApplyRequestRepository.selectById(applyId);
+                if (apply == null) {
+                    failures.add(BatchOperationResultVO.FailureDetail.builder()
+                            .id(applyId)
+                            .reason("申请不存在")
+                            .build());
+                    continue;
+                }
+                if (!DesignerApplyStatus.PENDING.getCode().equals(apply.getStatus())) {
+                    failures.add(BatchOperationResultVO.FailureDetail.builder()
+                            .id(applyId)
+                            .reason("申请状态不允许审核")
+                            .build());
+                    continue;
+                }
+
+                // 执行审核逻辑
+                DesignerApplyReviewRequest reviewRequest = new DesignerApplyReviewRequest();
+                reviewRequest.setId(applyId);
+                reviewRequest.setStatus("APPROVED".equals(request.getReviewStatus())
+                        ? DesignerApplyStatus.APPROVED
+                        : DesignerApplyStatus.REJECTED);
+                reviewRequest.setReviewRemark(request.getReviewRemark());
+
+                reviewDesignerApply(operatorId, reviewRequest);
+                successCount++;
+            } catch (Exception e) {
+                failures.add(BatchOperationResultVO.FailureDetail.builder()
+                        .id(applyId)
+                        .reason(e.getMessage())
+                        .build());
+            }
+        }
+
+        return BatchOperationResultVO.partial(request.getIds().size(), successCount, failures);
     }
 }

@@ -88,16 +88,40 @@ public class ModelDetailVO {
     private String baseSize;
 
     /**
+     * 主图URL
+     */
+    @Schema(description = "主图URL")
+    private String mainImageUrl;
+
+    /**
      * 模型文件路径
      */
     @Schema(description = "模型文件路径")
     private String filePath;
 
     /**
-     * 主图URL
+     * 是否已购买
      */
-    @Schema(description = "主图URL")
-    private String mainImageUrl;
+    @Schema(description = "是否已购买")
+    private Boolean purchased;
+
+    /**
+     * 预览URL（带水印/低精度）
+     */
+    @Schema(description = "预览URL")
+    private String previewUrl;
+
+    /**
+     * 文件大小(字节)
+     */
+    @Schema(description = "文件大小(字节)")
+    private Long fileSize;
+
+    /**
+     * 下载次数
+     */
+    @Schema(description = "下载次数")
+    private Integer downloadCount;
 
     /**
      * 上架状态: 0-审核中, 1-上架, 2-下架

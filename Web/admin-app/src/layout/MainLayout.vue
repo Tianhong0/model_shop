@@ -21,217 +21,301 @@
           :collapse="isCollapse"
           router
         >
-          <el-menu-item index="/dashboard">
-            <el-icon><monitor /></el-icon>
-            <template #title>仪表盘</template>
-          </el-menu-item>
-
-          <el-sub-menu index="user-mgmt">
-            <template #title>
-              <el-icon><user-filled /></el-icon>
-              <span>用户中心</span>
+          <!-- 动态菜单（如果有权限数据） -->
+          <template v-if="authStore.menus && authStore.menus.length > 0">
+            <template v-for="menu in authStore.menus" :key="menu.id || menu.permissionCode">
+              <!-- 有子菜单 -->
+              <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.permissionCode || String(menu.id)">
+                <template #title>
+                  <el-icon><component :is="menu.icon || 'Menu'" /></el-icon>
+                  <span>{{ menu.permissionName }}</span>
+                </template>
+                <el-menu-item
+                  v-for="child in menu.children"
+                  :key="child.id || child.permissionCode"
+                  :index="child.menuPath"
+                >
+                  <el-icon><component :is="child.icon || 'Menu'" /></el-icon>
+                  <span>{{ child.permissionName }}</span>
+                </el-menu-item>
+              </el-sub-menu>
+              <!-- 无子菜单 -->
+              <el-menu-item v-else :index="menu.menuPath">
+                <el-icon><component :is="menu.icon || 'Menu'" /></el-icon>
+                <template #title>{{ menu.permissionName }}</template>
+              </el-menu-item>
             </template>
-            <el-menu-item index="/users/list">
-              <el-icon><user /></el-icon>
-              <span>用户管理</span>
-            </el-menu-item>
-            <el-menu-item index="/users/deletion-requests">
-              <el-icon><document-delete /></el-icon>
-              <span>注销申请管理</span>
-            </el-menu-item>
-            <el-menu-item index="/users/admin-register-requests">
-              <el-icon><user-filled /></el-icon>
-              <span>管理员注册审核</span>
-            </el-menu-item>
-            <el-menu-item index="/users/designer-apply-requests">
-              <el-icon><user-filled /></el-icon>
-              <span>设计者申请审核</span>
-            </el-menu-item>
-          </el-sub-menu>
+          </template>
 
-          <el-sub-menu index="model-mgmt">
-            <template #title>
-              <el-icon><goods /></el-icon>
-              <span>模型管理</span>
-            </template>
-            <el-menu-item index="/models/category">
-              <el-icon><Menu /></el-icon>
-              <span>模型分类</span>
+          <!-- 静态菜单（后备，无权限数据时显示） -->
+          <template v-else>
+            <el-menu-item index="/dashboard">
+              <el-icon><monitor /></el-icon>
+              <template #title>仪表盘</template>
             </el-menu-item>
-            <el-menu-item index="/models/list">
-              <el-icon><List /></el-icon>
-              <span>模型管理</span>
-            </el-menu-item>
-            <el-menu-item index="/models/model-lists">
-              <el-icon><Collection /></el-icon>
-              <span>清单管理</span>
-            </el-menu-item>
-          </el-sub-menu>
 
-          <el-sub-menu index="order-mgmt">
-            <template #title>
-              <el-icon><ticket /></el-icon>
-              <span>订单系统</span>
-            </template>
-            <el-menu-item index="/orders/list">
-              <el-icon><document /></el-icon>
-              <span>订单管理</span>
-            </el-menu-item>
-            <el-menu-item index="/orders/after-sales">
+            <el-sub-menu index="user-mgmt">
+              <template #title>
+                <el-icon><user-filled /></el-icon>
+                <span>用户中心</span>
+              </template>
+              <el-menu-item index="/users/list">
+                <el-icon><user /></el-icon>
+                <span>用户管理</span>
+              </el-menu-item>
+              <el-menu-item index="/system/roles">
+                <el-icon><avatar /></el-icon>
+                <span>角色管理</span>
+              </el-menu-item>
+              <el-menu-item index="/users/deletion-requests">
+                <el-icon><document-delete /></el-icon>
+                <span>注销申请管理</span>
+              </el-menu-item>
+              <el-menu-item index="/users/admin-register-requests">
+                <el-icon><user-filled /></el-icon>
+                <span>管理员注册审核</span>
+              </el-menu-item>
+              <el-menu-item index="/users/designer-apply-requests">
+                <el-icon><user-filled /></el-icon>
+                <span>设计者申请审核</span>
+              </el-menu-item>
+              <el-menu-item index="/users/admins">
+                <el-icon><avatar /></el-icon>
+                <span>管理员管理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="model-mgmt">
+              <template #title>
+                <el-icon><goods /></el-icon>
+                <span>模型管理</span>
+              </template>
+              <el-menu-item index="/models/category">
+                <el-icon><Menu /></el-icon>
+                <span>模型分类</span>
+              </el-menu-item>
+              <el-menu-item index="/models/list">
+                <el-icon><List /></el-icon>
+                <span>模型管理</span>
+              </el-menu-item>
+              <el-menu-item index="/models/model-lists">
+                <el-icon><Collection /></el-icon>
+                <span>清单管理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="order-mgmt">
+              <template #title>
+                <el-icon><ticket /></el-icon>
+                <span>订单系统</span>
+              </template>
+              <el-menu-item index="/orders/list">
+                <el-icon><document /></el-icon>
+                <span>订单管理</span>
+              </el-menu-item>
+              <el-menu-item index="/orders/after-sales">
+                <el-icon><service /></el-icon>
+                <span>售后管理</span>
+              </el-menu-item>
+              <el-menu-item index="/orders/logistics">
+                <el-icon><van /></el-icon>
+                <span>物流管理</span>
+              </el-menu-item>
+              <el-menu-item index="/orders/reviews">
+                <el-icon><chat-line-square /></el-icon>
+                <span>订单评价</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="used-mgmt">
+              <template #title>
+                <el-icon><tickets /></el-icon>
+                <span>二手交易</span>
+              </template>
+              <el-menu-item index="/used/listings">
+                <el-icon><goods /></el-icon>
+                <span>商品管理</span>
+              </el-menu-item>
+              <el-menu-item index="/used/orders">
+                <el-icon><document /></el-icon>
+                <span>订单管理</span>
+              </el-menu-item>
+              <el-menu-item index="/used/reports">
+                <el-icon><warning /></el-icon>
+                <span>举报处理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="print-mgmt">
+              <template #title>
+                <el-icon><clock /></el-icon>
+                <span>打印排产</span>
+              </template>
+              <el-menu-item index="/print-queue">
+                <span>任务排产</span>
+              </el-menu-item>
+              <el-menu-item index="/print/printers">
+                <span>打印机管理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="bounty-mgmt">
+              <template #title>
+                <el-icon><collection /></el-icon>
+                <span>悬赏管理</span>
+              </template>
+              <el-menu-item index="/bounty">
+                <el-icon><document /></el-icon>
+                <span>任务悬赏</span>
+              </el-menu-item>
+              <el-menu-item index="/bounty/appeal">
+                <el-icon><warning /></el-icon>
+                <span>评价申诉</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="interaction">
+              <template #title>
+                <el-icon><promotion /></el-icon>
+                <span>社区模块</span>
+              </template>
+              <el-menu-item index="/community/posts">
+                <el-icon><chat-dot-round /></el-icon>
+                <span>帖子管理</span>
+              </el-menu-item>
+              <el-menu-item index="/community/replies">
+                <el-icon><calendar /></el-icon>
+                <span>回复管理</span>
+              </el-menu-item>
+              <el-menu-item index="/community/categories">
+                <el-icon><Menu /></el-icon>
+                <span>分类管理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="operation-mgmt">
+              <template #title>
+                <el-icon><setting /></el-icon>
+                <span>运营管理</span>
+              </template>
+              <el-menu-item index="/operation/banners">
+                <el-icon><picture /></el-icon>
+                <span>轮播管理</span>
+              </el-menu-item>
+              <el-menu-item index="/operation/notices">
+                <el-icon><notification /></el-icon>
+                <span>公告管理</span>
+              </el-menu-item>
+              <el-menu-item index="/coupon/templates">
+                <el-icon><ticket /></el-icon>
+                <span>优惠券管理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="group-buy-mgmt">
+              <template #title>
+                <el-icon><goods /></el-icon>
+                <span>拼团管理</span>
+              </template>
+              <el-menu-item index="/group-buy/activities">
+                <el-icon><list /></el-icon>
+                <span>拼团活动</span>
+              </el-menu-item>
+              <el-menu-item index="/group-buy/batch-discount">
+                <el-icon><price-tag /></el-icon>
+                <span>批量打印折扣</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="event-mgmt">
+              <template #title>
+                <el-icon><calendar /></el-icon>
+                <span>活动赛事</span>
+              </template>
+              <el-menu-item index="/events">
+                <el-icon><calendar /></el-icon>
+                <span>活动管理</span>
+              </el-menu-item>
+              <el-menu-item index="/event-submissions">
+                <el-icon><star-filled /></el-icon>
+                <span>作品管理</span>
+              </el-menu-item>
+              <el-menu-item index="/event-participations">
+                <el-icon><user /></el-icon>
+                <span>报名管理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="finance-mgmt">
+              <template #title>
+                <el-icon><money /></el-icon>
+                <span>资金管理</span>
+              </template>
+              <el-menu-item index="/finance/withdraws">
+                <el-icon><tickets /></el-icon>
+                <span>提现管理</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="system-mgmt">
+              <template #title>
+                <el-icon><setting /></el-icon>
+                <span>系统管理</span>
+              </template>
+              <el-menu-item index="/config">
+                <el-icon><operation /></el-icon>
+                <span>界面配置</span>
+              </el-menu-item>
+              <el-menu-item index="/system/config">
+                <el-icon><tools /></el-icon>
+                <span>系统配置</span>
+              </el-menu-item>
+              <el-menu-item index="/system/logs">
+                <el-icon><document /></el-icon>
+                <span>操作日志</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-sub-menu index="statistics-mgmt">
+              <template #title>
+                <el-icon><data-analysis /></el-icon>
+                <span>统计报表</span>
+              </template>
+              <el-menu-item index="/statistics/orders">
+                <el-icon><document /></el-icon>
+                <span>订单统计</span>
+              </el-menu-item>
+              <el-menu-item index="/statistics/users">
+                <el-icon><user /></el-icon>
+                <span>用户统计</span>
+              </el-menu-item>
+              <el-menu-item index="/statistics/models">
+                <el-icon><goods /></el-icon>
+                <span>模型统计</span>
+              </el-menu-item>
+              <el-menu-item index="/statistics/finance">
+                <el-icon><money /></el-icon>
+                <span>财务统计</span>
+              </el-menu-item>
+              <el-menu-item index="/statistics/bounty">
+                <el-icon><collection /></el-icon>
+                <span>悬赏统计</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <el-menu-item index="/customer-service">
               <el-icon><service /></el-icon>
-              <span>售后管理</span>
+              <template #title>客服管理</template>
             </el-menu-item>
-            <el-menu-item index="/orders/logistics">
-              <el-icon><van /></el-icon>
-              <span>物流管理</span>
-            </el-menu-item>
-            <el-menu-item index="/orders/reviews">
-              <el-icon><chat-line-square /></el-icon>
-              <span>订单评价</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="used-mgmt">
-            <template #title>
-              <el-icon><tickets /></el-icon>
-              <span>二手交易</span>
-            </template>
-            <el-menu-item index="/used/listings">
-              <el-icon><goods /></el-icon>
-              <span>商品管理</span>
-            </el-menu-item>
-            <el-menu-item index="/used/orders">
-              <el-icon><document /></el-icon>
-              <span>订单管理</span>
-            </el-menu-item>
-            <el-menu-item index="/used/reports">
-              <el-icon><warning /></el-icon>
-              <span>举报处理</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="print-mgmt">
-            <template #title>
-              <el-icon><clock /></el-icon>
-              <span>打印排产</span>
-            </template>
-            <el-menu-item index="/print-queue">
-              <span>任务排产</span>
-            </el-menu-item>
-            <el-menu-item index="/print/printers">
-              <span>打印机管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="bounty-mgmt">
-            <template #title>
-              <el-icon><collection /></el-icon>
-              <span>悬赏管理</span>
-            </template>
-            <el-menu-item index="/bounty">
-              <el-icon><document /></el-icon>
-              <span>任务悬赏</span>
-            </el-menu-item>
-            <el-menu-item index="/bounty/appeal">
-              <el-icon><warning /></el-icon>
-              <span>评价申诉</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="interaction">
-            <template #title>
-              <el-icon><promotion /></el-icon>
-              <span>社区模块</span>
-            </template>
-            <el-menu-item index="/community/posts">
-              <el-icon><chat-dot-round /></el-icon>
-              <span>帖子管理</span>
-            </el-menu-item>
-            <el-menu-item index="/community/replies">
-              <el-icon><calendar /></el-icon>
-              <span>回复管理</span>
-            </el-menu-item>
-            <el-menu-item index="/community/categories">
-              <el-icon><Menu /></el-icon>
-              <span>分类管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="operation-mgmt">
-            <template #title>
-              <el-icon><setting /></el-icon>
-              <span>运营管理</span>
-            </template>
-            <el-menu-item index="/operation/banners">
-              <el-icon><picture /></el-icon>
-              <span>轮播管理</span>
-            </el-menu-item>
-            <el-menu-item index="/operation/notices">
-              <el-icon><notification /></el-icon>
-              <span>公告管理</span>
-            </el-menu-item>
-            <el-menu-item index="/coupon/templates">
-              <el-icon><ticket /></el-icon>
-              <span>优惠券管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="group-buy-mgmt">
-            <template #title>
-              <el-icon><goods /></el-icon>
-              <span>拼团管理</span>
-            </template>
-            <el-menu-item index="/group-buy/activities">
-              <el-icon><list /></el-icon>
-              <span>拼团活动</span>
-            </el-menu-item>
-            <el-menu-item index="/group-buy/batch-discount">
-              <el-icon><price-tag /></el-icon>
-              <span>批量打印折扣</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="event-mgmt">
-            <template #title>
-              <el-icon><calendar /></el-icon>
-              <span>活动赛事</span>
-            </template>
-            <el-menu-item index="/events">
-              <el-icon><calendar /></el-icon>
-              <span>活动管理</span>
-            </el-menu-item>
-            <el-menu-item index="/event-submissions">
-              <el-icon><star-filled /></el-icon>
-              <span>作品管理</span>
-            </el-menu-item>
-            <el-menu-item index="/event-participations">
-              <el-icon><user /></el-icon>
-              <span>报名管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="finance-mgmt">
-            <template #title>
-              <el-icon><money /></el-icon>
-              <span>资金管理</span>
-            </template>
-            <el-menu-item index="/finance/withdraws">
-              <el-icon><tickets /></el-icon>
-              <span>提现管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-menu-item index="/config">
-            <el-icon><operation /></el-icon>
-            <template #title>系统配置</template>
-          </el-menu-item>
-
-          <el-menu-item index="/customer-service">
-            <el-icon><service /></el-icon>
-            <template #title>客服管理</template>
-          </el-menu-item>
+          </template>
         </el-menu>
       </el-scrollbar>
+
+      <!-- AI 智能工具按钮 - 放在菜单外部 -->
+      <div class="ai-assistant-btn" :class="{ 'collapsed': isCollapse }" @click="openAIAssistant">
+        <el-icon><magic-stick /></el-icon>
+        <span v-show="!isCollapse" class="ai-text">AI智能工具</span>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -763,6 +847,23 @@ onUnmounted(() => {
 
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title || '后台管理')
+
+// AI 智能工具
+const openAIAssistant = () => {
+  try {
+    // 每次都调用 createPageAgent，它会检查实例是否已被销毁
+    const agent = window.createPageAgent ? window.createPageAgent() : null
+    if (agent && agent.panel) {
+      agent.panel.show()
+      agent.panel.expand()
+    } else {
+      ElMessage.warning('AI 助手尚未初始化，请刷新页面后重试')
+    }
+  } catch (error) {
+    console.error('打开 AI 助手失败:', error)
+    ElMessage.error('打开 AI 助手失败')
+  }
+}
 </script>
 
 <style scoped>
@@ -1121,5 +1222,64 @@ const currentTitle = computed(() => route.meta.title || '后台管理')
 
 .sidebar-light :deep(.el-menu--inline) {
   background: var(--bg-secondary) !important;
+}
+
+/* AI 智能工具按钮 */
+.ai-assistant-btn {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 48px;
+  margin: 12px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(79, 70, 229, 0.3) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+}
+
+.ai-assistant-btn:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5) 0%, rgba(79, 70, 229, 0.5) 100%);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.ai-assistant-btn .el-icon {
+  font-size: 18px;
+  margin-right: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.ai-assistant-btn:hover .el-icon {
+  color: #fff;
+}
+
+.ai-assistant-btn.collapsed {
+  padding: 0;
+  justify-content: center;
+}
+
+.ai-assistant-btn.collapsed .el-icon {
+  margin-right: 0;
+}
+
+/* 浅色主题下的 AI 按钮 */
+.sidebar-light .ai-assistant-btn {
+  background: linear-gradient(135deg, var(--primary-lighter) 0%, rgba(99, 102, 241, 0.2) 100%);
+  border-color: var(--primary-lighter);
+  color: var(--primary-color);
+}
+
+.sidebar-light .ai-assistant-btn:hover {
+  background: linear-gradient(135deg, var(--primary-lighter) 0%, rgba(99, 102, 241, 0.3) 100%);
+  color: var(--primary-dark);
+}
+
+.sidebar-light .ai-assistant-btn .el-icon {
+  color: var(--primary-color);
 }
 </style>

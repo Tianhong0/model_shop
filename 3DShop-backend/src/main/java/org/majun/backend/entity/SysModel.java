@@ -87,6 +87,34 @@ public class SysModel implements Serializable {
     private String filePath;
 
     /**
+     * 模型主展示图路径
+     */
+    @TableField("main_image")
+    @Schema(description = "模型主展示图路径")
+    private String mainImage;
+
+    /**
+     * 预览版模型文件路径(低精度/水印版)
+     */
+    @TableField("preview_file_path")
+    @Schema(description = "预览版模型文件路径")
+    private String previewFilePath;
+
+    /**
+     * 文件大小(字节)
+     */
+    @TableField("file_size")
+    @Schema(description = "文件大小(字节)")
+    private Long fileSize;
+
+    /**
+     * 下载次数
+     */
+    @TableField("download_count")
+    @Schema(description = "下载次数")
+    private Integer downloadCount;
+
+    /**
      * 授权说明
      */
     @TableField("license_type")

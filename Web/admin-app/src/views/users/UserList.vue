@@ -21,6 +21,7 @@
             <el-option label="女" :value="0" />
           </el-select>
           <el-button type="primary" icon="Search" @click="handleSearch">查询</el-button>
+          <el-button type="success" icon="Download" @click="handleExport" :loading="exportLoading">导出</el-button>
         </el-space>
       </div>
 
@@ -108,13 +109,14 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserList, getUserDetail, updateUserStatus } from '../../api/user'
+import { getUserList, getUserDetail, updateUserStatus, exportUsers } from '../../api/user'
 
 const loading = ref(false)
 const userData = ref([])
 const total = ref(0)
 const detailVisible = ref(false)
 const currentUser = ref(null)
+const exportLoading = ref(false)
 
 const queryParams = reactive({
   userName: '',
@@ -202,6 +204,35 @@ const handleEditStatus = async (row) => {
       ElMessage.error(`${statusText}失败`)
     }
   }).catch(() => {})
+}
+
+// 导出用户数据
+const handleExport = async () => {
+  exportLoading.value = true
+  try {
+    const params = {}
+    if (queryParams.userName) params.userName = queryParams.userName
+    if (queryParams.nickname) params.nickname = queryParams.nickname
+    if (queryParams.mobile) params.mobile = queryParams.mobile
+    if (queryParams.status !== null) params.status = queryParams.status
+    if (queryParams.sex !== null) params.sex = queryParams.sex
+
+    const blob = await exportUsers(params)
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `用户数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 onMounted(() => {

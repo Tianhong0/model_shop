@@ -11,10 +11,15 @@
           <el-button type="primary" icon="Search" @click="handleSearch">查询</el-button>
           <el-button icon="Refresh" @click="handleReset">重置</el-button>
         </el-space>
+        <el-space v-if="selectedRows.length > 0">
+          <el-button type="success" @click="handleBatchReview('APPROVED')">批量通过 ({{ selectedRows.length }})</el-button>
+          <el-button type="danger" @click="handleBatchReview('REJECTED')">批量拒绝 ({{ selectedRows.length }})</el-button>
+        </el-space>
       </div>
 
       <div class="table-wrapper">
-        <el-table :data="tableData" stripe border style="width: 100%" v-loading="loading">
+        <el-table :data="tableData" stripe border style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="55" :selectable="row => row.status === 'pending'" />
           <el-table-column prop="id" label="申请ID" width="110" />
           <el-table-column prop="userName" label="登录账户" min-width="140" />
           <el-table-column prop="nickname" label="昵称" min-width="120" />
@@ -87,6 +92,28 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="batchReviewVisible" :title="batchReviewStatus === 'APPROVED' ? '批量通过' : '批量拒绝'" width="520px">
+      <el-form label-width="100px">
+        <el-form-item label="已选数量">
+          <el-tag>{{ selectedRows.length }} 条申请</el-tag>
+        </el-form-item>
+        <el-form-item label="审核备注">
+          <el-input
+            v-model="batchReviewRemark"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="请输入审核备注（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchReviewVisible = false">取消</el-button>
+        <el-button :type="batchReviewStatus === 'APPROVED' ? 'success' : 'danger'" @click="submitBatchReview" :loading="batchLoading">确认</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="attachmentVisible" title="附件列表" width="620px">
       <el-empty v-if="attachmentList.length === 0" description="未提供附件" />
       <el-space direction="vertical" style="width: 100%" v-else>
@@ -98,13 +125,18 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getDesignerApplyRequests, reviewDesignerApplyRequest } from '../../api/user'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getDesignerApplyRequests, reviewDesignerApplyRequest, batchReviewDesignerApply } from '../../api/user'
 
 const loading = ref(false)
 const total = ref(0)
 const tableData = ref([])
+const selectedRows = ref([])
 const reviewVisible = ref(false)
+const batchReviewVisible = ref(false)
+const batchReviewStatus = ref('APPROVED')
+const batchReviewRemark = ref('')
+const batchLoading = ref(false)
 const attachmentVisible = ref(false)
 const attachmentList = ref([])
 const currentRow = ref(null)
@@ -133,6 +165,10 @@ const parseAttachmentUrls = (raw) => {
 const showAttachments = (row) => {
   attachmentList.value = parseAttachmentUrls(row?.attachmentUrls)
   attachmentVisible.value = true
+}
+
+const handleSelectionChange = (selection) => {
+  selectedRows.value = selection
 }
 
 const fetchList = async () => {
@@ -197,6 +233,32 @@ const submitReview = async () => {
     fetchList()
   } catch (error) {
     console.error('审核失败', error)
+  }
+}
+
+const handleBatchReview = (status) => {
+  batchReviewStatus.value = status
+  batchReviewRemark.value = ''
+  batchReviewVisible.value = true
+}
+
+const submitBatchReview = async () => {
+  batchLoading.value = true
+  try {
+    const result = await batchReviewDesignerApply({
+      ids: selectedRows.value.map(row => row.id),
+      reviewStatus: batchReviewStatus.value,
+      reviewRemark: batchReviewRemark.value
+    })
+    ElMessage.success(`批量审核完成：成功 ${result.successCount} 条，失败 ${result.failCount} 条`)
+    batchReviewVisible.value = false
+    selectedRows.value = []
+    fetchList()
+  } catch (error) {
+    console.error('批量审核失败', error)
+    ElMessage.error('批量审核失败')
+  } finally {
+    batchLoading.value = false
   }
 }
 
