@@ -26,7 +26,8 @@
       </div>
 
       <div class="table-wrapper">
-        <el-table :data="modelData" stripe border highlight-current-row style="width: 100%" v-loading="loading">
+        <el-table :data="modelData" stripe border highlight-current-row style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="55" />
           <el-table-column prop="id" label="模型ID" width="160" />
           <el-table-column label="主图" width="100">
             <template #default="scope">
@@ -483,6 +484,7 @@ const modelFileUploadProgress = ref(0)
 const materialDialogVisible = ref(false)
 const editingMaterialIndex = ref(-1)
 const exportLoading = ref(false)
+const selectedModels = ref([]) // 选中的模型列表
 
 // 水印管理相关
 const watermarkDialogVisible = ref(false)
@@ -1292,12 +1294,16 @@ const submitForm = async () => {
 
 // 导出模型数据
 const handleExport = async () => {
+  if (selectedModels.value.length === 0) {
+    ElMessage.warning('请先勾选要导出的模型')
+    return
+  }
+
   exportLoading.value = true
   try {
-    const params = {}
-    if (queryParams.modelName) params.modelName = queryParams.modelName
-    if (queryParams.categoryId) params.categoryId = queryParams.categoryId
-    if (queryParams.status !== null) params.status = queryParams.status
+    const params = {
+      modelIds: selectedModels.value.map(m => m.id)
+    }
 
     const blob = await exportModels(params)
     const url = window.URL.createObjectURL(blob)
@@ -1308,13 +1314,18 @@ const handleExport = async () => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    ElMessage.success('导出成功')
+    ElMessage.success(`成功导出 ${selectedModels.value.length} 个模型`)
   } catch (error) {
     console.error('导出失败:', error)
     ElMessage.error('导出失败')
   } finally {
     exportLoading.value = false
   }
+}
+
+// 表格选择变化
+const handleSelectionChange = (selection) => {
+  selectedModels.value = selection
 }
 
 // ==================== 水印管理 ====================

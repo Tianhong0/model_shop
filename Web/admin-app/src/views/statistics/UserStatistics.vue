@@ -113,9 +113,23 @@ const dateShortcuts = [
 ]
 
 const handleDateChange = () => fetchData()
-const handleExport = () => {
-  const [start, end] = getDates()
-  exportStatistics('users', start, end)
+const handleExport = async () => {
+  try {
+    const [start, end] = getDates()
+    const blob = await exportStatistics('users', start, end)
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `用户统计_${start}_${end}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 const getDates = () => {

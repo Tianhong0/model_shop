@@ -14,6 +14,9 @@ import java.util.List;
 @Schema(description = "订单导出请求")
 public class OrderExportRequest extends ExportRequest {
 
+    @Schema(description = "指定导出的订单ID列表（优先使用）")
+    private List<Long> orderIds;
+
     @Schema(description = "订单状态列表")
     private List<Integer> orderStatuses;
 

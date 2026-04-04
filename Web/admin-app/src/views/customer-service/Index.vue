@@ -160,7 +160,8 @@ import {
   sendCsMessageApi,
   setCsAdminStatusApi,
   markCsAdminReadApi,
-  uploadCsMediaApi
+  uploadCsMediaApi,
+  getCsStatsApi
 } from '@/api/customer-service'
 
 const isOnline = ref(true)
@@ -286,13 +287,19 @@ const handleWsEvent = (data) => {
       currentConversation.value = { ...currentConversation.value, ...updatedConv }
     }
     // 更新统计
-    updateStats()
+    loadStats()
   }
 }
 
-// 从会话列表统计当前会话数
-const updateStats = () => {
-  currentConversationCount.value = conversationList.value.filter(c => c.status === 1).length
+// 加载客服统计数据
+const loadStats = async () => {
+  try {
+    const stats = await getCsStatsApi()
+    currentConversationCount.value = stats.activeConversations || 0
+    totalServedCount.value = stats.totalServed || 0
+  } catch (e) {
+    console.error('获取统计数据失败', e)
+  }
 }
 
 // ==================== 数据加载 ====================
@@ -307,7 +314,6 @@ const loadConversations = async () => {
     })
     conversationList.value = res.records || []
     total.value = res.total || 0
-    updateStats()
   } catch (e) {
     // ignore
   }
@@ -319,6 +325,7 @@ const acceptConversation = async (id) => {
     await acceptCsConversationApi(id)
     ElMessage.success('接单成功')
     loadConversations()
+    loadStats()
   } catch (e) {
     ElMessage.error('接单失败')
   }
@@ -334,6 +341,7 @@ const endConversation = async (id) => {
       messages.value = []
     }
     loadConversations()
+    loadStats()
   } catch (e) {
     ElMessage.error('操作失败')
   }
@@ -492,6 +500,7 @@ const previewImage = (url) => {
 
 onMounted(() => {
   loadConversations()
+  loadStats()
   connectWebSocket()
 })
 

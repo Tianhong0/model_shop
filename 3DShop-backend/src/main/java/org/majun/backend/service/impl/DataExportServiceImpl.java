@@ -40,7 +40,7 @@ public class DataExportServiceImpl implements DataExportService {
 
     @Override
     public void exportOrders(OrderExportRequest request, HttpServletResponse response) {
-        String filename = "orders_" + formatDate(request.getStartDate()) + "_" + formatDate(request.getEndDate()) + ".xlsx";
+        String filename = "orders_" + formatNow() + ".xlsx";
         setResponseHeaders(response, filename);
 
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(1000)) {
@@ -56,20 +56,27 @@ public class DataExportServiceImpl implements DataExportService {
             // 查询数据
             LambdaQueryWrapper<SysOrder> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(SysOrder::getIsDelete, 0);
-            if (request.getOrderSn() != null && !request.getOrderSn().isBlank()) {
-                wrapper.like(SysOrder::getOrderSn, request.getOrderSn());
-            }
-            if (request.getUserId() != null) {
-                wrapper.eq(SysOrder::getUserId, request.getUserId());
-            }
-            if (request.getOrderStatuses() != null && !request.getOrderStatuses().isEmpty()) {
-                wrapper.in(SysOrder::getOrderStatus, request.getOrderStatuses());
-            }
-            if (request.getStartDate() != null) {
-                wrapper.ge(SysOrder::getCreateTime, request.getStartDate().atStartOfDay());
-            }
-            if (request.getEndDate() != null) {
-                wrapper.lt(SysOrder::getCreateTime, request.getEndDate().plusDays(1).atStartOfDay());
+
+            // 优先使用订单ID列表
+            if (request.getOrderIds() != null && !request.getOrderIds().isEmpty()) {
+                wrapper.in(SysOrder::getId, request.getOrderIds());
+            } else {
+                // 没有指定ID列表时，使用筛选条件
+                if (request.getOrderSn() != null && !request.getOrderSn().isBlank()) {
+                    wrapper.like(SysOrder::getOrderSn, request.getOrderSn());
+                }
+                if (request.getUserId() != null) {
+                    wrapper.eq(SysOrder::getUserId, request.getUserId());
+                }
+                if (request.getOrderStatuses() != null && !request.getOrderStatuses().isEmpty()) {
+                    wrapper.in(SysOrder::getOrderStatus, request.getOrderStatuses());
+                }
+                if (request.getStartDate() != null) {
+                    wrapper.ge(SysOrder::getCreateTime, request.getStartDate().atStartOfDay());
+                }
+                if (request.getEndDate() != null) {
+                    wrapper.lt(SysOrder::getCreateTime, request.getEndDate().plusDays(1).atStartOfDay());
+                }
             }
             wrapper.orderByDesc(SysOrder::getCreateTime);
 
@@ -168,23 +175,30 @@ public class DataExportServiceImpl implements DataExportService {
             // 查询数据
             LambdaQueryWrapper<SysModel> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(SysModel::getIsDelete, 0);
-            if (request.getModelName() != null && !request.getModelName().isBlank()) {
-                wrapper.like(SysModel::getModelName, request.getModelName());
-            }
-            if (request.getStatuses() != null && !request.getStatuses().isEmpty()) {
-                wrapper.in(SysModel::getStatus, request.getStatuses());
-            }
-            if (request.getCategoryId() != null) {
-                wrapper.eq(SysModel::getCategoryId, request.getCategoryId());
-            }
-            if (request.getDesignerId() != null) {
-                wrapper.eq(SysModel::getDesignerId, request.getDesignerId());
-            }
-            if (request.getStartDate() != null) {
-                wrapper.ge(SysModel::getCreateTime, request.getStartDate().atStartOfDay());
-            }
-            if (request.getEndDate() != null) {
-                wrapper.lt(SysModel::getCreateTime, request.getEndDate().plusDays(1).atStartOfDay());
+
+            // 优先使用模型ID列表
+            if (request.getModelIds() != null && !request.getModelIds().isEmpty()) {
+                wrapper.in(SysModel::getId, request.getModelIds());
+            } else {
+                // 没有指定ID列表时，使用筛选条件
+                if (request.getModelName() != null && !request.getModelName().isBlank()) {
+                    wrapper.like(SysModel::getModelName, request.getModelName());
+                }
+                if (request.getStatuses() != null && !request.getStatuses().isEmpty()) {
+                    wrapper.in(SysModel::getStatus, request.getStatuses());
+                }
+                if (request.getCategoryId() != null) {
+                    wrapper.eq(SysModel::getCategoryId, request.getCategoryId());
+                }
+                if (request.getDesignerId() != null) {
+                    wrapper.eq(SysModel::getDesignerId, request.getDesignerId());
+                }
+                if (request.getStartDate() != null) {
+                    wrapper.ge(SysModel::getCreateTime, request.getStartDate().atStartOfDay());
+                }
+                if (request.getEndDate() != null) {
+                    wrapper.lt(SysModel::getCreateTime, request.getEndDate().plusDays(1).atStartOfDay());
+                }
             }
             wrapper.orderByDesc(SysModel::getCreateTime);
 

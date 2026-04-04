@@ -111,3 +111,13 @@ export function uploadCsMediaApi(file) {
     }
   })
 }
+
+/**
+ * 获取客服统计数据
+ */
+export function getCsStatsApi() {
+  return request({
+    url: '/api/cs/admin/stats',
+    method: 'get'
+  })
+}

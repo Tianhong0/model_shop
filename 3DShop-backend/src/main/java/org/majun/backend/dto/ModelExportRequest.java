@@ -14,6 +14,9 @@ import java.util.List;
 @Schema(description = "模型导出请求")
 public class ModelExportRequest extends ExportRequest {
 
+    @Schema(description = "指定导出的模型ID列表（优先使用）")
+    private List<Long> modelIds;
+
     @Schema(description = "模型状态列表")
     private List<Integer> statuses;
 

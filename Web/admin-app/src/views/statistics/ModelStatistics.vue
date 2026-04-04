@@ -59,7 +59,24 @@ const dateShortcuts = [
 ]
 
 const handleDateChange = () => fetchData()
-const handleExport = () => { const [start, end] = getDates(); exportStatistics('models', start, end) }
+const handleExport = async () => {
+  try {
+    const [start, end] = getDates()
+    const blob = await exportStatistics('models', start, end)
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `模型统计_${start}_${end}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
+}
 const getDates = () => {
   if (dateRange.value?.length === 2) return dateRange.value
   const end = new Date(); const start = new Date(); start.setTime(start.getTime() - 30 * 24 * 3600 * 1000)

@@ -59,5 +59,10 @@ export const getBountyStatistics = (startDate, endDate) => {
  * 导出统计报表
  */
 export const exportStatistics = (module, startDate, endDate) => {
-  window.open(`/api/statistics/export?module=${module}&startDate=${startDate}&endDate=${endDate}`, '_blank')
+  return request({
+    url: '/api/statistics/export',
+    method: 'get',
+    params: { module, startDate, endDate },
+    responseType: 'blob'
+  })
 }

@@ -134,6 +134,12 @@
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.2.5</version>
 		</dependency>
+		<!-- POI 需要的 commons-compress 版本，解决版本冲突 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+			<version>1.26.1</version>
+		</dependency>
 	<!-- WebP图片格式支持 -->
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>

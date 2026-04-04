@@ -19,7 +19,8 @@
         </el-space>
       </div>
 
-      <el-table v-loading="loading" :data="orderData" stripe border highlight-current-row style="width: 100%">
+      <el-table v-loading="loading" :data="orderData" stripe border highlight-current-row style="width: 100%" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="订单ID" width="180" />
         <el-table-column prop="orderSn" label="订单号" width="200" />
         <el-table-column prop="modelId" label="模型ID" width="140" />
@@ -156,6 +157,7 @@ const loading = ref(false)
 const total = ref(0)
 const orderData = ref([])
 const exportLoading = ref(false)
+const selectedOrders = ref([]) // 选中的订单列表
 
 const detailVisible = ref(false)
 const currentOrder = ref(null)
@@ -327,13 +329,15 @@ const submitShip = async () => {
 }
 
 const handleExport = async () => {
+  if (selectedOrders.value.length === 0) {
+    ElMessage.warning('请先勾选要导出的订单')
+    return
+  }
+
   exportLoading.value = true
   try {
     const blob = await exportOrders({
-      orderSn: queryParams.orderSn || undefined,
-      modelId: queryParams.modelId || undefined,
-      userId: queryParams.userId || undefined,
-      orderStatus: queryParams.orderStatus ?? undefined
+      orderIds: selectedOrders.value.map(o => o.id)
     })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -343,13 +347,18 @@ const handleExport = async () => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    ElMessage.success('导出成功')
+    ElMessage.success(`成功导出 ${selectedOrders.value.length} 个订单`)
   } catch (error) {
     console.error('导出失败:', error)
     ElMessage.error('导出失败')
   } finally {
     exportLoading.value = false
   }
+}
+
+// 表格选择变化
+const handleSelectionChange = (selection) => {
+  selectedOrders.value = selection
 }
 
 onMounted(() => {

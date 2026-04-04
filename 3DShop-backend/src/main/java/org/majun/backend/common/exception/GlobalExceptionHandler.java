@@ -1,12 +1,14 @@
 package org.majun.backend.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.majun.backend.common.Result;
 import org.majun.backend.common.ResultCode;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -124,8 +126,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Result<Void> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
+    public Result<Void> handleRuntimeException(RuntimeException e, HttpServletRequest request, HttpServletResponse response) {
         log.error("运行时异常: uri={}, message={}", request.getRequestURI(), e.getMessage(), e);
+        // 如果 Content-Type 已被设置为非 JSON 格式（如 Excel 导出），重置为 JSON
+        resetContentTypeToJson(response);
         return Result.fail(ResultCode.SYSTEM_ERROR);
     }
 
@@ -134,8 +138,22 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Result<Void> handleException(Exception e, HttpServletRequest request) {
+    public Result<Void> handleException(Exception e, HttpServletRequest request, HttpServletResponse response) {
         log.error("系统异常: uri={}, message={}", request.getRequestURI(), e.getMessage(), e);
+        // 如果 Content-Type 已被设置为非 JSON 格式（如 Excel 导出），重置为 JSON
+        resetContentTypeToJson(response);
         return Result.fail(ResultCode.SYSTEM_ERROR);
+    }
+
+    /**
+     * 重置 Content-Type 为 JSON 格式
+     * 用于处理 Excel 导出等场景下发生异常时，Content-Type 已被设置为非 JSON 格式的情况
+     */
+    private void resetContentTypeToJson(HttpServletResponse response) {
+        String contentType = response.getContentType();
+        if (contentType != null && !contentType.contains("application/json")) {
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setHeader("Content-Disposition", "");
+        }
     }
 }

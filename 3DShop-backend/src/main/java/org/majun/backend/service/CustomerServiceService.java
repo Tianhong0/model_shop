@@ -5,6 +5,7 @@ import org.majun.backend.vo.CsAdminStatusVO;
 import org.majun.backend.vo.CsConversationDetailVO;
 import org.majun.backend.vo.CsConversationVO;
 import org.majun.backend.vo.CsMessageVO;
+import org.majun.backend.vo.CsStatsVO;
 import org.majun.backend.vo.PageResult;
 
 public interface CustomerServiceService {
@@ -92,4 +93,9 @@ public interface CustomerServiceService {
      * 自动结束超时会话（定时任务调用）
      */
     void closeExpiredConversations();
+
+    /**
+     * 获取客服统计数据
+     */
+    CsStatsVO getStats();
 }

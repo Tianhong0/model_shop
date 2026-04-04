@@ -636,4 +636,14 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
             updateAdminConversationCount(adminId);
         }
     }
+
+    @Override
+    public CsStatsVO getStats() {
+        CsStatsVO stats = new CsStatsVO();
+        // 当前进行中的会话数
+        stats.setActiveConversations(conversationRepository.countByStatus(CsConversationStatus.ACTIVE.getCode()));
+        // 累计服务数（已结束的会话）
+        stats.setTotalServed(conversationRepository.countByStatus(CsConversationStatus.ENDED.getCode()));
+        return stats;
+    }
 }

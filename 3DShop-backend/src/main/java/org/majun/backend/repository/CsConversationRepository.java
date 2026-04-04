@@ -3,6 +3,7 @@ package org.majun.backend.repository;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.majun.backend.entity.CsConversation;
 
 import java.util.List;
@@ -34,4 +35,10 @@ public interface CsConversationRepository extends BaseMapper<CsConversation> {
      * 查询超时的进行中会话（SQL层过滤）
      */
     List<CsConversation> findExpiredConversations(@Param("timeoutMinutes") long timeoutMinutes);
+
+    /**
+     * 统计指定状态的会话数
+     */
+    @Select("SELECT COUNT(*) FROM cs_conversation WHERE status = #{status}")
+    long countByStatus(@Param("status") Integer status);
 }

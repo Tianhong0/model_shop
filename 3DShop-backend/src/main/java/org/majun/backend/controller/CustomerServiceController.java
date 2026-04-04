@@ -288,4 +288,12 @@ public class CustomerServiceController {
             return Result.fail(500, "上传失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 获取客服统计数据
+     */
+    @GetMapping("/admin/stats")
+    public Result<CsStatsVO> getStats() {
+        return Result.success(customerServiceService.getStats());
+    }
 }

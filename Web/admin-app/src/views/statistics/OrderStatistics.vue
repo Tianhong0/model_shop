@@ -122,9 +122,23 @@ const handleDateChange = () => {
   fetchData()
 }
 
-const handleExport = () => {
-  const [start, end] = getDates()
-  exportStatistics('orders', start, end)
+const handleExport = async () => {
+  try {
+    const [start, end] = getDates()
+    const blob = await exportStatistics('orders', start, end)
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `订单统计_${start}_${end}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 const getDates = () => {
