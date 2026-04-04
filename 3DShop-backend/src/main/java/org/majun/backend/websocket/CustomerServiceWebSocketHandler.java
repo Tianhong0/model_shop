@@ -67,7 +67,6 @@ public class CustomerServiceWebSocketHandler extends TextWebSocketHandler {
                 customerServiceWebSocketService.updateAdminHeartbeat(userId);
             }
 
-            log.info("客服WebSocket连接建立: userId={}, role={}, conversationId={}", userId, userRole, conversationId);
         } catch (Exception ex) {
             log.warn("建立客服WS连接失败", ex);
             closeUnauthorized(session, "连接鉴权失败");
@@ -122,7 +121,7 @@ public class CustomerServiceWebSocketHandler extends TextWebSocketHandler {
             customerServiceWebSocketService.unregisterAdminSession(userId, session);
         }
 
-        log.info("客服WebSocket连接关闭: userId={}, role={}", userId, userRole);
+
     }
 
     private Map<String, String> parseQueryParams(WebSocketSession session) {

@@ -422,6 +422,9 @@
 
       <template #footer>
         <el-button @click="watermarkDialogVisible = false">关闭</el-button>
+        <el-button type="info" @click="handleGenerateThumbnails" :loading="thumbnailLoading">
+          生成缩略图
+        </el-button>
         <el-button type="warning" @click="handleRegenerateWatermark" :loading="watermarkLoading">
           重新生成
         </el-button>
@@ -459,7 +462,8 @@ import {
   exportModels,
   generateWatermark,
   regenerateWatermark,
-  getWatermarkStatus
+  getWatermarkStatus,
+  generateThumbnails
 } from '../../api/model'
 
 const loading = ref(false)
@@ -491,6 +495,7 @@ const watermarkDialogVisible = ref(false)
 const watermarkModel = ref(null)
 const watermarkStatus = ref(null)
 const watermarkLoading = ref(false)
+const thumbnailLoading = ref(false)
 
 const queryParams = reactive({
   modelName: '',
@@ -1389,6 +1394,26 @@ const handleRegenerateWatermark = async () => {
     ElMessage.error('重新生成水印失败')
   } finally {
     watermarkLoading.value = false
+  }
+}
+
+// 生成缩略图
+const handleGenerateThumbnails = async () => {
+  if (!watermarkModel.value) return
+
+  thumbnailLoading.value = true
+  try {
+    const result = await generateThumbnails(watermarkModel.value.id)
+    ElMessage.success(`成功生成 ${result.processedCount || 0} 张图片的缩略图`)
+
+    // 刷新状态
+    const status = await getWatermarkStatus(watermarkModel.value.id)
+    watermarkStatus.value = status
+  } catch (error) {
+    console.error('生成缩略图失败:', error)
+    ElMessage.error('生成缩略图失败')
+  } finally {
+    thumbnailLoading.value = false
   }
 }
 

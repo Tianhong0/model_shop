@@ -31,7 +31,11 @@
         :key="msg.id || index"
         :id="'msg-' + (msg.id || index)"
         class="message-item"
-        :class="{ 'message-self': isSelf(msg), 'message-system': msg.messageType == 4 }"
+        :class="{
+          'message-self': isSelf(msg),
+          'message-system': msg.messageType == 4,
+          'message-ai': msg.senderRole === 'AI'
+        }"
       >
         <!-- 系统消息 -->
         <view v-if="msg.messageType == 4" class="system-msg">
@@ -47,6 +51,7 @@
           <view class="msg-content">
             <view class="msg-meta">
               <text class="sender-name">{{ getSenderName(msg) }}</text>
+              <text v-if="msg.senderRole === 'AI'" class="ai-tag">AI</text>
               <text class="msg-time">{{ formatTime(msg.createTime) }}</text>
             </view>
 
@@ -79,6 +84,14 @@
 
     <!-- 输入区域 -->
     <view v-if="canSend" class="input-area">
+      <!-- AI 模式下显示转人工按钮 -->
+      <view v-if="isAiMode" class="transfer-btn" @click="handleTransferToHuman">
+        <text>人工</text>
+      </view>
+      <!-- 等待人工客服时显示等待提示 -->
+      <view v-if="isWaitingForHuman" class="waiting-indicator">
+        <text>等待接入...</text>
+      </view>
       <view class="media-btn" @click="showMediaMenu = true">+</view>
       <input
         v-model="inputText"
@@ -141,15 +154,31 @@ const pollTimer = ref(null)
 const socketTask = ref(null)
 const intentionalClose = ref(false)
 const reconnectTimer = ref(null)
+const lastMessageId = ref(null)
 
 const canSend = computed(() => {
-  return conversation.value && conversation.value.status === 1
+  // 进行中或等待人工客服时都可以发送消息
+  return conversation.value && (conversation.value.status === 1 || conversation.value.status === 0)
+})
+
+// 是否为 AI 模式（没有人工客服接入且状态为进行中）
+const isAiMode = computed(() => {
+  return conversation.value && conversation.value.status === 1 && !conversation.value.adminId
+})
+
+// 是否正在等待人工客服接入
+const isWaitingForHuman = computed(() => {
+  return conversation.value && conversation.value.status === 0
 })
 
 const conversationStatusText = computed(() => {
-  if (!conversation.value) return '在线客服'
-  if (conversation.value.status === 0) return '等待分配...'
-  if (conversation.value.status === 1) return '在线客服'
+  if (!conversation.value) return '智能客服'
+  if (conversation.value.status === 0) return '等待人工客服接入...'
+  if (conversation.value.status === 1) {
+    // 如果有 adminId 说明是人工客服
+    if (conversation.value.adminId) return '在线客服'
+    return '智能客服'
+  }
   return '会话已结束'
 })
 
@@ -189,12 +218,14 @@ const checkConversation = async () => {
     const res = await getCsConversationStatusApi()
     if (res) {
       conversation.value = res
-      // 状态 0=等待分配 1=进行中 2=已结束
+      // 状态 0=等待人工客服 1=进行中(AI或人工) 2=已结束
       if (res.status === 1) {
         loadMessages()
         connectSocket()
       } else if (res.status === 0) {
-        // 等待分配中，轮询等待客服接入
+        // 等待人工客服接入中
+        loadMessages()
+        connectSocket()
         pollForAssignment()
       } else if (res.status === 2) {
         // 已结束，创建新会话
@@ -214,12 +245,15 @@ const startNewConversation = async () => {
   try {
     const res = await startCsConversationApi()
     conversation.value = res
-    // 状态 0=等待分配 1=进行中 2=已结束
+    // 状态 0=等待人工客服 1=进行中(AI或人工) 2=已结束
     if (res.status === 1) {
+      // AI 模式或人工客服已接入
       loadMessages()
       connectSocket()
     } else if (res.status === 0) {
-      // 等待分配中，轮询等待客服接入
+      // 等待人工客服接入中
+      loadMessages()
+      connectSocket()
       pollForAssignment()
     } else if (res.status === 2) {
       // 已结束，可以重新发起
@@ -228,7 +262,9 @@ const startNewConversation = async () => {
       if (newRes.status === 1) {
         loadMessages()
         connectSocket()
-      } else {
+      } else if (newRes.status === 0) {
+        loadMessages()
+        connectSocket()
         pollForAssignment()
       }
     }
@@ -248,12 +284,13 @@ const pollForAssignment = () => {
       const res = await getCsConversationStatusApi()
       if (res) {
         conversation.value = res
-        if (res.status === 1) {
-          // 客服已接入
+        // 人工客服已接入：状态为进行中且有 adminId
+        if (res.status === 1 && res.adminId) {
           clearInterval(pollTimer.value)
           pollTimer.value = null
           loadMessages()
           connectSocket()
+          uni.showToast({ title: '客服已接入', icon: 'success' })
         } else if (res.status === 2) {
           // 会话已结束
           clearInterval(pollTimer.value)
@@ -304,16 +341,12 @@ const sendTextMessage = async () => {
   inputText.value = ''
 
   try {
-    const res = await sendCsMessageApi({
+    await sendCsMessageApi({
       conversationId: conversation.value.id,
       messageType: 1,
       content: text
     })
-    // 立即添加到本地列表（WebSocket 可能没连接成功）
-    if (res) {
-      messages.value.push(res)
-      nextTick(() => scrollToBottom())
-    }
+    // 不再手动添加到列表，完全依赖 WebSocket 推送
   } catch (e) {
     console.error('发送消息失败', e)
     uni.showToast({ title: '发送失败', icon: 'none' })
@@ -332,18 +365,14 @@ const chooseImage = async () => {
       uni.showLoading({ title: '上传中...' })
       try {
         const url = await uploadCsMediaApi(filePath, 'image')
-        const msgRes = await sendCsMessageApi({
+        await sendCsMessageApi({
           conversationId: conversation.value.id,
           messageType: 2,
           content: '[图片]',
           attachments: url
         })
         uni.hideLoading()
-        // 立即添加到本地列表
-        if (msgRes) {
-          messages.value.push(msgRes)
-          nextTick(() => scrollToBottom())
-        }
+        // 不再手动添加到列表，完全依赖 WebSocket 推送
       } catch (e) {
         uni.hideLoading()
         uni.showToast({ title: '上传失败', icon: 'none' })
@@ -363,18 +392,14 @@ const chooseVideo = async () => {
       uni.showLoading({ title: '上传中...' })
       try {
         const url = await uploadCsMediaApi(filePath, 'video')
-        const msgRes = await sendCsMessageApi({
+        await sendCsMessageApi({
           conversationId: conversation.value.id,
           messageType: 3,
           content: '[视频]',
           attachments: url
         })
         uni.hideLoading()
-        // 立即添加到本地列表
-        if (msgRes) {
-          messages.value.push(msgRes)
-          nextTick(() => scrollToBottom())
-        }
+        // 不再手动添加到列表，完全依赖 WebSocket 推送
       } catch (e) {
         uni.hideLoading()
         uni.showToast({ title: '上传失败', icon: 'none' })
@@ -393,9 +418,46 @@ const handleEndConversation = async () => {
           await endCsConversationApi(conversation.value.id)
           conversation.value.status = 2
           closeSocket()
-          stopMessagePolling()
+          stopPolling()
         } catch (e) {
           uni.showToast({ title: '结束失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
+
+/**
+ * 停止轮询
+ */
+const stopPolling = () => {
+  if (pollTimer.value) {
+    clearInterval(pollTimer.value)
+    pollTimer.value = null
+  }
+}
+
+/**
+ * 转人工客服
+ */
+const handleTransferToHuman = () => {
+  uni.showModal({
+    title: '转人工客服',
+    content: '确定要转接人工客服吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          // 发送转人工消息
+          await sendCsMessageApi({
+            conversationId: conversation.value.id,
+            messageType: 1,
+            content: '人工客服'
+          })
+          // 不再手动添加到列表，完全依赖 WebSocket 推送
+          // 开始轮询等待人工客服接入
+          pollForAssignment()
+        } catch (e) {
+          uni.showToast({ title: '转人工失败', icon: 'none' })
         }
       }
     }
@@ -433,17 +495,36 @@ const connectSocket = () => {
   task.onMessage((res) => {
     try {
       const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+
       if (data.eventType === 'NEW_MESSAGE') {
         const msg = data.message
-        if (!messages.value.some(m => m.id === msg.id)) {
+        const msgIdStr = String(msg.id)
+
+        // 去重：检查消息ID是否已存在
+        const existsById = messages.value.some(m => String(m.id) === msgIdStr)
+
+        if (!existsById) {
           messages.value.push(msg)
           nextTick(scrollToBottom)
           markCsMessageReadApi(conversation.value.id).catch(() => {})
         }
       } else if (data.eventType === 'CONVERSATION_UPDATE') {
-        conversation.value = { ...conversation.value, ...data.conversation }
+        const updatedConv = data.conversation
+        conversation.value = { ...conversation.value, ...updatedConv }
+
+        // 如果状态变为等待人工客服，开始轮询
+        if (updatedConv.status === 0 && !updatedConv.adminId) {
+          pollForAssignment()
+        }
+        // 如果人工客服已接入，停止轮询
+        if (updatedConv.status === 1 && updatedConv.adminId) {
+          stopPolling()
+          uni.showToast({ title: '客服已接入', icon: 'success' })
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[WS] 处理消息失败:', e)
+    }
   })
 
   task.onClose(() => {
@@ -478,11 +559,13 @@ const closeSocket = () => {
 const isSelf = (msg) => msg.senderRole === 'USER'
 
 const getAvatarText = (msg) => {
+  if (msg.senderRole === 'AI') return 'AI'
   const name = msg.senderNickname || (msg.senderRole === 'USER' ? '我' : '客服')
   return name.slice(0, 1)
 }
 
 const getSenderName = (msg) => {
+  if (msg.senderRole === 'AI') return msg.senderNickname || '智能助手'
   return msg.senderNickname || (msg.senderRole === 'USER' ? '我' : '客服')
 }
 
@@ -608,6 +691,16 @@ const previewImage = (url) => {
   background: #07c160;
 }
 
+/* AI 消息样式 */
+.message-ai .msg-avatar {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.message-ai .msg-bubble {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #065f46;
+}
+
 .msg-content {
   max-width: 70%;
 }
@@ -616,10 +709,21 @@ const previewImage = (url) => {
   font-size: 22rpx;
   color: #999;
   margin-bottom: 8rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
 
   .msg-time {
-    margin-left: 12rpx;
+    margin-left: 4rpx;
   }
+}
+
+.ai-tag {
+  background: #10b981;
+  color: #fff;
+  font-size: 18rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
 }
 
 .msg-bubble {
@@ -678,6 +782,33 @@ const previewImage = (url) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.transfer-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waiting-indicator {
+  padding: 0 20rpx;
+  height: 72rpx;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text {
+    color: #f59e0b;
+    font-size: 24rpx;
+  }
 }
 
 .msg-input {

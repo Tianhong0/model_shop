@@ -7,7 +7,6 @@
 				</view>
 				<text class="brand-title">3D模型商城</text>
 			</view>
-	
 		</view>
 
 		<view class="search-panel glass-nav">
@@ -27,7 +26,7 @@
 			</view>
 		</view>
 
-		<scroll-view scroll-y class="content-scroll" @scrolltolower="loadMoreCards" lower-threshold="100">
+		<scroll-view scroll-y class="content-scroll" @scrolltolower="loadMoreModels" lower-threshold="100">
 			<view v-if="banners.length" class="banner-swiper-wrap">
 				<swiper
 					class="banner-swiper"
@@ -86,51 +85,96 @@
 			</view>
 
 			<view class="section-head product-head">
-				<text class="section-title">精选模型</text>
-				<view class="filter-btn">
-					<u-icon name="list" size="18" color="#94a3b8"></u-icon>
+				<text class="section-title">现有模型</text>
+				<view class="sort-tabs">
+					<view
+						v-for="tab in sortTabs"
+						:key="tab.value"
+						:class="['sort-tab', currentSort === tab.value ? 'active' : '']"
+						@tap="changeSort(tab.value)"
+					>
+						<text class="sort-tab-text">{{ tab.label }}</text>
+						<view v-if="currentSort === tab.value && tab.canReverse" class="sort-arrow">
+							<u-icon :name="sortAsc ? 'arrow-up' : 'arrow-down'" size="10" color="#fff"></u-icon>
+						</view>
+					</view>
 				</view>
 			</view>
 
-			<view class="skeleton-wrap" v-if="pageLoading && !hotModels.length">
+			<view class="skeleton-wrap" v-if="pageLoading && !allModels.length">
 				<u-skeleton title :rows="4" :loading="pageLoading" :animate="true"></u-skeleton>
 			</view>
 
-			<view class="product-grid" v-else>
-				<view
-					class="product-card"
-					v-for="(model, index) in visibleModels"
-					:key="model.id || index"
-					@click="goDetail(model.id)"
-					:style="{ animationDelay: `${index * 0.08}s` }"
-				>
-					<view class="product-media">
-						<image :src="model.mainImageUrl || defaultBanner" mode="aspectFill" class="product-image" lazy-load></image>
-						<view class="fav-btn" :class="{ active: !!model.favorited }" @click.stop="toggleFavorite(model)">
-							<u-icon :name="model.favorited ? 'heart-fill' : 'heart'" size="15" :color="model.favorited ? '#ef4444' : '#c0c0c0'"></u-icon>
-						</view>
-					</view>
-					<view class="product-info">
-						<view class="title-row">
-							<text class="product-name u-line-2">{{ model.modelName }}</text>
-							<view class="product-rate">
-								<u-icon name="star-fill" size="11" color="#f59e0b"></u-icon>
-								<text class="rate-text">{{ formatScore(model.avgOverallScore) }}</text>
+			<!-- 瀑布流布局 -->
+			<view class="waterfall-container" v-else-if="allModels.length">
+				<view class="waterfall-column" v-for="(column, colIndex) in waterfallColumns" :key="colIndex">
+					<view
+						class="waterfall-card"
+						v-for="model in column"
+						:key="model.id"
+						@click="goDetail(model.id)"
+					>
+						<view class="card-media">
+							<!-- 图片容器 -->
+							<view class="image-wrapper">
+								<!-- 缩略图（如果有） -->
+								<image
+									v-if="model.thumbnailUrl"
+									:src="model.thumbnailUrl"
+									mode="aspectFill"
+									class="card-image thumb-image"
+									:class="{ hidden: model._imgLoaded }"
+									lazy-load
+								></image>
+								<!-- 主图 -->
+								<image
+									:src="model.watermarkedMainImageUrl || model.mainImageUrl || defaultBanner"
+									mode="aspectFill"
+									class="card-image main-image"
+									:class="{ loaded: model._imgLoaded }"
+									lazy-load
+									@load="onImgLoad(model)"
+									@error="onImgError(model)"
+								></image>
+								<!-- 加载失败的占位图 -->
+								<view v-if="model._imgError" class="error-placeholder">
+									<u-icon name="photo" size="30" color="#c0c0c0"></u-icon>
+								</view>
+							</view>
+							<view class="fav-btn" :class="{ active: !!model.favorited }" @click.stop="toggleFavorite(model)">
+								<u-icon :name="model.favorited ? 'heart-fill' : 'heart'" size="14" :color="model.favorited ? '#ef4444' : '#c0c0c0'"></u-icon>
+							</view>
+							<view class="card-stats">
+								<view class="stat-item">
+									<u-icon name="download" size="11" color="#fff"></u-icon>
+									<text class="stat-text">{{ formatCount(model.downloadCount) }}</text>
+								</view>
 							</view>
 						</view>
-						<text class="product-spec">{{ model.baseSizeDisplay || '--*--*--' }} · {{ model.baseVolumeDisplay || '--' }} mm³</text>
-						<view class="product-bottom">
-							<view class="price-wrap">
-								<text class="price-symbol">¥</text>
-								<text class="product-price">{{ formatPrice(model.basePrice) }}</text>
+						<view class="card-info">
+							<text class="card-name u-line-2">{{ model.modelName }}</text>
+							<view class="card-meta">
+								<view class="card-rate" v-if="model.avgScore > 0">
+									<u-icon name="star-fill" size="11" color="#f59e0b"></u-icon>
+									<text class="rate-text">{{ model.avgScore?.toFixed(1) || '--' }}</text>
+								</view>
+								<text class="card-price">¥{{ formatPrice(model.basePrice) }}</text>
 							</view>
 						</view>
 					</view>
 				</view>
+			</view>
+
+			<view class="empty-wrap" v-else-if="!pageLoading && !allModels.length">
+				<text class="empty-text">暂无模型</text>
 			</view>
 
 			<view class="loading-wrap" v-if="fetching">
 				<u-loadmore status="loading" loadingText="加载中..." loadmoreText="" nomoreText=""></u-loadmore>
+			</view>
+
+			<view class="loadmore-wrap" v-else-if="allModels.length && !hasMore">
+				<u-loadmore status="nomore" nomoreText="没有更多了"></u-loadmore>
 			</view>
 
 			<view class="safe-area-bottom"></view>
@@ -144,11 +188,10 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
-import { getHomeConfigApi, getHotModelsApi } from '../../api/home'
-import { getCategoryTreeApi, getMyFavoriteModelIdsApi, toggleModelFavoriteApi } from '../../api/model'
-import { getModelOrderCommentStatsApi } from '../../api/order'
+import { getHomeConfigApi } from '../../api/home'
+import { getCategoryTreeApi, getMyFavoriteModelIdsApi, toggleModelFavoriteApi, getModelListApi } from '../../api/model'
 import { ensureLoginOrRedirect } from '../../utils/auth'
 // #ifdef APP-PLUS
 import AppTabbar from '../../components/AppTabbar.vue'
@@ -165,13 +208,44 @@ const notices = ref([])
 const defaultBanner = 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=800'
 const pageLoading = ref(true)
 const fetching = ref(false)
-const renderCount = ref(4)
+
+// 排序相关
+const sortTabs = [
+	{ label: '最新', value: 'create_time', canReverse: true },
+	{ label: '销量', value: 'sales', canReverse: true },
+	{ label: '评分', value: 'score', canReverse: true },
+	{ label: '价格', value: 'price', canReverse: true }
+]
+const currentSort = ref('create_time')
+const sortAsc = ref(false) // false = 降序(倒序), true = 升序(正序)
+
+// 分页相关
+const allModels = ref([])
+const pageNum = ref(1)
+const pageSize = 20
+const hasMore = ref(true)
 
 const quickCats = ref([
 	{ id: 0, name: '全部', icon: 'grid', iconColor: '#333333', iconBg: '#f4f4f4' }
 ])
 
-const hotModels = ref([])
+const favoriteMap = ref({})
+
+// 瀑布流双列布局
+const waterfallColumns = computed(() => {
+	const leftColumn = []
+	const rightColumn = []
+
+	allModels.value.forEach((model, index) => {
+		if (index % 2 === 0) {
+			leftColumn.push(model)
+		} else {
+			rightColumn.push(model)
+		}
+	})
+
+	return [leftColumn, rightColumn]
+})
 
 const flattenCategories = (tree = []) => {
 	const result = []
@@ -211,28 +285,21 @@ const isImageUrl = (url) => {
 
 const fetchQuickCategories = async () => {
 	try {
-		// 强制刷新获取最新分类数据（包括 icon）
 		const tree = await getCategoryTreeApi(true)
-		console.log('分类树数据:', JSON.stringify(tree))
 		const flattened = flattenCategories(Array.isArray(tree) ? tree : [])
 		if (!flattened.length) return
 
-		quickCats.value = flattened.slice(0, 8).map((cat, index) => ({
+		quickCats.value = flattened.slice(0, 8).map((cat) => ({
 			id: cat.id,
 			name: cat.name,
 			icon: cat.icon || resolveCategoryIcon(cat.name),
 			iconColor: '#333333',
 			iconBg: '#f4f4f4'
 		}))
-		console.log('quickCats:', JSON.stringify(quickCats.value))
 	} catch (error) {
-		// ignore category fetch error and keep fallback
+		// ignore
 	}
 }
-
-const visibleModels = computed(() => hotModels.value.slice(0, renderCount.value))
-
-const favoriteMap = ref({})
 
 const loadFavoriteMap = async () => {
 	try {
@@ -257,139 +324,134 @@ const initSystemInfo = () => {
 
 initSystemInfo()
 
-const formatBaseSize = (value) => {
-	const raw = String(value || '').trim()
-	if (!raw) return '--*--*--'
-	const normalized = raw
-		.replace(/[xX×\*]/g, '*')
-		.split('*')
-		.map(part => part.trim())
-		.filter(Boolean)
-	if (normalized.length !== 3) {
-		return raw.replace(/[xX×]/g, '*')
+// 格式化数量显示
+const formatCount = (value) => {
+	const count = Number(value) || 0
+	if (count >= 10000) {
+		return (count / 10000).toFixed(1) + 'w'
 	}
-	return normalized.join('*')
+	if (count >= 1000) {
+		return (count / 1000).toFixed(1) + 'k'
+	}
+	return String(count)
 }
 
-const formatBaseVolume = (value) => {
-	if (value == null || value === '') return '--'
-	const volume = Number(value)
-	if (!Number.isFinite(volume) || volume <= 0) return '--'
-	return volume >= 1000 ? volume.toFixed(0) : volume.toFixed(2)
+const formatPrice = (value) => {
+	const amount = Number(value)
+	if (Number.isNaN(amount)) return '0.00'
+	return amount.toFixed(2)
 }
 
-const formatScore = (value) => {
-	const score = Number(value)
-	if (!Number.isFinite(score) || score <= 0) return '--'
-	return Math.max(0, Math.min(5, score)).toFixed(1)
+// 切换排序
+const changeSort = (sortValue) => {
+	if (currentSort.value === sortValue) {
+		// 点击已选中的标签，切换排序方向
+		sortAsc.value = !sortAsc.value
+	} else {
+		// 切换到新标签，默认降序
+		currentSort.value = sortValue
+		sortAsc.value = false
+	}
+	// 重新加载数据
+	allModels.value = []
+	pageNum.value = 1
+	hasMore.value = true
+	fetchModelList()
 }
 
-const enrichHomeModels = async () => {
-	if (!hotModels.value.length) return
+// 获取模型列表
+const fetchModelList = async (force = false) => {
+	if (fetching.value || !hasMore.value) return
 
-	const tasks = hotModels.value.map(async (model) => {
-		const modelId = model.id
-		if (!modelId) {
-			return {
-				...model,
-				baseSizeDisplay: formatBaseSize(model.baseSize),
-				avgOverallScore: Number(model.avgOverallScore || 0),
-				favorited: !!favoriteMap.value[String(model.id)]
-			}
+	fetching.value = true
+	try {
+		// 根据排序字段和方向生成 orderBy 参数
+		let orderBy = currentSort.value
+		if (currentSort.value === 'price') {
+			orderBy = sortAsc.value ? 'price_asc' : 'price_desc'
+		} else if (currentSort.value === 'create_time') {
+			orderBy = sortAsc.value ? 'create_time_asc' : 'create_time'
+		} else if (currentSort.value === 'sales') {
+			orderBy = sortAsc.value ? 'sales_asc' : 'sales'
+		} else if (currentSort.value === 'score') {
+			orderBy = sortAsc.value ? 'score_asc' : 'score'
 		}
 
-		const [statsRes, detailRes] = await Promise.allSettled([
-			getModelOrderCommentStatsApi(modelId),
-			Promise.resolve({
-				baseSize: model.baseSize,
-				baseVolume: model.baseVolume
-			})
-		])
+		const res = await getModelListApi({
+			pageNum: pageNum.value,
+			pageSize: pageSize,
+			status: 1,
+			orderBy: orderBy
+		}, force)
 
-		const score = statsRes.status === 'fulfilled'
-			? Number(statsRes.value?.avgOverallScore || statsRes.value?.avgModelScore || 0)
-			: Number(model.avgOverallScore || 0)
+		const records = Array.isArray(res?.records) ? res.records : []
 
-		const detailBaseSize = detailRes.status === 'fulfilled'
-			? (detailRes.value?.baseSize || detailRes.value?.base_size || detailRes.value?.data?.baseSize || detailRes.value?.data?.base_size || '')
-			: ''
-        const detailBaseVolume = detailRes.status === 'fulfilled'
-			? (detailRes.value?.baseVolume || detailRes.value?.base_volume || detailRes.value?.data?.baseVolume || detailRes.value?.data?.base_volume || '')
-			: ''
+		// 处理模型数据
+		const processedRecords = records.map(item => ({
+			id: item.id,
+			modelName: item.modelName,
+			mainImageUrl: item.mainImageUrl,
+			watermarkedMainImageUrl: item.watermarkedMainImageUrl,
+			thumbnailUrl: item.thumbnailUrl,
+			basePrice: item.basePrice,
+			downloadCount: item.downloadCount || 0,
+			avgScore: item.avgScore || 0,
+			favorited: !!favoriteMap.value[String(item.id)],
+			_imgLoaded: false,
+			_imgError: false
+		}))
 
-		const resolvedBaseSize = model.baseSize || detailBaseSize
-		const resolvedBaseVolume = model.baseVolume || detailBaseVolume
-
-		return {
-			...model,
-			baseSize: resolvedBaseSize,
-			baseVolume: resolvedBaseVolume,
-			baseSizeDisplay: formatBaseSize(resolvedBaseSize),
-			baseVolumeDisplay: formatBaseVolume(resolvedBaseVolume),
-			avgOverallScore: score,
-			designerName: model.designerName || '平台设计师',
-			favorited: !!favoriteMap.value[String(modelId)]
+		if (pageNum.value === 1) {
+			allModels.value = processedRecords
+		} else {
+			allModels.value = [...allModels.value, ...processedRecords]
 		}
-	})
 
-	hotModels.value = await Promise.all(tasks)
+		// 判断是否还有更多
+		hasMore.value = records.length >= pageSize
+		if (hasMore.value) {
+			pageNum.value++
+		}
+
+		pageLoading.value = false
+	} catch (error) {
+		uni.showToast({
+			title: error.message || '加载失败',
+			icon: 'none'
+		})
+	} finally {
+		fetching.value = false
+	}
+}
+
+// 加载更多
+const loadMoreModels = () => {
+	if (hasMore.value && !fetching.value) {
+		fetchModelList()
+	}
 }
 
 const fetchHomeData = async (force = false) => {
 	if (!ensureLoginOrRedirect()) return
-	if (fetching.value) return
+
 	await loadFavoriteMap()
 	await fetchQuickCategories()
 
-	fetching.value = true
+	// 获取首页配置
 	try {
-		const [configRes, modelRes] = await Promise.allSettled([
-			getHomeConfigApi(force),
-			getHotModelsApi(1, force)
-		])
-
-		const configData = configRes.status === 'fulfilled' ? configRes.value : null
-		const modelData = modelRes.status === 'fulfilled' ? modelRes.value : null
-
+		const configData = await getHomeConfigApi(force)
 		if (configData) {
 			banners.value = Array.isArray(configData.banners) && configData.banners.length
 				? configData.banners
 				: banners.value
 			notices.value = Array.isArray(configData.notices) ? configData.notices : []
 		}
-
-		if (modelData?.records) {
-			hotModels.value = modelData.records.map(item => ({
-				id: item.id,
-				modelName: item.modelName,
-				designerName: item.designerName || item.designer || '',
-				basePrice: item.basePrice,
-				mainImageUrl: item.mainImageUrl,
-				baseSize: item.baseSize || item.base_size || '',
-				baseVolume: item.baseVolume || item.base_volume || '',
-				avgOverallScore: Number(item.avgOverallScore || item.avgScore || 0),
-				favorited: !!favoriteMap.value[String(item.id)]
-			}))
-		}
-
-		await enrichHomeModels()
-
-		renderCount.value = 4
-		await nextTick()
-		setTimeout(() => {
-			renderCount.value = Math.min(6, hotModels.value.length)
-		}, 120)
-		pageLoading.value = false
 	} catch (error) {
-		if (!hotModels.value.length) {
-			uni.showToast({
-				title: error.message || '首页数据加载失败',
-				icon: 'none'
-			})
-		}
-	} finally {
-		fetching.value = false
+		// ignore
 	}
+
+	// 获取模型列表
+	await fetchModelList(force)
 }
 
 onShow(() => {
@@ -397,15 +459,14 @@ onShow(() => {
 })
 
 onPullDownRefresh(async () => {
+	// 重置状态
+	allModels.value = []
+	pageNum.value = 1
+	hasMore.value = true
+
 	await fetchHomeData(true)
 	uni.stopPullDownRefresh()
 })
-
-const loadMoreCards = () => {
-	if (renderCount.value < hotModels.value.length) {
-		renderCount.value = Math.min(renderCount.value + 2, hotModels.value.length)
-	}
-}
 
 const goMall = (cat) => {
 	const categoryId = Number(cat?.id || 0)
@@ -456,16 +517,26 @@ const handleSearch = () => {
 	})
 }
 
-const formatPrice = (value) => {
-	const amount = Number(value)
-	if (Number.isNaN(amount)) return '0.00'
-	return amount.toFixed(2)
-}
-
 const onBannerTap = (item) => {
 	if (!item?.linkValue) return
 	if (item.linkValue.startsWith('/pages/')) {
 		uni.navigateTo({ url: item.linkValue })
+	}
+}
+
+// 图片加载完成
+const onImgLoad = (model) => {
+	const idx = allModels.value.findIndex(m => m.id === model.id)
+	if (idx >= 0) {
+		allModels.value[idx] = { ...allModels.value[idx], _imgLoaded: true, _imgError: false }
+	}
+}
+
+// 图片加载失败
+const onImgError = (model) => {
+	const idx = allModels.value.findIndex(m => m.id === model.id)
+	if (idx >= 0) {
+		allModels.value[idx] = { ...allModels.value[idx], _imgLoaded: true, _imgError: true }
 	}
 }
 
@@ -478,7 +549,8 @@ const toggleFavorite = (model) => {
 			...favoriteMap.value,
 			[modelId]: nextState
 		}
-		hotModels.value = hotModels.value.map(item => {
+		// 更新列表中的收藏状态
+		allModels.value = allModels.value.map(item => {
 			if (String(item.id) !== modelId) return item
 			return {
 				...item,
@@ -494,7 +566,7 @@ const toggleFavorite = (model) => {
 
 <style scoped lang="scss">
 /* ============================================
-   首页 — 果冻质感极简设计
+   首页 — 果冻质感极简设计 + 瀑布流布局
    ============================================ */
 
 $sky-blue: #00bfff;
@@ -553,26 +625,6 @@ $gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 	font-size: 40rpx;
 	font-weight: 800;
 	color: $text-primary;
-}
-
-.header-actions {
-	display: flex;
-	align-items: center;
-}
-
-.action-btn {
-	width: 64rpx;
-	height: 64rpx;
-	border-radius: 999rpx;
-	background: rgba(0, 0, 0, 0.03);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-	&:active {
-		transform: scale(0.92);
-	}
 }
 
 /* —— 搜索栏 —— */
@@ -792,10 +844,37 @@ $gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 	margin-top: 32rpx;
 }
 
-.filter-btn {
-	width: 48rpx;
-	height: 48rpx;
-	border-radius: 50%;
+/* —— 排序标签 —— */
+.sort-tabs {
+	display: flex;
+	gap: 16rpx;
+}
+
+.sort-tab {
+	padding: 10rpx 20rpx;
+	border-radius: 999rpx;
+	background: $surface;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	gap: 4rpx;
+
+	&.active {
+		background: $gradient-primary;
+
+		.sort-tab-text {
+			color: #fff;
+			font-weight: 600;
+		}
+	}
+}
+
+.sort-tab-text {
+	font-size: 24rpx;
+	color: $text-muted;
+}
+
+.sort-arrow {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -809,131 +888,138 @@ $gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 	box-shadow: $shadow-card;
 }
 
-/* —— 产品双列网格 —— */
-.product-grid {
-	margin-top: 24rpx;
-	padding: 0 32rpx;
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 20rpx;
+/* —— 瀑布流布局 —— */
+.waterfall-container {
+	display: flex;
+	gap: 16rpx;
+	padding: 24rpx 32rpx 0;
 }
 
-.product-card {
+.waterfall-column {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 16rpx;
+}
+
+.waterfall-card {
 	background: $surface-raised;
-	border-radius: 24rpx;
+	border-radius: 20rpx;
 	overflow: hidden;
 	box-shadow: $shadow-card;
-	animation: fadeInUp 0.5s ease forwards;
+	animation: fadeInUp 0.4s ease forwards;
 	opacity: 0;
-	transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+	transition: transform 0.2s ease;
 
 	&:active {
-		transform: scale(0.97);
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		transform: scale(0.98);
 	}
 }
 
-.product-media {
+.card-media {
 	position: relative;
-	aspect-ratio: 1 / 1;
 	background: #f0f2f5;
 	overflow: hidden;
 }
 
-.fav-btn {
+.image-wrapper {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	background: linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%);
+}
+
+.card-image {
 	position: absolute;
-	top: 14rpx;
-	right: 14rpx;
-	width: 52rpx;
-	height: 52rpx;
-	border-radius: 999rpx;
-	background: rgba(255, 255, 255, 0.85);
-	backdrop-filter: blur(8px);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-	&:active {
-		transform: scale(0.88);
-	}
-}
-
-.fav-btn.active {
-	background: #fff1f2;
-}
-
-.product-image {
+	top: 0;
+	left: 0;
 	width: 100%;
 	height: 100%;
-	animation: imgFadeIn 0.5s ease forwards;
+	object-fit: cover;
+}
+
+/* 缩略图样式 - 模糊效果 */
+.thumb-image {
+	filter: blur(8px);
+	transform: scale(1.05);
+	transition: opacity 0.4s ease;
+	opacity: 1;
+}
+
+.thumb-image.hidden {
 	opacity: 0;
 }
 
-@keyframes imgFadeIn {
-	from { opacity: 0; transform: scale(0.97); }
-	to { opacity: 1; transform: scale(1); }
+/* 主图样式 */
+.main-image {
+	opacity: 0;
+	transition: opacity 0.4s ease;
+	z-index: 1;
 }
 
-.product-info {
-	padding: 16rpx 18rpx 14rpx;
-	background: $surface-raised;
+.main-image.loaded {
+	opacity: 1;
 }
 
-.title-row {
+/* 加载失败占位 */
+.error-placeholder {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
 	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 10rpx;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%);
+	z-index: 2;
 }
 
-.product-name {
-	font-size: 28rpx;
+.card-stats {
+	position: absolute;
+	bottom: 10rpx;
+	left: 10rpx;
+	display: flex;
+	gap: 12rpx;
+}
+
+.stat-item {
+	display: flex;
+	align-items: center;
+	gap: 4rpx;
+	padding: 4rpx 10rpx;
+	background: rgba(0, 0, 0, 0.45);
+	border-radius: 999rpx;
+	backdrop-filter: blur(4px);
+}
+
+.stat-text {
+	font-size: 20rpx;
+	color: #fff;
+}
+
+.card-info {
+	padding: 16rpx;
+}
+
+.card-name {
+	font-size: 26rpx;
 	color: $text-primary;
-	line-height: 1.38;
+	line-height: 1.4;
 	font-weight: 600;
-	flex: 1;
 }
 
-.product-spec {
-	margin-top: 8rpx;
-	font-size: 22rpx;
-	color: $text-muted;
-	line-height: 1.3;
-}
-
-.product-bottom {
-	margin-top: 10rpx;
+.card-meta {
+	margin-top: 12rpx;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 }
 
-.price-wrap {
-	display: inline-flex;
-	align-items: baseline;
-	gap: 4rpx;
-}
-
-.price-symbol {
-	font-size: 22rpx;
-	font-weight: 500;
-	color: $sky-deep;
-	line-height: 1;
-}
-
-.product-price {
-	font-size: 38rpx;
-	font-weight: 800;
-	color: $sky-deep;
-	line-height: 1;
-}
-
-.product-rate {
-	display: inline-flex;
+.card-rate {
+	display: flex;
 	align-items: center;
 	gap: 4rpx;
-	margin-top: 2rpx;
 }
 
 .rate-text {
@@ -942,9 +1028,30 @@ $gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 	color: #f59e0b;
 }
 
+.card-price {
+	font-size: 32rpx;
+	font-weight: 700;
+	color: $sky-deep;
+}
+
+.empty-wrap {
+	padding: 120rpx 0;
+	text-align: center;
+}
+
+.empty-text {
+	font-size: 28rpx;
+	color: $text-muted;
+}
+
 .loading-wrap {
 	margin-top: 32rpx;
 	padding: 0 32rpx 10rpx;
+}
+
+.loadmore-wrap {
+	margin-top: 24rpx;
+	padding: 0 32rpx;
 }
 
 .safe-area-bottom {
@@ -961,5 +1068,29 @@ $gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 	0% { opacity: 0; transform: scale(0.88); }
 	60% { transform: scale(1.05); }
 	100% { opacity: 1; transform: scale(1); }
+}
+
+/* —— 收藏按钮 —— */
+.fav-btn {
+	position: absolute;
+	top: 10rpx;
+	right: 10rpx;
+	width: 48rpx;
+	height: 48rpx;
+	border-radius: 999rpx;
+	background: rgba(255, 255, 255, 0.85);
+	backdrop-filter: blur(8px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	&:active {
+		transform: scale(0.88);
+	}
+}
+
+.fav-btn.active {
+	background: #fff1f2;
 }
 </style>

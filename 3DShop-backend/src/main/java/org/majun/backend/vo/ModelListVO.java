@@ -42,6 +42,12 @@ public class ModelListVO {
     private String watermarkedMainImageUrl;
 
     /**
+     * 缩略图URL（渐进式加载用）
+     */
+    @Schema(description = "缩略图URL")
+    private String thumbnailUrl;
+
+    /**
      * 设计者昵称
      */
     @Schema(description = "设计者昵称")
@@ -76,4 +82,16 @@ public class ModelListVO {
      */
     @Schema(description = "模型图片数量")
     private Integer imageCount;
+
+    /**
+     * 下载次数（销量）
+     */
+    @Schema(description = "下载次数（销量）")
+    private Integer downloadCount;
+
+    /**
+     * 平均评分
+     */
+    @Schema(description = "平均评分")
+    private Double avgScore;
 }

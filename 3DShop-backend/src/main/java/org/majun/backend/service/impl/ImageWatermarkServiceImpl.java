@@ -40,6 +40,8 @@ public class ImageWatermarkServiceImpl implements ImageWatermarkService {
     private static final String WATERMARK_CONFIG_KEY = "WATERMARK_TEXT";
     private static final String WATERMARK_POSITION_KEY = "WATERMARK_POSITION"; // CENTER, BOTTOM_RIGHT, TILE
     private static final float DEFAULT_ALPHA = 0.3f; // 水印透明度
+    private static final int THUMBNAIL_WIDTH = 100; // 缩略图宽度
+    private static final int THUMBNAIL_QUALITY = 30; // 缩略图质量 (0-100)
 
     private final ModelImageWatermarkRepository watermarkRepository;
     private final SysModelImageRepository modelImageRepository;
@@ -121,11 +123,31 @@ public class ImageWatermarkServiceImpl implements ImageWatermarkService {
                 existingWatermark != null,
                 existingWatermark != null && !currentWatermarkText.equals(existingWatermark.getWatermarkText()));
 
+        // 下载原图
+        BufferedImage originalImage = downloadImage(originalImageUrl);
+        if (originalImage == null) {
+            log.warn("无法下载原图，跳过水印生成: {}", originalImageUrl);
+            return originalImageUrl;
+        }
+
         // 添加水印
-        String watermarkedUrl = addWatermark(originalImageUrl, currentWatermarkText);
+        BufferedImage watermarkedImage = applyWatermark(originalImage, currentWatermarkText);
+
+        // 生成缩略图
+        String thumbnailUrl = null;
+        try {
+            BufferedImage thumbnail = createThumbnail(watermarkedImage);
+            thumbnailUrl = uploadImage(thumbnail, originalImageUrl, "thumbnail");
+            log.info("缩略图生成成功: {}", thumbnailUrl);
+        } catch (Exception e) {
+            log.warn("缩略图生成失败: {}", e.getMessage());
+        }
+
+        // 上传水印图
+        String watermarkedUrl = uploadImage(watermarkedImage, originalImageUrl, "watermark");
         if (!StringUtils.hasText(watermarkedUrl)) {
             log.warn("水印生成失败，返回原图URL: {}", originalImageUrl);
-            return originalImageUrl; // 失败时返回原图
+            return originalImageUrl;
         }
 
         log.info("水印生成成功，新URL: {}", watermarkedUrl);
@@ -135,10 +157,10 @@ public class ImageWatermarkServiceImpl implements ImageWatermarkService {
             log.info("更新现有水印记录: id={}", existingWatermark.getId());
             existingWatermark.setOriginalUrl(originalImageUrl);
             existingWatermark.setWatermarkedUrl(watermarkedUrl);
+            existingWatermark.setThumbnailUrl(thumbnailUrl);
             existingWatermark.setWatermarkText(currentWatermarkText);
             existingWatermark.setIsDelete(0);
-            int updateResult = watermarkRepository.updateById(existingWatermark);
-            log.info("更新结果: {}", updateResult);
+            watermarkRepository.updateById(existingWatermark);
         } else {
             // 不存在记录，创建新的
             log.info("创建新水印记录");
@@ -147,9 +169,9 @@ public class ImageWatermarkServiceImpl implements ImageWatermarkService {
             watermark.setOriginalImageId(imageId);
             watermark.setOriginalUrl(originalImageUrl);
             watermark.setWatermarkedUrl(watermarkedUrl);
+            watermark.setThumbnailUrl(thumbnailUrl);
             watermark.setWatermarkText(currentWatermarkText);
-            int insertResult = watermarkRepository.insert(watermark);
-            log.info("插入结果: {}, 新记录ID: {}", insertResult, watermark.getId());
+            watermarkRepository.insert(watermark);
         }
 
         return watermarkedUrl;
@@ -433,23 +455,107 @@ public class ImageWatermarkServiceImpl implements ImageWatermarkService {
      * 上传水印图片到MinIO
      */
     private String uploadWatermarkedImage(BufferedImage watermarkedImage, String originalUrl) {
+        return uploadImage(watermarkedImage, originalUrl, "watermark");
+    }
+
+    /**
+     * 上传图片到MinIO
+     * @param image 图片
+     * @param originalUrl 原图URL（用于获取格式）
+     * @param type 类型（watermark/thumbnail）
+     * @return 上传后的URL
+     */
+    private String uploadImage(BufferedImage image, String originalUrl, String type) {
         try {
             // 转换为字节数组
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             String format = getImageFormat(originalUrl);
-            ImageIO.write(watermarkedImage, format, baos);
+            ImageIO.write(image, format, baos);
             byte[] bytes = baos.toByteArray();
 
             // 生成对象名称
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-            String objectName = "watermark/" + timestamp + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + format;
+            String objectName = type + "/" + timestamp + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + format;
 
             // 上传
             return minioUtil.uploadBytes(bytes, "image/" + format, objectName);
         } catch (Exception e) {
-            log.error("上传水印图片失败", e);
+            log.error("上传图片失败: type={}", type, e);
             return null;
         }
+    }
+
+    /**
+     * 创建缩略图
+     * @param originalImage 原图
+     * @return 缩略图
+     */
+    private BufferedImage createThumbnail(BufferedImage originalImage) {
+        int originalWidth = originalImage.getWidth();
+        int originalHeight = originalImage.getHeight();
+
+        // 计算缩略图高度（保持宽高比）
+        int thumbnailHeight = (int) ((double) THUMBNAIL_WIDTH / originalWidth * originalHeight);
+
+        // 创建缩略图
+        BufferedImage thumbnail = new BufferedImage(THUMBNAIL_WIDTH, thumbnailHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = thumbnail.createGraphics();
+
+        // 设置高质量缩放
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // 绘制缩放后的图片
+        g2d.drawImage(originalImage, 0, 0, THUMBNAIL_WIDTH, thumbnailHeight, null);
+        g2d.dispose();
+
+        return thumbnail;
+    }
+
+    @Override
+    public String getThumbnailUrl(Long modelId, Long imageId) {
+        ModelImageWatermark watermark = watermarkRepository.selectOne(
+                new LambdaQueryWrapper<ModelImageWatermark>()
+                        .eq(ModelImageWatermark::getModelId, modelId)
+                        .eq(ModelImageWatermark::getOriginalImageId, imageId)
+                        .eq(ModelImageWatermark::getIsDelete, 0)
+        );
+        return watermark != null ? watermark.getThumbnailUrl() : null;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int generateThumbnails(Long modelId) {
+        if (modelId == null) {
+            return 0;
+        }
+
+        // 查询模型的所有图片
+        List<SysModelImage> images = modelImageRepository.selectList(
+                new LambdaQueryWrapper<SysModelImage>()
+                        .eq(SysModelImage::getModelId, modelId)
+        );
+
+        if (images.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        for (SysModelImage image : images) {
+            try {
+                // 触发水印和缩略图生成
+                String watermarkedUrl = getOrAddWatermark(modelId, image.getId(), image.getImageUrl());
+                if (StringUtils.hasText(watermarkedUrl)) {
+                    count++;
+                }
+            } catch (Exception e) {
+                log.error("生成缩略图失败: imageId={}", image.getId(), e);
+            }
+        }
+
+        log.info("批量生成缩略图完成: modelId={}, count={}", modelId, count);
+        return count;
     }
 
     /**

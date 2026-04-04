@@ -278,3 +278,38 @@ export const deleteWatermark = (modelId) => {
     method: 'delete'
   })
 }
+
+// 生成缩略图
+export const generateThumbnails = (modelId) => {
+  return request({
+    url: `/api/admin/watermark/thumbnails/${modelId}`,
+    method: 'post'
+  })
+}
+
+// 批量生成缩略图
+export const batchGenerateThumbnails = (modelIds) => {
+  return request({
+    url: '/api/admin/watermark/batch-thumbnails',
+    method: 'post',
+    data: { modelIds }
+  })
+}
+
+// ==================== 语义搜索索引管理 ====================
+
+// 获取语义搜索索引状态
+export const getSemanticSearchStatus = () => {
+  return request({
+    url: '/api/semantic-search/status',
+    method: 'get'
+  })
+}
+
+// 重建语义搜索索引
+export const rebuildSemanticIndex = () => {
+  return request({
+    url: '/api/semantic-search/reindex',
+    method: 'post'
+  })
+}

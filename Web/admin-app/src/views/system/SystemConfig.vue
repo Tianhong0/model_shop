@@ -1,5 +1,42 @@
 <template>
   <div class="page-container">
+    <!-- 语义搜索索引管理 -->
+    <div class="index-card">
+      <div class="index-header">
+        <div class="index-title">
+          <el-icon><Search /></el-icon>
+          <span>语义搜索索引</span>
+        </div>
+        <el-button type="primary" :loading="reindexLoading" @click="handleReindex">
+          重建索引
+        </el-button>
+      </div>
+      <div class="index-content">
+        <div class="index-item">
+          <span class="label">服务状态</span>
+          <el-tag :type="indexStatus.available ? 'success' : 'danger'" size="small">
+            {{ indexStatus.available ? '可用' : '不可用' }}
+          </el-tag>
+        </div>
+        <div class="index-item">
+          <span class="label">已索引商品</span>
+          <span class="value">{{ indexStatus.indexCount || 0 }} 个</span>
+        </div>
+        <div class="index-item">
+          <span class="label">向量维度</span>
+          <span class="value">{{ indexStatus.dimension || 1024 }} 维</span>
+        </div>
+        <div class="index-item">
+          <span class="label">最后更新</span>
+          <span class="value">{{ indexStatus.version ? formatVersion(indexStatus.version) : '未索引' }}</span>
+        </div>
+      </div>
+      <div class="index-tip">
+        <el-icon><InfoFilled /></el-icon>
+        <span>语义搜索基于 AI 向量技术，用户可以用自然语言描述查找商品。重建索引会重新处理所有已上架模型。</span>
+      </div>
+    </div>
+
     <div class="table-card">
       <div class="header-actions">
         <el-space>
@@ -105,7 +142,9 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, InfoFilled } from '@element-plus/icons-vue'
 import { getAllConfigs, getConfigsByGroup, setConfig, deleteConfig } from '../../api/config'
+import { getSemanticSearchStatus, rebuildSemanticIndex } from '../../api/model'
 
 const loading = ref(false)
 const configData = ref([])
@@ -114,6 +153,60 @@ const isEdit = ref(false)
 const submitLoading = ref(false)
 const formRef = ref(null)
 const currentGroup = ref('')
+
+// 语义搜索索引状态
+const indexStatus = ref({
+  available: false,
+  indexCount: 0,
+  version: null,
+  dimension: 1024
+})
+const reindexLoading = ref(false)
+
+// 获取索引状态
+const fetchIndexStatus = async () => {
+  try {
+    const res = await getSemanticSearchStatus()
+    indexStatus.value = res || {}
+  } catch (error) {
+    console.error('获取索引状态失败:', error)
+    indexStatus.value.available = false
+  }
+}
+
+// 重建索引
+const handleReindex = async () => {
+  ElMessageBox.confirm(
+    '重建索引会重新处理所有已上架模型，可能需要几分钟时间。确定要重建吗？',
+    '重建索引',
+    { type: 'warning' }
+  ).then(async () => {
+    reindexLoading.value = true
+    try {
+      await rebuildSemanticIndex()
+      ElMessage.success('索引重建任务已启动，请稍后刷新查看结果')
+      // 3秒后刷新状态
+      setTimeout(fetchIndexStatus, 3000)
+    } catch (error) {
+      console.error('重建索引失败:', error)
+      ElMessage.error('重建索引失败')
+    } finally {
+      reindexLoading.value = false
+    }
+  }).catch(() => {})
+}
+
+// 格式化版本时间
+const formatVersion = (timestamp) => {
+  const date = new Date(parseInt(timestamp))
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
 const formData = reactive({
   configKey: '',
@@ -211,12 +304,74 @@ const handleDelete = (row) => {
 
 onMounted(() => {
   fetchConfigs()
+  fetchIndexStatus()
 })
 </script>
 
 <style scoped>
 .page-container {
   padding: 0;
+}
+
+.index-card {
+  background: var(--bg-primary);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+}
+
+.index-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.index-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.index-content {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 16px;
+}
+
+.index-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.index-item .label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.index-item .value {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.index-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .table-card {

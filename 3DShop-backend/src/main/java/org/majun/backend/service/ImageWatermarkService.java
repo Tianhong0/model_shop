@@ -66,4 +66,19 @@ public interface ImageWatermarkService {
      * @param modelId 模型ID
      */
     void deleteWatermarks(Long modelId);
+
+    /**
+     * 获取缩略图URL
+     * @param modelId 模型ID
+     * @param imageId 图片ID
+     * @return 缩略图URL，不存在返回null
+     */
+    String getThumbnailUrl(Long modelId, Long imageId);
+
+    /**
+     * 为模型生成缩略图
+     * @param modelId 模型ID
+     * @return 处理的图片数量
+     */
+    int generateThumbnails(Long modelId);
 }

@@ -37,6 +37,9 @@ public class ModelImageWatermark implements Serializable {
     @TableField("watermarked_url")
     private String watermarkedUrl;
 
+    @TableField("thumbnail_url")
+    private String thumbnailUrl;
+
     @TableField("watermark_text")
     private String watermarkText;
 

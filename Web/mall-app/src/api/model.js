@@ -76,3 +76,28 @@ export const getMyFavoriteModelIdsApi = (forceUpdate = false) => {
     forceUpdate
   })
 }
+
+/**
+ * 语义搜索模型（基于 AI 向量的智能搜索）
+ * @param {Object} data 请求参数
+ * @param {string} data.query 搜索查询文本
+ * @param {number} data.pageNum 页码
+ * @param {number} data.pageSize 每页数量
+ */
+export const semanticSearchModelsApi = (data) => {
+  return request({
+    url: '/api/semantic-search/models',
+    method: 'GET',
+    data
+  })
+}
+
+/**
+ * 获取语义搜索索引状态
+ */
+export const getSemanticSearchStatusApi = () => {
+  return request({
+    url: '/api/semantic-search/status',
+    method: 'GET'
+  })
+}

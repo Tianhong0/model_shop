@@ -94,6 +94,43 @@ public class WatermarkController {
         return Result.success();
     }
 
+    @Operation(summary = "生成缩略图", description = "为指定模型生成缩略图（用于渐进式加载）")
+    @OperationLog(type = "UPDATE", module = "水印管理", description = "生成缩略图", targetType = "MODEL")
+    @PostMapping("/thumbnails/{modelId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public Result<Map<String, Object>> generateThumbnails(@PathVariable Long modelId) {
+        int count = imageWatermarkService.generateThumbnails(modelId);
+        Map<String, Object> result = new HashMap<>();
+        result.put("modelId", modelId);
+        result.put("processedCount", count);
+        return Result.success(result);
+    }
+
+    @Operation(summary = "批量生成缩略图", description = "批量为多个模型生成缩略图")
+    @OperationLog(type = "UPDATE", module = "水印管理", description = "批量生成缩略图", targetType = "MODEL")
+    @PostMapping("/batch-thumbnails")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public Result<Map<String, Object>> batchGenerateThumbnails(@RequestBody BatchWatermarkRequest request) {
+        int totalCount = 0;
+        int successCount = 0;
+
+        for (Long modelId : request.getModelIds()) {
+            try {
+                int count = imageWatermarkService.generateThumbnails(modelId);
+                totalCount += count;
+                successCount++;
+            } catch (Exception e) {
+                // 单个模型失败不影响其他
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalProcessedImages", totalCount);
+        result.put("successModels", successCount);
+        result.put("totalModels", request.getModelIds().size());
+        return Result.success(result);
+    }
+
     /**
      * 批量生成水印请求
      */

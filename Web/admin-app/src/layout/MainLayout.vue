@@ -338,7 +338,7 @@
                 {{ configStore.siteStatus ? '正在营业' : '系统维护' }}
               </el-tag>
             </div>
-            <el-badge :value="unreadMessageCount" :hidden="unreadMessageCount <= 0" class="item">
+            <el-badge :value="totalUnreadCount" :hidden="totalUnreadCount <= 0" class="item" :max="99">
               <el-icon :size="20" style="cursor:pointer" @click="handleShowMessages"><bell /></el-icon>
             </el-badge>
             <el-dropdown trigger="click" @command="handleUserCommand">
@@ -443,21 +443,70 @@
 
       <!-- 消息中心抽屉 -->
       <el-drawer v-model="messageVisible" title="消息通知" size="350px">
-        <el-list>
-          <el-empty v-if="messages.length === 0" description="暂无新消息" />
-          <div v-for="msg in messages" :key="msg.key || msg.id" class="message-item">
-            <div class="msg-header">
-              <el-tag :type="msg.type" size="small">{{ msg.tag }}</el-tag>
-              <span class="msg-time">{{ msg.time }}</span>
-            </div>
-            <div class="msg-content">{{ msg.content }}</div>
-            <el-divider />
-          </div>
-        </el-list>
+        <el-tabs>
+          <el-tab-pane :label="`系统消息 (${messages.length})`">
+            <el-list>
+              <el-empty v-if="messages.length === 0" description="暂无新消息" />
+              <div v-for="msg in messages" :key="msg.key || msg.id" class="message-item">
+                <div class="msg-header">
+                  <el-tag :type="msg.type" size="small">{{ msg.tag }}</el-tag>
+                  <span class="msg-time">{{ msg.time }}</span>
+                </div>
+                <div class="msg-content">{{ msg.content }}</div>
+                <el-divider />
+              </div>
+            </el-list>
+          </el-tab-pane>
+          <el-tab-pane :label="`客服通知 (${notificationStore.notifications.length})`">
+            <el-list>
+              <el-empty v-if="notificationStore.notifications.length === 0" description="暂无通知" />
+              <div
+                v-for="notification in notificationStore.notifications"
+                :key="notification.id"
+                class="message-item"
+                :class="{ 'unread': !notification.read }"
+                @click="handleNotificationClick(notification)"
+              >
+                <div class="msg-header">
+                  <el-tag :type="notification.type" size="small">
+                    {{ notification.type === 'success' ? '成功' : notification.type === 'warning' ? '警告' : '通知' }}
+                  </el-tag>
+                  <span class="msg-time">{{ formatNotificationTime(notification.createdAt) }}</span>
+                </div>
+                <div class="msg-title">{{ notification.title }}</div>
+                <div v-if="notification.message" class="msg-content">{{ notification.message }}</div>
+                <el-divider />
+              </div>
+            </el-list>
+          </el-tab-pane>
+        </el-tabs>
         <template #footer>
-          <el-button style="width: 100%" @click="clearMessages">全部标记为已读</el-button>
+          <el-button style="width: 100%" @click="handleMarkAllRead">全部标记为已读</el-button>
         </template>
       </el-drawer>
+
+      <!-- 顶部冒泡通知 -->
+      <TransitionGroup name="toast" tag="div" class="toast-container">
+        <div
+          v-for="notification in activeToasts"
+          :key="notification.id"
+          class="toast-notification"
+          :class="`toast-${notification.type}`"
+          @click="handleToastClick(notification)"
+        >
+          <div class="toast-icon">
+            <el-icon v-if="notification.type === 'success'"><CircleCheckFilled /></el-icon>
+            <el-icon v-else-if="notification.type === 'warning'"><WarningFilled /></el-icon>
+            <el-icon v-else-if="notification.type === 'error'"><CircleCloseFilled /></el-icon>
+            <el-icon v-else><InfoFilled /></el-icon>
+          </div>
+          <div class="toast-content">
+            <div class="toast-title">{{ notification.title }}</div>
+            <div v-if="notification.message" class="toast-message">{{ notification.message }}</div>
+          </div>
+          <el-icon class="toast-close" @click.stop="closeToast(notification.id)"><Close /></el-icon>
+        </div>
+      </TransitionGroup>
 
       <div class="content-area">
         <router-view v-slot="{ Component }">
@@ -471,10 +520,18 @@
 </template>
 
 <script setup>
+import {
+  CircleCheckFilled,
+  WarningFilled,
+  CircleCloseFilled,
+  InfoFilled,
+  Close
+} from '@element-plus/icons-vue'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useConfigStore } from '../store/config'
 import { useAuthStore } from '../stores/auth'
+import { useNotificationStore } from '../stores/notification'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getDashboardMessages, markAllDashboardMessagesRead } from '../api/dashboard'
 import { getAdminOperationStatus } from '../api/operation'
@@ -484,6 +541,7 @@ const route = useRoute()
 const router = useRouter()
 const configStore = useConfigStore()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const isCollapse = ref(false)
 
 // 用户菜单控制
@@ -522,9 +580,51 @@ const securityForm = ref({
 
 const messages = ref([])
 const unreadMessageCount = computed(() => messages.value.filter(item => item?.unread).length)
+const totalUnreadCount = computed(() => unreadMessageCount.value + notificationStore.unreadCount)
 const displayName = computed(() => String(profileForm.value.nickname || authStore.user?.nickname || authStore.user?.userName || '管理员'))
 const displayAvatar = computed(() => String(profileForm.value.avatar || authStore.user?.avatar || ''))
 const displayRole = computed(() => '系统管理员')
+
+// 冒泡通知相关
+const activeToasts = computed(() => {
+  return notificationStore.notifications.filter(n => !n.read).slice(0, 3) // 最多显示3个
+})
+
+const handleToastClick = (notification) => {
+  notificationStore.markAsRead(notification.id)
+  // 如果有回调数据，可以跳转
+  if (notification.data && notification.route) {
+    router.push(notification.route)
+  }
+}
+
+const closeToast = (id) => {
+  notificationStore.markAsRead(id)
+}
+
+const handleNotificationClick = (notification) => {
+  notificationStore.markAsRead(notification.id)
+  if (notification.route) {
+    messageVisible.value = false
+    router.push(notification.route)
+  }
+}
+
+const handleMarkAllRead = async () => {
+  await clearMessages()
+  notificationStore.markAllAsRead()
+}
+
+const formatNotificationTime = (createdAt) => {
+  if (!createdAt) return ''
+  const date = new Date(createdAt)
+  const now = new Date()
+  const diff = now - date
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  return date.toLocaleDateString()
+}
 
 const formatDateTime = (value) => {
   if (!value) return '-'
@@ -1123,10 +1223,24 @@ const openAIAssistant = () => {
 .message-item {
   padding: 14px 0;
   border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.message-item:hover {
+  background: var(--bg-tertiary);
+  margin: 0 -20px;
+  padding: 14px 20px;
 }
 
 .message-item:last-child {
   border-bottom: none;
+}
+
+.message-item.unread {
+  background: var(--primary-lighter);
+  margin: 0 -20px;
+  padding: 14px 20px;
 }
 
 .msg-header {
@@ -1141,9 +1255,16 @@ const openAIAssistant = () => {
   color: var(--text-muted);
 }
 
+.msg-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
 .msg-content {
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -1281,5 +1402,134 @@ const openAIAssistant = () => {
 
 .sidebar-light .ai-assistant-btn .el-icon {
   color: var(--primary-color);
+}
+
+/* 冒泡通知样式 */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast-notification {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  min-width: 320px;
+  max-width: 450px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+}
+
+.toast-notification:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.toast-success {
+  border-left: 4px solid #10b981;
+}
+
+.toast-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.toast-error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast-info {
+  border-left: 4px solid #3b82f6;
+}
+
+.toast-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+  color: #10b981;
+}
+
+.toast-warning .toast-icon {
+  color: #f59e0b;
+}
+
+.toast-error .toast-icon {
+  color: #ef4444;
+}
+
+.toast-info .toast-icon {
+  color: #3b82f6;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.toast-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.toast-close {
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.toast-close:hover {
+  color: var(--text-primary);
+}
+
+/* 通知动画 */
+.toast-enter-active {
+  animation: toast-in 0.3s ease;
+}
+
+.toast-leave-active {
+  animation: toast-out 0.3s ease;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
 }
 </style>

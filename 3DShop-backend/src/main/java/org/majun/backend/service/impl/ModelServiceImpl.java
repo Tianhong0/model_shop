@@ -21,6 +21,7 @@ import org.majun.backend.entity.SysModelCategory;
 import org.majun.backend.entity.SysUser;
 import org.majun.backend.entity.ModelMaterial;
 import org.majun.backend.entity.ModelImageWatermark;
+import org.majun.backend.entity.SysOrderComment;
 import org.majun.backend.repository.SysModelRepository;
 import org.majun.backend.repository.SysModelFavoriteRepository;
 import org.majun.backend.repository.SysModelImageRepository;
@@ -29,6 +30,7 @@ import org.majun.backend.repository.SysModelCategoryRepository;
 import org.majun.backend.repository.SysUserRepository;
 import org.majun.backend.repository.ModelMaterialRepository;
 import org.majun.backend.repository.ModelImageWatermarkRepository;
+import org.majun.backend.repository.SysOrderCommentRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -70,6 +72,7 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
     private final ModelDownloadService modelDownloadService;
     private final ImageWatermarkService imageWatermarkService;
     private final ModelImageWatermarkRepository watermarkRepository;
+    private final SysOrderCommentRepository orderCommentRepository;
 
     @Override
     public PageResult<?> getModelList(ModelQueryRequest queryRequest) {
@@ -123,8 +126,18 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         if (StringUtils.hasText(queryRequest.getOrderBy())) {
             switch (queryRequest.getOrderBy()) {
                 case "create_time" -> queryWrapper.orderByDesc(SysModel::getCreateTime);
+                case "create_time_asc" -> queryWrapper.orderByAsc(SysModel::getCreateTime);
                 case "price_asc" -> queryWrapper.orderByAsc(SysModel::getBasePrice);
                 case "price_desc" -> queryWrapper.orderByDesc(SysModel::getBasePrice);
+                case "sales" -> queryWrapper.orderByDesc(SysModel::getDownloadCount);
+                case "sales_asc" -> queryWrapper.orderByAsc(SysModel::getDownloadCount);
+                case "score" -> {
+                    // 评分排序需要子查询，使用 last() 添加子查询
+                    queryWrapper.last("ORDER BY (SELECT COALESCE(AVG(model_score), 0) FROM sys_order_comment WHERE model_id = sys_model.id AND status = 1) DESC");
+                }
+                case "score_asc" -> {
+                    queryWrapper.last("ORDER BY (SELECT COALESCE(AVG(model_score), 0) FROM sys_order_comment WHERE model_id = sys_model.id AND status = 1) ASC");
+                }
                 case null, default -> queryWrapper.orderByDesc(SysModel::getCreateTime);
             }
         } else {
@@ -138,8 +151,11 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         Page<SysModel> page = new Page<>(queryRequest.getPageNum(), queryRequest.getPageSize());
         modelRepository.selectPage(page, queryWrapper);
 
-        // 3. 查询每张模型的主图
+        // 3. 查询每张模型的主图、水印图和缩略图
         Map<Long, String> modelMainImages = new HashMap<>();
+        Map<Long, String> modelWatermarkedImages = new HashMap<>();
+        Map<Long, String> modelThumbnails = new HashMap<>();
+
         for (SysModel model : page.getRecords()) {
             List<SysModelImage> images = modelImageRepository.selectList(
                 new LambdaQueryWrapper<SysModelImage>()
@@ -148,7 +164,15 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
                     .last("LIMIT 1")
             );
             if (images != null && !images.isEmpty()) {
-                modelMainImages.put(model.getId(), images.get(0).getImageUrl());
+                SysModelImage mainImage = images.get(0);
+                modelMainImages.put(model.getId(), mainImage.getImageUrl());
+
+                // 查询水印图和缩略图
+                String watermarkedUrl = imageWatermarkService.getWatermarkedUrl(model.getId(), mainImage.getId());
+                String thumbnailUrl = imageWatermarkService.getThumbnailUrl(model.getId(), mainImage.getId());
+
+                modelWatermarkedImages.put(model.getId(), watermarkedUrl);
+                modelThumbnails.put(model.getId(), thumbnailUrl);
             } else {
                 modelMainImages.put(model.getId(), model.getFilePath());
             }
@@ -174,6 +198,8 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
             vo.setId(model.getId());
             vo.setModelName(model.getModelName());
             vo.setMainImageUrl(modelMainImages.get(model.getId()));
+            vo.setWatermarkedMainImageUrl(modelWatermarkedImages.get(model.getId()));
+            vo.setThumbnailUrl(modelThumbnails.get(model.getId()));
             vo.setDesignerName("设计者_" + model.getDesignerId());
             vo.setBasePrice(model.getBasePrice() != null ? model.getBasePrice().toString() : "0.00");
             vo.setBaseVolume(model.getBaseVolume() != null ? model.getBaseVolume().toPlainString() : "");
@@ -181,10 +207,42 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
             vo.setCategoryName(categoryNameMap.get(model.getCategoryId()));
             vo.setStatus(model.getStatus());
             vo.setImageCount(0);
+            vo.setDownloadCount(model.getDownloadCount() != null ? model.getDownloadCount() : 0);
             return vo;
         }).collect(Collectors.toList());
 
-        // 4. 构建返回结果
+        // 4. 批量查询模型评分
+        if (!records.isEmpty()) {
+            List<Long> modelIds = records.stream().map(ModelListVO::getId).collect(Collectors.toList());
+            Map<Long, Double> avgScoreMap = new HashMap<>();
+
+            // 查询每个模型的平均评分
+            List<SysOrderComment> comments = orderCommentRepository.selectList(
+                new LambdaQueryWrapper<SysOrderComment>()
+                    .in(SysOrderComment::getModelId, modelIds)
+                    .eq(SysOrderComment::getStatus, 1)
+            );
+
+            // 按模型ID分组计算平均评分
+            Map<Long, List<SysOrderComment>> commentByModel = comments.stream()
+                .collect(Collectors.groupingBy(SysOrderComment::getModelId));
+
+            for (Map.Entry<Long, List<SysOrderComment>> entry : commentByModel.entrySet()) {
+                List<SysOrderComment> modelComments = entry.getValue();
+                double avgScore = modelComments.stream()
+                    .mapToInt(c -> c.getModelScore() != null ? c.getModelScore() : 0)
+                    .average()
+                    .orElse(0.0);
+                avgScoreMap.put(entry.getKey(), Math.round(avgScore * 10) / 10.0); // 保留一位小数
+            }
+
+            // 填充评分到VO
+            for (ModelListVO vo : records) {
+                vo.setAvgScore(avgScoreMap.getOrDefault(vo.getId(), 0.0));
+            }
+        }
+
+        // 5. 构建返回结果
         PageResult<ModelListVO> result = PageResult.<ModelListVO>builder()
                 .records(records)
                 .total(page.getTotal())

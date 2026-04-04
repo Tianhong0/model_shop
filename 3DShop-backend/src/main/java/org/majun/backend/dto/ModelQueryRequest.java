@@ -48,7 +48,10 @@ public class ModelQueryRequest {
     private Integer status;
 
     /**
-     * 排序字段: create_time-创建时间, price_asc-价格升序, price_desc-价格降序
+     * 排序字段: create_time-创建时间降序, create_time_asc-创建时间升序,
+     *          price_asc-价格升序, price_desc-价格降序,
+     *          sales-销量降序, sales_asc-销量升序,
+     *          score-评分降序, score_asc-评分升序
      */
     @Schema(description = "排序字段")
     private String orderBy = "create_time";

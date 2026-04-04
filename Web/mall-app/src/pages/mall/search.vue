@@ -4,14 +4,21 @@
 			<input
 				v-model="keyword"
 				type="text"
-				placeholder="请输入模型名称"
+				:placeholder="searchMode === 'semantic' ? '描述你想要的模型，如：可爱的卡通小动物' : '请输入模型名称'"
 				confirm-type="search"
 				@confirm="onSearch"
 			/>
+			<view class="search-mode-toggle" @click="toggleSearchMode">
+				<text :class="['mode-text', searchMode === 'keyword' ? 'active' : '']">关键词</text>
+				<text :class="['mode-text', searchMode === 'semantic' ? 'active' : '']">语义</text>
+			</view>
 			<button class="search-btn" @click="onSearch">搜索</button>
 		</view>
 
-		<view class="result-header">共找到 {{ modelList.length }} 个模型</view>
+		<view class="search-info">
+			<text class="result-count">共找到 {{ modelList.length }} 个模型</text>
+			<text v-if="searchMode === 'semantic'" class="search-hint">AI 语义搜索中...</text>
+		</view>
 
 		<view v-if="modelList.length" class="model-list">
 			<view class="model-card" v-for="item in modelList" :key="item.id" @click="goDetail(item.id)">
@@ -25,8 +32,12 @@
 			</view>
 		</view>
 
-		<view v-else class="empty-wrap">
-			<text class="empty-text">暂无匹配模型</text>
+		<view v-else-if="searched && !loading" class="empty-wrap">
+			<text class="empty-text">{{ searchMode === 'semantic' ? '未找到相关模型，试试其他描述' : '暂无匹配模型' }}</text>
+		</view>
+
+		<view v-if="loading" class="loading-wrap">
+			<text class="loading-text">搜索中...</text>
 		</view>
 	</view>
 </template>
@@ -34,38 +45,61 @@
 <script setup>
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getModelListApi } from '@/api/model.js'
+import { getModelListApi, semanticSearchModelsApi } from '@/api/model.js'
 import { ensureLoginOrRedirect } from '@/utils/auth.js'
 
 const keyword = ref('')
 const modelList = ref([])
+const searchMode = ref('keyword') // 'keyword' | 'semantic'
+const searched = ref(false)
+const loading = ref(false)
+
+const toggleSearchMode = () => {
+	searchMode.value = searchMode.value === 'keyword' ? 'semantic' : 'keyword'
+}
 
 const loadList = async () => {
 	if (!keyword.value.trim()) {
 		modelList.value = []
 		return
 	}
-	uni.showLoading({ title: '搜索中...' })
+
+	loading.value = true
+	searched.value = false
+
 	try {
-		const res = await getModelListApi({
-			pageNum: 1,
-			pageSize: 50,
-			modelName: keyword.value.trim(),
-			status: 1
-		})
+		let res
+		if (searchMode.value === 'semantic') {
+			// 语义搜索
+			res = await semanticSearchModelsApi({
+				query: keyword.value.trim(),
+				pageNum: 1,
+				pageSize: 50
+			})
+		} else {
+			// 关键词搜索
+			res = await getModelListApi({
+				pageNum: 1,
+				pageSize: 50,
+				modelName: keyword.value.trim(),
+				status: 1
+			})
+		}
 		modelList.value = Array.isArray(res?.records) ? res.records : []
+		searched.value = true
 	} catch (error) {
 		modelList.value = []
+		searched.value = true
 		uni.showToast({ title: error?.message || '搜索失败', icon: 'none' })
 	} finally {
-		uni.hideLoading()
+		loading.value = false
 	}
 }
 
 const onSearch = () => {
 	const value = keyword.value.trim()
 	if (!value) {
-		uni.showToast({ title: '请输入搜索关键词', icon: 'none' })
+		uni.showToast({ title: '请输入搜索内容', icon: 'none' })
 		return
 	}
 	loadList()
@@ -85,6 +119,10 @@ onLoad((options) => {
 		return
 	}
 	keyword.value = decodeURIComponent(options?.keyword || '').trim()
+	// 支持从外部指定搜索模式
+	if (options?.mode === 'semantic') {
+		searchMode.value = 'semantic'
+	}
 	if (keyword.value) {
 		loadList()
 	}
@@ -143,6 +181,25 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 		}
 	}
 
+	.search-mode-toggle {
+		display: flex;
+		background: $surface;
+		border-radius: 999rpx;
+		padding: 4rpx;
+		.mode-text {
+			padding: 8rpx 16rpx;
+			font-size: 24rpx;
+			color: $text-muted;
+			border-radius: 999rpx;
+			transition: all 0.2s;
+			&.active {
+				background: $gradient-primary;
+				color: #fff;
+				font-weight: 600;
+			}
+		}
+	}
+
 	.search-btn {
 		height: 68rpx;
 		line-height: 68rpx;
@@ -161,10 +218,21 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 	}
 }
 
-.result-header {
-	font-size: 24rpx;
-	color: $text-secondary;
+.search-info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 	margin: 28rpx 8rpx;
+
+	.result-count {
+		font-size: 24rpx;
+		color: $text-secondary;
+	}
+
+	.search-hint {
+		font-size: 22rpx;
+		color: $sky-blue;
+	}
 }
 
 .model-list {
@@ -237,6 +305,16 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 }
 
 .empty-text {
+	font-size: 28rpx;
+	color: $text-muted;
+}
+
+.loading-wrap {
+	padding: 60rpx 0;
+	text-align: center;
+}
+
+.loading-text {
 	font-size: 28rpx;
 	color: $text-muted;
 }

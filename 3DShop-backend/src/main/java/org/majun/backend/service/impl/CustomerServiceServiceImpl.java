@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.majun.backend.config.AiProperties;
 import org.majun.backend.dto.CsMessageSendRequest;
 import org.majun.backend.entity.CsAdminStatus;
 import org.majun.backend.entity.CsConversation;
@@ -16,9 +17,11 @@ import org.majun.backend.repository.CsAdminStatusRepository;
 import org.majun.backend.repository.CsConversationRepository;
 import org.majun.backend.repository.CsMessageRepository;
 import org.majun.backend.repository.SysUserRepository;
+import org.majun.backend.service.AiChatService;
 import org.majun.backend.service.CustomerServiceService;
 import org.majun.backend.service.CustomerServiceWebSocketService;
 import org.majun.backend.vo.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +40,10 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
     private final CsAdminStatusRepository adminStatusRepository;
     private final SysUserRepository sysUserRepository;
     private final CustomerServiceWebSocketService webSocketService;
+    private final AiProperties aiProperties;
+
+    @Autowired(required = false)
+    private AiChatService aiChatService;
 
     // ==================== 用户端 ====================
 
@@ -61,16 +68,65 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
             conversation.setUserAvatar(user.getAvatar());
         }
 
-        conversation.setStatus(CsConversationStatus.WAITING.getCode());
+        // 直接设置为进行中状态，由 AI 接管
+        conversation.setStatus(CsConversationStatus.ACTIVE.getCode());
         conversation.setUnreadUserCount(0);
         conversation.setUnreadAdminCount(0);
+        // adminId 为 null 表示 AI 模式
 
         conversationRepository.insert(conversation);
 
-        // 分配客服
-        assignAdminToConversation(conversation);
+        // 发送 AI 欢迎消息
+        if (aiProperties.getEnabled() && aiChatService != null) {
+            final Long conversationId = conversation.getId();
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    sendAiWelcomeMessage(conversationId);
+                } catch (Exception e) {
+                    log.error("发送 AI 欢迎消息失败", e);
+                }
+            });
+        }
 
         return convertToVO(conversation);
+    }
+
+    /**
+     * 发送 AI 欢迎消息
+     */
+    private void sendAiWelcomeMessage(Long conversationId) {
+        CsMessage welcomeMessage = new CsMessage();
+        welcomeMessage.setConversationId(conversationId);
+        welcomeMessage.setSenderId(-1L);
+        welcomeMessage.setSenderRole("AI");
+        welcomeMessage.setSenderNickname("智能助手");
+        welcomeMessage.setMessageType(CsMessageType.TEXT.getCode());
+        welcomeMessage.setContent("您好！我是智能客服助手 😊\n\n我可以帮您解答关于：\n• 3D打印价格咨询\n• 材料选择建议\n• 订单状态查询\n• 配送时间咨询\n\n请问有什么可以帮您的？\n\n如需人工客服，请发送人工客服或点击转人工按钮。");
+        welcomeMessage.setIsRead(0);
+        welcomeMessage.setCreateTime(LocalDateTime.now());
+        messageRepository.insert(welcomeMessage);
+
+        // 更新会话最后消息时间
+        CsConversation conversation = conversationRepository.selectById(conversationId);
+        if (conversation != null) {
+            conversation.setLastMessageTime(LocalDateTime.now());
+            conversationRepository.updateById(conversation);
+        }
+
+        // 推送欢迎消息给用户
+        CsMessageVO messageVO = CsMessageVO.builder()
+                .id(welcomeMessage.getId())
+                .conversationId(welcomeMessage.getConversationId())
+                .senderId(welcomeMessage.getSenderId())
+                .senderRole(welcomeMessage.getSenderRole())
+                .senderNickname(welcomeMessage.getSenderNickname())
+                .messageType(welcomeMessage.getMessageType())
+                .content(welcomeMessage.getContent())
+                .isRead(false)
+                .createTime(welcomeMessage.getCreateTime())
+                .build();
+
+        webSocketService.pushNewMessage(conversationId, messageVO);
     }
 
     @Override
@@ -150,7 +206,37 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
             log.warn("推送消息失败", e);
         }
 
+        // 新增：AI 自动回复逻辑（只有会话没有人工客服时才触发）
+        if (shouldTriggerAi(conversation)) {
+            final Long conversationId = request.getConversationId();
+            final String userMessage = request.getContent();
+            final Long senderId = userId;
+            // 异步调用 AI 服务，避免阻塞用户消息发送
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    if (aiChatService != null) {
+                        aiChatService.processUserMessage(conversationId, userMessage, senderId);
+                    }
+                } catch (Exception e) {
+                    log.error("AI 回复失败", e);
+                }
+            });
+        }
+
         return messageVO;
+    }
+
+    /**
+     * 判断是否应该触发 AI 回复
+     */
+    private boolean shouldTriggerAi(CsConversation conversation) {
+        // AI 功能未启用
+        if (!aiProperties.getEnabled()) {
+            return false;
+        }
+
+        // 没有人工客服接入
+        return conversation.getAdminId() == null;
     }
 
     @Override
@@ -380,11 +466,18 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
 
             addSystemMessage(conversation.getId(), "客服 " + nickname + " 已接入会话");
 
-            // 通过WebSocket通知
+            // 通过WebSocket通知用户端
             try {
                 webSocketService.pushConversationUpdate(convertToVO(conversation));
             } catch (Exception e) {
                 log.warn("推送会话更新失败", e);
+            }
+
+            // 推送专门的分配通知给客服
+            try {
+                webSocketService.pushConversationAssigned(adminId, convertToVO(conversation), true);
+            } catch (Exception e) {
+                log.warn("推送会话分配通知失败", e);
             }
         }
 

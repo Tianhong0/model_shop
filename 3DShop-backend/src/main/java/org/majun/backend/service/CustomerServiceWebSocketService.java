@@ -141,9 +141,35 @@ public class CustomerServiceWebSocketService {
             // 推送给客服
             if (conversation.getAdminId() != null) {
                 pushToAdmin(conversation.getAdminId(), payload);
+            } else if (conversation.getStatus() != null && conversation.getStatus() == 0) {
+                // 会话状态为 WAITING (0) 且没有客服接入，通知所有在线客服
+                log.info("会话等待人工接入，通知所有在线客服: conversationId={}", conversation.getId());
+                pushToAllOnlineAdmins(payload);
             }
         } catch (Exception e) {
             log.error("推送会话更新失败", e);
+        }
+    }
+
+    /**
+     * 推送会话分配/转接通知给指定客服
+     * @param adminId 客服ID
+     * @param conversation 会话信息
+     * @param isAutoAssign 是否为自动分配
+     */
+    public void pushConversationAssigned(Long adminId, CsConversationVO conversation, boolean isAutoAssign) {
+        try {
+            String payload = objectMapper.writeValueAsString(Map.of(
+                "eventType", "CONVERSATION_ASSIGNED",
+                "conversation", conversation,
+                "isAutoAssign", isAutoAssign
+            ));
+
+            pushToAdmin(adminId, payload);
+            log.info("推送会话分配通知给客服: adminId={}, conversationId={}, isAutoAssign={}",
+                adminId, conversation.getId(), isAutoAssign);
+        } catch (Exception e) {
+            log.error("推送会话分配通知失败", e);
         }
     }
 
@@ -201,9 +227,24 @@ public class CustomerServiceWebSocketService {
     // 推送给所有在线客服（新会话通知）
     public void pushToAllOnlineAdmins(String payload) {
         List<Long> onlineAdminIds = adminStatusRepository.findOnlineAdminIds();
-        for (Long adminId : onlineAdminIds) {
-            pushToAdmin(adminId, payload);
+        log.info("推送消息给所有在线客服: onlineAdminIds={}, 已注册sessions={}", onlineAdminIds, adminSessions.keySet());
+
+        if (onlineAdminIds == null || onlineAdminIds.isEmpty()) {
+            log.warn("没有在线客服，无法推送消息");
+            return;
         }
+
+        int successCount = 0;
+        for (Long adminId : onlineAdminIds) {
+            CopyOnWriteArraySet<WebSocketSession> sessions = adminSessions.get(adminId);
+            if (sessions != null && !sessions.isEmpty()) {
+                pushToAdmin(adminId, payload);
+                successCount++;
+            } else {
+                log.warn("客服 {} 在数据库中在线但没有 WebSocket session", adminId);
+            }
+        }
+        log.info("成功推送给 {} 个在线客服", successCount);
     }
 
     // 获取在线客服列表

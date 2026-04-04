@@ -19,12 +19,15 @@
       <div class="conversation-panel">
         <div class="panel-header">
           <h3>会话列表</h3>
-          <el-radio-group v-model="statusFilter" size="small" @change="loadConversations">
-            <el-radio-button :label="null">全部</el-radio-button>
-            <el-radio-button :label="0">等待中</el-radio-button>
-            <el-radio-button :label="1">进行中</el-radio-button>
-            <el-radio-button :label="2">已结束</el-radio-button>
-          </el-radio-group>
+          <div class="header-actions">
+            <el-button size="small" @click="loadConversations">刷新</el-button>
+            <el-radio-group v-model="statusFilter" size="small" @change="loadConversations">
+              <el-radio-button :label="null">全部</el-radio-button>
+              <el-radio-button :label="0">等待中</el-radio-button>
+              <el-radio-button :label="1">进行中</el-radio-button>
+              <el-radio-button :label="2">已结束</el-radio-button>
+            </el-radio-group>
+          </div>
         </div>
 
         <el-table :data="conversationList" @row-click="openConversation" highlight-current-row>
@@ -91,19 +94,26 @@
             v-for="msg in messages"
             :key="msg.id"
             class="message-item"
-            :class="{ 'message-self': msg.senderRole === 'ADMIN', 'message-system': msg.messageType == 4 }"
+            :class="{
+              'message-self': msg.senderRole === 'ADMIN',
+              'message-system': msg.messageType == 4,
+              'message-ai': msg.senderRole === 'AI'
+            }"
           >
             <template v-if="msg.messageType == 4">
               <div class="system-msg">{{ msg.content }}</div>
             </template>
             <template v-else>
-              <div class="message-avatar">
+              <div class="message-avatar" :class="{ 'ai-avatar': msg.senderRole === 'AI' }">
                 <img v-if="msg.senderAvatar" :src="msg.senderAvatar" />
                 <template v-else>{{ getAvatarText(msg) }}</template>
               </div>
               <div class="message-content">
                 <div class="message-meta">
-                  <span class="sender-name">{{ getSenderName(msg) }}</span>
+                  <span class="sender-name">
+                    {{ getSenderName(msg) }}
+                    <el-tag v-if="msg.senderRole === 'AI'" type="success" size="small" style="margin-left: 4px">AI</el-tag>
+                  </span>
                   <span class="msg-time">{{ formatTime(msg.createTime) }}</span>
                 </div>
                 <div v-if="msg.messageType == 1" class="message-bubble">
@@ -150,8 +160,10 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import JSONBigFactory from 'json-bigint'
+import { useNotificationStore } from '@/stores/notification'
 
 const JSONBig = JSONBigFactory({ storeAsString: true })
+const notificationStore = useNotificationStore()
 import {
   getCsConversationsApi,
   acceptCsConversationApi,
@@ -186,8 +198,8 @@ const wsConnected = ref(false)
 
 const buildWsUrl = () => {
   const token = localStorage.getItem('token')
-  // 从 REST API 基地址推导 WebSocket 地址，保证走同一个后端实例
-  const restBase = 'http://127.0.0.1:9999'.replace(/\/+$/, '')
+  // 从当前页面地址推导 WebSocket 地址
+  const restBase = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:9999'
   const wsBase = restBase.startsWith('https://')
     ? restBase.replace('https://', 'wss://')
     : restBase.replace('http://', 'ws://')
@@ -257,6 +269,10 @@ const handleWsEvent = (data) => {
 
     // 如果是当前打开的会话，追加消息
     if (currentConversation.value && String(currentConversation.value.id) === String(convId)) {
+      // 客服自己发送的消息已经在 sendMessage 中添加过了，跳过
+      if (msg.senderRole === 'ADMIN') {
+        return
+      }
       if (!messages.value.some(m => String(m.id) === String(msg.id))) {
         messages.value.push(msg)
         nextTick(scrollToBottom)
@@ -271,8 +287,35 @@ const handleWsEvent = (data) => {
         conv.lastMessageTime = msg.createTime
       }
     }
+  } else if (data.eventType === 'CONVERSATION_ASSIGNED') {
+    // 会话自动转接通知
+    const assignedConv = data.conversation
+    const isAutoAssign = data.isAutoAssign
+
+    // 添加到会话列表
+    const idx = conversationList.value.findIndex(c => String(c.id) === String(assignedConv.id))
+    if (idx < 0) {
+      conversationList.value.unshift(assignedConv)
+      total.value++
+    } else {
+      conversationList.value[idx] = { ...conversationList.value[idx], ...assignedConv }
+    }
+
+    // 显示强提醒通知（自动转接时使用warning类型）
+    if (isAutoAssign) {
+      notificationStore.addConversationTransferNotification(assignedConv)
+    } else {
+      notificationStore.addCustomerServiceNotification(assignedConv)
+    }
+
+    // 自动打开转接的会话
+    openConversation(assignedConv)
+
+    // 更新统计
+    loadStats()
   } else if (data.eventType === 'CONVERSATION_UPDATE') {
     const updatedConv = data.conversation
+
     const idx = conversationList.value.findIndex(c => String(c.id) === String(updatedConv.id))
     if (idx >= 0) {
       // 更新已有会话
@@ -281,6 +324,23 @@ const handleWsEvent = (data) => {
       // 新会话，插入列表头部
       conversationList.value.unshift(updatedConv)
       total.value++
+
+      // 新会话提示
+      if (updatedConv.status === 0) {
+        // 等待接入的会话
+        notificationStore.addNotification({
+          type: 'warning',
+          title: '有新会话等待接入',
+          message: `用户 ${updatedConv.userNickname || '用户'} 正在等待人工客服`,
+          duration: 0, // 不自动关闭
+          route: '/customer-service'
+        })
+      } else if (updatedConv.status === 1 && updatedConv.adminId) {
+        // 自动分配的会话 - 显示冒泡通知
+        notificationStore.addCustomerServiceNotification(updatedConv)
+        // 自动打开会话
+        openConversation(updatedConv)
+      }
     }
     // 如果是当前打开的会话，同步状态
     if (currentConversation.value && String(currentConversation.value.id) === String(updatedConv.id)) {
@@ -349,11 +409,15 @@ const endConversation = async (id) => {
 
 // 打开会话
 const openConversation = async (row) => {
-  currentConversation.value = row
+  // 如果 row 只包含部分字段，从列表中找到完整的会话对象
+  const fullConv = conversationList.value.find(c => String(c.id) === String(row.id))
+  currentConversation.value = fullConv || row
 
   // 标记已读
   await markCsAdminReadApi(row.id)
-  row.unreadAdminCount = 0
+  if (fullConv) {
+    fullConv.unreadAdminCount = 0
+  }
 
   // 加载历史消息
   try {
@@ -478,11 +542,13 @@ const formatTime = (time) => {
 }
 
 const getAvatarText = (msg) => {
+  if (msg.senderRole === 'AI') return 'AI'
   const name = msg.senderNickname || (msg.senderRole === 'USER' ? '用户' : '我')
   return name.slice(0, 1)
 }
 
 const getSenderName = (msg) => {
+  if (msg.senderRole === 'AI') return msg.senderNickname || '智能助手'
   return msg.senderNickname || (msg.senderRole === 'USER' ? '用户' : '我')
 }
 
@@ -498,13 +564,27 @@ const previewImage = (url) => {
 
 // ==================== 生命周期 ====================
 
-onMounted(() => {
+onMounted(async () => {
+  // 自动设置在线状态
+  try {
+    await setCsAdminStatusApi(true)
+    console.log('已自动设置为在线状态')
+  } catch (e) {
+    console.error('设置在线状态失败', e)
+  }
+
   loadConversations()
   loadStats()
   connectWebSocket()
 })
 
-onUnmounted(() => {
+onUnmounted(async () => {
+  // 离开页面时设置为离线
+  try {
+    await setCsAdminStatusApi(false)
+  } catch (e) {
+    // ignore
+  }
   closeWebSocket()
 })
 </script>
@@ -560,6 +640,16 @@ onUnmounted(() => {
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-light);
+}
+
+.panel-header h3 {
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .chat-panel {
@@ -648,6 +738,17 @@ onUnmounted(() => {
 
 .message-item.message-self .message-avatar {
   background: linear-gradient(135deg, var(--success-color) 0%, #34d399 100%);
+}
+
+/* AI 消息样式 */
+.message-item.message-ai .message-avatar,
+.message-avatar.ai-avatar {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.message-item.message-ai .message-bubble {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #10b98133;
 }
 
 .message-content {
