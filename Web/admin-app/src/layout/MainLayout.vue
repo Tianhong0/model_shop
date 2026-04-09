@@ -27,7 +27,7 @@
               <!-- 有子菜单 -->
               <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.permissionCode || String(menu.id)">
                 <template #title>
-                  <el-icon><component :is="menu.icon || 'Menu'" /></el-icon>
+                  <el-icon><component :is="getMenuIcon(menu)" /></el-icon>
                   <span>{{ menu.permissionName }}</span>
                 </template>
                 <el-menu-item
@@ -35,13 +35,13 @@
                   :key="child.id || child.permissionCode"
                   :index="child.menuPath"
                 >
-                  <el-icon><component :is="child.icon || 'Menu'" /></el-icon>
+                  <el-icon><component :is="getMenuIcon(child)" /></el-icon>
                   <span>{{ child.permissionName }}</span>
                 </el-menu-item>
               </el-sub-menu>
               <!-- 无子菜单 -->
               <el-menu-item v-else :index="menu.menuPath">
-                <el-icon><component :is="menu.icon || 'Menu'" /></el-icon>
+                <el-icon><component :is="getMenuIcon(menu)" /></el-icon>
                 <template #title>{{ menu.permissionName }}</template>
               </el-menu-item>
             </template>
@@ -199,7 +199,7 @@
                 <span>运营管理</span>
               </template>
               <el-menu-item index="/operation/banners">
-                <el-icon><picture /></el-icon>
+                <el-icon><PictureFilled /></el-icon>
                 <span>轮播管理</span>
               </el-menu-item>
               <el-menu-item index="/operation/notices">
@@ -921,12 +921,18 @@ const clearMessages = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadOperationStatus()
   loadMessages()
   loadCurrentUser()
   // 应用主题
   configStore.applyTheme()
+  // 刷新菜单数据确保图标正确
+  if (authStore.isAuthenticated) {
+    await authStore.fetchPermissions()
+  }
+  // 打印菜单数据用于调试
+  console.log('Current menus:', JSON.stringify(authStore.menus, null, 2))
 })
 
 // 监听主题颜色变化
@@ -944,6 +950,95 @@ onUnmounted(() => {
     profileCodeTimer = null
   }
 })
+
+// 菜单名称到图标的映射表
+const menuIconMap = {
+  '仪表盘': 'Monitor',
+  '用户中心': 'UserFilled',
+  '用户管理': 'User',
+  '角色管理': 'Avatar',
+  '注销申请管理': 'DocumentDelete',
+  '管理员注册审核': 'UserFilled',
+  '设计者申请审核': 'UserFilled',
+  '管理员管理': 'Avatar',
+  '模型管理': 'Goods',
+  '模型分类': 'Menu',
+  '模型管理': 'List',
+  '清单管理': 'Collection',
+  '订单系统': 'Ticket',
+  '订单管理': 'Document',
+  '售后管理': 'Service',
+  '物流管理': 'Van',
+  '订单评价': 'ChatLineSquare',
+  '二手交易': 'Tickets',
+  '商品管理': 'Goods',
+  '举报处理': 'Warning',
+  '打印排产': 'Clock',
+  '任务排产': 'List',
+  '打印机管理': 'Printer',
+  '悬赏管理': 'Collection',
+  '任务悬赏': 'Document',
+  '评价申诉': 'Warning',
+  '社区模块': 'Promotion',
+  '帖子管理': 'ChatDotRound',
+  '回复管理': 'Calendar',
+  '分类管理': 'Menu',
+  '运营管理': 'Setting',
+  '轮播管理': 'PictureFilled',
+  '公告管理': 'Notification',
+  '优惠券管理': 'Ticket',
+  '拼团管理': 'Goods',
+  '拼团活动': 'List',
+  '批量打印折扣': 'PriceTag',
+  '活动赛事': 'Calendar',
+  '活动管理': 'Calendar',
+  '作品管理': 'StarFilled',
+  '报名管理': 'User',
+  '资金管理': 'Money',
+  '提现管理': 'Tickets',
+  '系统管理': 'Setting',
+  '界面配置': 'Operation',
+  '系统配置': 'Tools',
+  '操作日志': 'Document',
+  '统计报表': 'DataAnalysis',
+  '订单统计': 'Document',
+  '用户统计': 'User',
+  '模型统计': 'Goods',
+  '财务统计': 'Money',
+  '悬赏统计': 'Collection',
+  '客服管理': 'Service'
+}
+
+// 获取菜单图标
+const getMenuIcon = (menu) => {
+  // 调试输出
+  console.log('getMenuIcon called with:', menu.permissionName, 'icon:', menu.icon)
+
+  // 优先使用数据库配置的图标（排除空字符串）
+  if (menu.icon && menu.icon.trim()) {
+    console.log('  -> using db icon:', menu.icon.trim())
+    return menu.icon.trim()
+  }
+  // 根据菜单名称匹配图标
+  const name = menu.permissionName?.trim()
+  if (name && menuIconMap[name]) {
+    console.log('  -> using mapped icon:', menuIconMap[name])
+    return menuIconMap[name]
+  }
+  // 根据菜单路径匹配
+  const path = menu.menuPath?.trim()
+  if (path) {
+    if (path.includes('banner') || path.includes('Banner')) {
+      console.log('  -> using path matched icon: PictureFilled')
+      return 'PictureFilled'
+    }
+    if (path.includes('notice') || path.includes('Notice')) return 'Notification'
+    if (path.includes('coupon')) return 'Ticket'
+  }
+  // 默认图标
+  console.log('  -> using default icon: Menu')
+  return 'Menu'
+}
 
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title || '后台管理')

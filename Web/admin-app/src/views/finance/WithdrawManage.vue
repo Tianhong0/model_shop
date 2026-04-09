@@ -16,12 +16,7 @@
         </el-space>
       </div>
 
-      <el-alert
-        title="当前提现申请已支持系统自动审核并自动打款，本页面仍保留手工审核/打款能力用于异常处理。"
-        type="success"
-        :closable="false"
-        style="margin-bottom: 16px"
-      />
+     
 
       <el-table v-loading="loading" :data="tableData" stripe border highlight-current-row style="width: 100%">
         <el-table-column prop="id" label="提现ID" width="180" />

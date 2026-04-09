@@ -31,10 +31,6 @@
           <span class="value">{{ indexStatus.version ? formatVersion(indexStatus.version) : '未索引' }}</span>
         </div>
       </div>
-      <div class="index-tip">
-        <el-icon><InfoFilled /></el-icon>
-        <span>语义搜索基于 AI 向量技术，用户可以用自然语言描述查找商品。重建索引会重新处理所有已上架模型。</span>
-      </div>
     </div>
 
     <div class="table-card">
