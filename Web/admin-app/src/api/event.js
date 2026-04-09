@@ -150,3 +150,24 @@ export const updateParticipationStatus = (data) => {
     data
   })
 }
+
+/**
+ * 为指定获奖者颁发积分
+ */
+export const awardPoints = (data) => {
+  return request({
+    url: '/api/event/admin/award-points',
+    method: 'POST',
+    data
+  })
+}
+
+/**
+ * 批量发放活动所有获奖者积分
+ */
+export const awardAllWinners = (eventId) => {
+  return request({
+    url: `/api/event/admin/award-all/${eventId}`,
+    method: 'POST'
+  })
+}

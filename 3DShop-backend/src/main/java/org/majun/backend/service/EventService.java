@@ -162,4 +162,19 @@ public interface EventService {
      * 管理端更新参与状态
      */
     void updateParticipationStatus(ParticipationStatusUpdateRequest request);
+
+    // ==================== 管理端颁奖接口 ====================
+
+    /**
+     * 为指定获奖者颁发积分奖励
+     * @param request 颁奖请求
+     */
+    void awardPoints(AwardPointsRequest request);
+
+    /**
+     * 批量为活动所有获奖者颁奖
+     * @param eventId 活动ID
+     * @return 颁奖结果统计
+     */
+    AwardPointsResultVO awardAllWinners(Long eventId);
 }

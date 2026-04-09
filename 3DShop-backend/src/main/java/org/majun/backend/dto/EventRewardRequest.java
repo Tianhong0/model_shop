@@ -24,4 +24,7 @@ public class EventRewardRequest {
     @NotBlank(message = "奖品内容不能为空")
     @Schema(description = "奖品内容")
     private String prizeContent;
+
+    @Schema(description = "奖励积分数量")
+    private Integer points;
 }

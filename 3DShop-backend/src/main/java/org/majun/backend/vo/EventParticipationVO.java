@@ -54,6 +54,12 @@ public class EventParticipationVO {
     @Schema(description = "获奖奖项")
     private String awardRank;
 
+    @Schema(description = "积分是否已发放: 0-未发放, 1-已发放")
+    private Integer pointsSent;
+
+    @Schema(description = "积分发放时间")
+    private LocalDateTime pointsSentTime;
+
     @Schema(description = "参与结果")
     private String result;
 

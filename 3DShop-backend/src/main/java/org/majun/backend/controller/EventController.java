@@ -307,4 +307,21 @@ public class EventController {
         eventService.updateParticipationStatus(request);
         return Result.success();
     }
+
+    // ==================== 管理端颁奖接口 ====================
+
+    @Operation(summary = "为指定获奖者颁发积分")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/admin/award-points")
+    public Result<Void> awardPoints(@Valid @RequestBody AwardPointsRequest request) {
+        eventService.awardPoints(request);
+        return Result.success();
+    }
+
+    @Operation(summary = "批量发放活动所有获奖者积分")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/admin/award-all/{eventId}")
+    public Result<AwardPointsResultVO> awardAllWinners(@PathVariable Long eventId) {
+        return Result.success(eventService.awardAllWinners(eventId));
+    }
 }

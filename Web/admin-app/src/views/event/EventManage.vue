@@ -148,11 +148,26 @@
 
         <!-- 奖励配置 -->
         <el-divider content-position="left">奖励设置</el-divider>
-        <div v-for="(reward, index) in form.rewards" :key="index" style="display: flex; gap: 10px; margin-bottom: 10px;">
-          <el-input v-model="reward.rankName" placeholder="奖项名称" style="width: 150px" />
-          <el-input-number v-model="reward.winnerCount" :min="1" placeholder="人数" style="width: 100px" />
-          <el-input v-model="reward.prizeContent" placeholder="奖品内容" style="flex: 1" />
-          <el-button type="danger" @click="removeReward(index)" :icon="Delete" circle />
+        <div v-for="(reward, index) in form.rewards" :key="index" style="margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 8px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="width: 140px;">
+              <div style="font-size: 12px; color: #909399; margin-bottom: 4px;">奖项名称</div>
+              <el-input v-model="reward.rankName" placeholder="如：一等奖" />
+            </div>
+            <div style="width: 100px;">
+              <div style="font-size: 12px; color: #909399; margin-bottom: 4px;">获奖人数</div>
+              <el-input-number v-model="reward.winnerCount" :min="1" style="width: 100%" />
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 12px; color: #909399; margin-bottom: 4px;">奖品内容</div>
+              <el-input v-model="reward.prizeContent" placeholder="如：证书+奖杯" />
+            </div>
+            <div style="width: 120px;">
+              <div style="font-size: 12px; color: #909399; margin-bottom: 4px;">奖励积分</div>
+              <el-input-number v-model="reward.points" :min="0" style="width: 100%" />
+            </div>
+            <el-button type="danger" @click="removeReward(index)" :icon="Delete" circle style="margin-top: 20px;" />
+          </div>
         </div>
         <el-button type="primary" link @click="addReward">+ 添加奖项</el-button>
       </el-form>
@@ -292,7 +307,8 @@ const openEdit = async (row) => {
     form.rewards = (res.rewards || []).map(r => ({
       rankName: r.rankName,
       winnerCount: r.winnerCount || 1,
-      prizeContent: r.prizeContent
+      prizeContent: r.prizeContent,
+      points: r.points || 0
     }))
     dialogVisible.value = true
   } catch (error) {
@@ -304,7 +320,8 @@ const addReward = () => {
   form.rewards.push({
     rankName: '',
     winnerCount: 1,
-    prizeContent: ''
+    prizeContent: '',
+    points: 0
   })
 }
 

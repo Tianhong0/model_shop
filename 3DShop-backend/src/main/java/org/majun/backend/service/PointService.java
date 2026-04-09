@@ -39,6 +39,7 @@ public class PointService {
     public static final String BIZ_COUPON_REFUND = "COUPON_REFUND";
     public static final String BIZ_POST_REPLY_ADOPTED = "POST_REPLY_ADOPTED";
     public static final String BIZ_POST_REPLY_EXCELLENT = "POST_REPLY_EXCELLENT";
+    public static final String BIZ_EVENT_AWARD = "EVENT_AWARD";
 
     // 配置键名
     public static final String CONFIG_ECO_MATERIAL_REWARD_POINTS = "ECO_MATERIAL_REWARD_POINTS";

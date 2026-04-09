@@ -16,6 +16,7 @@
           <el-button type="primary" @click="fetchList">查询</el-button>
           <el-button @click="resetQuery">重置</el-button>
         </el-space>
+        <el-button type="success" @click="openBatchAward" :disabled="!canBatchAward">批量颁奖</el-button>
       </div>
 
       <el-table v-loading="loading" :data="records" border stripe>
@@ -50,14 +51,23 @@
             {{ scope.row.awardRank || '-' }}
           </template>
         </el-table-column>
+        <el-table-column label="积分发放" width="100">
+          <template #default="scope">
+            <el-tag v-if="scope.row.status === 4" :type="scope.row.pointsSent ? 'success' : 'warning'">
+              {{ scope.row.pointsSent ? '已发放' : '未发放' }}
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="result" label="参与结果" min-width="150">
           <template #default="scope">
             {{ scope.row.result || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button link type="primary" @click="openEdit(scope.row)">修改状态</el-button>
+            <el-button v-if="scope.row.status === 4 && !scope.row.pointsSent" link type="success" @click="openAward(scope.row)">颁奖</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -100,7 +110,12 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="form.status === 4" label="获奖奖项">
-          <el-input v-model="form.awardRank" placeholder="请输入获奖奖项" />
+          <el-select v-model="form.awardRank" placeholder="请选择获奖奖项" style="width: 100%">
+            <el-option v-for="r in formRewards" :key="r.rankName" :label="r.rankName" :value="r.rankName">
+              <span>{{ r.rankName }}</span>
+              <span v-if="r.points" style="color: #909399; font-size: 12px; margin-left: 8px;">({{ r.points }}积分)</span>
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="参与结果">
           <el-input v-model="form.result" type="textarea" :rows="2" placeholder="可选填写参与结果" />
@@ -111,16 +126,57 @@
         <el-button type="primary" :loading="saving" @click="submit">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 颁奖弹窗 -->
+    <el-dialog v-model="awardDialogVisible" title="颁发积分奖励" width="500px">
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="用户">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <el-avatar :src="awardForm.userAvatar" :size="36" />
+            <span>{{ awardForm.userName }}</span>
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="活动">{{ awardForm.eventTitle }}</el-descriptions-item>
+        <el-descriptions-item label="获奖奖项">{{ awardForm.awardRank }}</el-descriptions-item>
+        <el-descriptions-item label="奖励积分">
+          <el-tag type="warning" size="large">{{ awardForm.points }} 积分</el-tag>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="awardDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="awarding" @click="submitAward">确认发放</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量颁奖弹窗 -->
+    <el-dialog v-model="batchAwardDialogVisible" title="批量颁奖确认" width="500px">
+      <el-alert type="warning" :closable="false" style="margin-bottom: 16px;">
+        <template #title>
+          将为活动【{{ batchAwardForm.eventTitle }}】的所有获奖者发放积分奖励
+        </template>
+      </el-alert>
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="待发放人数">{{ batchAwardForm.pendingCount }} 人</el-descriptions-item>
+        <el-descriptions-item label="预计发放积分">{{ batchAwardForm.totalPoints }} 积分</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="batchAwardDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="awarding" @click="submitBatchAward">确认发放</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getAllAdminParticipations,
   getEventAdminList,
-  updateParticipationStatus
+  updateParticipationStatus,
+  awardPoints,
+  awardAllWinners,
+  getEventDetail
 } from '../../api/event'
 
 const loading = ref(false)
@@ -137,8 +193,10 @@ const query = reactive({
 })
 
 const dialogVisible = ref(false)
+const formRewards = ref([])
 const form = reactive({
   id: null,
+  eventId: null,
   userId: null,
   userName: '',
   userAvatar: '',
@@ -146,6 +204,27 @@ const form = reactive({
   status: 1,
   awardRank: '',
   result: ''
+})
+
+// 颁奖相关
+const awardDialogVisible = ref(false)
+const batchAwardDialogVisible = ref(false)
+const awarding = ref(false)
+const awardForm = reactive({
+  participationId: null,
+  eventId: null,
+  userId: null,
+  userName: '',
+  userAvatar: '',
+  eventTitle: '',
+  awardRank: '',
+  points: 0
+})
+const batchAwardForm = reactive({
+  eventId: null,
+  eventTitle: '',
+  pendingCount: 0,
+  totalPoints: 0
 })
 
 const formatDateTime = (time) => {
@@ -206,8 +285,9 @@ const resetQuery = () => {
   fetchList()
 }
 
-const openEdit = (row) => {
+const openEdit = async (row) => {
   form.id = row.id
+  form.eventId = row.eventId
   form.userId = row.userId
   form.userName = row.userName || '未知用户'
   form.userAvatar = row.userAvatar
@@ -215,6 +295,18 @@ const openEdit = (row) => {
   form.status = row.status
   form.awardRank = row.awardRank || ''
   form.result = row.result || ''
+
+  // 获取活动的奖励列表
+  formRewards.value = []
+  if (row.eventId) {
+    try {
+      const eventDetail = await getEventDetail(row.eventId)
+      formRewards.value = eventDetail.rewards || []
+    } catch (error) {
+      console.error('获取活动奖励失败:', error)
+    }
+  }
+
   dialogVisible.value = true
 }
 
@@ -234,6 +326,103 @@ const submit = async () => {
     ElMessage.error(error.message || '修改失败')
   } finally {
     saving.value = false
+  }
+}
+
+// 计算是否可以批量颁奖
+const canBatchAward = computed(() => {
+  return query.eventId && records.value.some(r => r.status === 4 && !r.pointsSent)
+})
+
+// 打开单个颁奖弹窗
+const openAward = async (row) => {
+  awardForm.participationId = row.id
+  awardForm.eventId = row.eventId
+  awardForm.userId = row.userId
+  awardForm.userName = row.userName || '未知用户'
+  awardForm.userAvatar = row.userAvatar
+  awardForm.eventTitle = row.eventTitle
+  awardForm.awardRank = row.awardRank
+
+  // 获取对应奖项的积分
+  try {
+    const eventDetail = await getEventDetail(row.eventId)
+    const reward = (eventDetail.rewards || []).find(r => r.rankName === row.awardRank)
+    awardForm.points = reward?.points || 0
+  } catch (error) {
+    awardForm.points = 0
+  }
+
+  if (awardForm.points <= 0) {
+    ElMessage.warning('该奖项未配置积分奖励')
+    return
+  }
+
+  awardDialogVisible.value = true
+}
+
+// 提交单个颁奖
+const submitAward = async () => {
+  awarding.value = true
+  try {
+    await awardPoints({
+      eventId: awardForm.eventId,
+      participationIds: [awardForm.participationId]
+    })
+    ElMessage.success('积分发放成功')
+    awardDialogVisible.value = false
+    fetchList()
+  } catch (error) {
+    ElMessage.error(error.message || '发放失败')
+  } finally {
+    awarding.value = false
+  }
+}
+
+// 打开批量颁奖弹窗
+const openBatchAward = async () => {
+  if (!query.eventId) {
+    ElMessage.warning('请先选择活动')
+    return
+  }
+
+  // 获取待发放人数和总积分
+  const pendingWinners = records.value.filter(r => r.status === 4 && !r.pointsSent)
+  if (pendingWinners.length === 0) {
+    ElMessage.warning('没有需要发放积分的获奖者')
+    return
+  }
+
+  batchAwardForm.eventId = query.eventId
+  batchAwardForm.eventTitle = events.value.find(e => e.id === query.eventId)?.title || ''
+  batchAwardForm.pendingCount = pendingWinners.length
+
+  // 计算总积分
+  try {
+    const eventDetail = await getEventDetail(query.eventId)
+    const pointsMap = new Map((eventDetail.rewards || []).map(r => [r.rankName, r.points || 0]))
+    batchAwardForm.totalPoints = pendingWinners.reduce((sum, w) => {
+      return sum + (pointsMap.get(w.awardRank) || 0)
+    }, 0)
+  } catch (error) {
+    batchAwardForm.totalPoints = 0
+  }
+
+  batchAwardDialogVisible.value = true
+}
+
+// 提交批量颁奖
+const submitBatchAward = async () => {
+  awarding.value = true
+  try {
+    const result = await awardAllWinners(batchAwardForm.eventId)
+    batchAwardDialogVisible.value = false
+    fetchList()
+    ElMessage.success(`颁奖完成: 成功${result.successCount}人, 跳过${result.skippedCount}人, 发放${result.totalPoints}积分`)
+  } catch (error) {
+    ElMessage.error(error.message || '批量颁奖失败')
+  } finally {
+    awarding.value = false
   }
 }
 

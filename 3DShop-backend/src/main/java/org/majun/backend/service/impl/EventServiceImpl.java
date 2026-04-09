@@ -10,6 +10,7 @@ import org.majun.backend.dto.*;
 import org.majun.backend.entity.*;
 import org.majun.backend.repository.*;
 import org.majun.backend.service.EventService;
+import org.majun.backend.service.PointService;
 import org.majun.backend.vo.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ public class EventServiceImpl implements EventService {
     private final SysEventSubmissionCommentRepository submissionCommentRepository;
     private final SysEventCommentLikeRepository commentLikeRepository;
     private final SysUserRepository userRepository;
+    private final PointService pointService;
 
     // ==================== 管理端接口 ====================
 
@@ -226,6 +228,7 @@ public class EventServiceImpl implements EventService {
             rvo.setRankName(r.getRankName());
             rvo.setWinnerCount(r.getWinnerCount());
             rvo.setPrizeContent(r.getPrizeContent());
+            rvo.setPoints(r.getPoints());
             return rvo;
         }).collect(Collectors.toList()));
 
@@ -908,6 +911,7 @@ public class EventServiceImpl implements EventService {
             reward.setRankOrder(rewardReq.getRankOrder() != null ? rewardReq.getRankOrder() : order++);
             reward.setWinnerCount(rewardReq.getWinnerCount() != null ? rewardReq.getWinnerCount() : 1);
             reward.setPrizeContent(rewardReq.getPrizeContent());
+            reward.setPoints(rewardReq.getPoints() != null ? rewardReq.getPoints() : 0);
             reward.setIsDelete(0);
             rewardRepository.insert(reward);
         }
@@ -1003,6 +1007,8 @@ public class EventServiceImpl implements EventService {
         vo.setStatus(p.getStatus());
         vo.setStatusName(getParticipationStatusName(p.getStatus()));
         vo.setAwardRank(p.getAwardRank());
+        vo.setPointsSent(p.getPointsSent());
+        vo.setPointsSentTime(p.getPointsSentTime());
         vo.setResult(p.getResult());
 
         // 查询用户信息
@@ -1190,5 +1196,142 @@ public class EventServiceImpl implements EventService {
         }
 
         return vo;
+    }
+
+    // ==================== 管理端颁奖接口 ====================
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void awardPoints(AwardPointsRequest request) {
+        SysEvent event = getEventOrThrow(request.getEventId());
+
+        // 校验活动状态（只有已结束的活动可以颁奖）
+        if (event.getStatus() != 4) {
+            throw new BusinessException(ResultCode.FAIL, "只有已结束的活动才能颁奖");
+        }
+
+        // 获取活动的奖励配置（奖项 -> 积分映射）
+        java.util.Map<String, Integer> rewardPointsMap = getRewardPointsMap(request.getEventId());
+
+        for (Long participationId : request.getParticipationIds()) {
+            SysEventParticipation participation = participationRepository.selectById(participationId);
+            if (participation == null || participation.getIsDelete() == 1) {
+                continue;
+            }
+
+            // 校验是否为获奖者
+            if (participation.getStatus() != 4) {
+                continue;
+            }
+
+            // 校验是否已发放
+            if (Objects.equals(participation.getPointsSent(), 1)) {
+                continue;
+            }
+
+            // 校验活动ID匹配
+            if (!participation.getEventId().equals(request.getEventId())) {
+                continue;
+            }
+
+            // 获取对应奖项的积分
+            Integer points = rewardPointsMap.get(participation.getAwardRank());
+            if (points == null || points <= 0) {
+                continue;
+            }
+
+            // 生成业务流水号（使用参与记录ID保证幂等性）
+            String bizNo = "EVENT_AWARD_" + participationId;
+
+            // 发放积分
+            String remark = String.format("活动[%s]获奖奖励[%s]", event.getTitle(), participation.getAwardRank());
+            pointService.increase(participation.getUserId(), points, PointService.BIZ_EVENT_AWARD, bizNo, participationId, remark);
+
+            // 更新发放状态
+            participation.setPointsSent(1);
+            participation.setPointsSentTime(LocalDateTime.now());
+            participationRepository.updateById(participation);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AwardPointsResultVO awardAllWinners(Long eventId) {
+        SysEvent event = getEventOrThrow(eventId);
+
+        // 校验活动状态
+        if (event.getStatus() != 4) {
+            throw new BusinessException(ResultCode.FAIL, "只有已结束的活动才能颁奖");
+        }
+
+        // 获取活动的奖励配置
+        java.util.Map<String, Integer> rewardPointsMap = getRewardPointsMap(eventId);
+
+        // 查询所有获奖者（status=4）
+        LambdaQueryWrapper<SysEventParticipation> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysEventParticipation::getEventId, eventId)
+                .eq(SysEventParticipation::getStatus, 4)
+                .eq(SysEventParticipation::getIsDelete, 0);
+        List<SysEventParticipation> winners = participationRepository.selectList(wrapper);
+
+        int successCount = 0;
+        int failCount = 0;
+        int skippedCount = 0;
+        int totalPoints = 0;
+
+        for (SysEventParticipation participation : winners) {
+            // 已发放的跳过
+            if (Objects.equals(participation.getPointsSent(), 1)) {
+                skippedCount++;
+                continue;
+            }
+
+            // 获取对应奖项的积分
+            Integer points = rewardPointsMap.get(participation.getAwardRank());
+            if (points == null || points <= 0) {
+                failCount++;
+                continue;
+            }
+
+            try {
+                // 生成业务流水号
+                String bizNo = "EVENT_AWARD_" + participation.getId();
+
+                // 发放积分
+                String remark = String.format("活动[%s]获奖奖励[%s]", event.getTitle(), participation.getAwardRank());
+                pointService.increase(participation.getUserId(), points, PointService.BIZ_EVENT_AWARD, bizNo, participation.getId(), remark);
+
+                // 更新发放状态
+                participation.setPointsSent(1);
+                participation.setPointsSentTime(LocalDateTime.now());
+                participationRepository.updateById(participation);
+
+                successCount++;
+                totalPoints += points;
+            } catch (Exception e) {
+                log.error("颁奖失败, participationId={}", participation.getId(), e);
+                failCount++;
+            }
+        }
+
+        return AwardPointsResultVO.builder()
+                .successCount(successCount)
+                .failCount(failCount)
+                .skippedCount(skippedCount)
+                .totalPoints(totalPoints)
+                .build();
+    }
+
+    /**
+     * 获取活动的奖项-积分映射
+     */
+    private java.util.Map<String, Integer> getRewardPointsMap(Long eventId) {
+        List<SysEventReward> rewards = rewardRepository.selectList(
+                new LambdaQueryWrapper<SysEventReward>()
+                        .eq(SysEventReward::getEventId, eventId)
+        );
+        return rewards.stream()
+                .filter(r -> r.getPoints() != null && r.getPoints() > 0)
+                .collect(Collectors.toMap(SysEventReward::getRankName, SysEventReward::getPoints, (a, b) -> a));
     }
 }

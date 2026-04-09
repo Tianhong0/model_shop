@@ -48,6 +48,10 @@ public class SysEventReward implements Serializable {
     @Schema(description = "奖品内容")
     private String prizeContent;
 
+    @TableField("points")
+    @Schema(description = "奖励积分数量")
+    private Integer points;
+
     @TableField("is_delete")
     @TableLogic
     @Schema(description = "逻辑删除")
