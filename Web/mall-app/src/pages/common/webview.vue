@@ -1,6 +1,9 @@
 <template>
 	<view class="webview-container">
-		<view class="content-box">
+		<!-- 外部链接模式 -->
+		<web-view v-if="externalUrl" :src="externalUrl" class="external-webview"></web-view>
+		<!-- 协议内容模式 -->
+		<view v-else class="content-box">
 			<view class="title">{{ pageTitle }}</view>
 			<view class="update-time">更新时间：{{ updateTime }}</view>
 			<view class="content" v-html="content"></view>
@@ -14,7 +17,8 @@ import { onLoad } from '@dcloudio/uni-app'
 
 const pageTitle = ref('用户协议')
 const content = ref('')
-const updateTime = ref('2024年1月1日')
+const updateTime = ref('2026年4月1日')
+const externalUrl = ref('')
 
 const userAgreementContent = `
 	<h3>一、服务条款的确认和接纳</h3>
@@ -56,7 +60,7 @@ const userAgreementContent = `
 	<h3>八、协议修改</h3>
 	<p>8.1 本平台有权在必要时修改本服务协议，并在平台上公布。</p>
 	<p>8.2 如用户不同意本平台对本服务协议所做的修改，用户有权停止使用网络服务。</p>
-	<p>8.3 如用户继续使用网络服务，则视为用户接受本平台对本服务协议的修改。</p>
+	<p>8.3 如用户继续使用网络服务，则视为用户接受本平台对本服务协议所做的修改。</p>
 `
 
 const privacyPolicyContent = `
@@ -111,6 +115,16 @@ const privacyPolicyContent = `
 `
 
 onLoad((options) => {
+	// 优先处理外部链接模式
+	if (options?.url) {
+		externalUrl.value = decodeURIComponent(options.url)
+		const title = options?.title || '详情'
+		pageTitle.value = decodeURIComponent(title)
+		uni.setNavigationBarTitle({ title: pageTitle.value })
+		return
+	}
+
+	// 协议内容模式
 	const type = options?.type || 'userAgreement'
 	const title = options?.title || '用户协议'
 
@@ -147,8 +161,11 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 .webview-container {
 	min-height: 100vh;
 	background-color: $surface;
-	padding: 24rpx;
-	padding-bottom: calc(env(safe-area-inset-bottom) + 24rpx);
+}
+
+.external-webview {
+	width: 100%;
+	height: 100vh;
 }
 
 .content-box {
@@ -157,6 +174,7 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 	border-radius: 24rpx;
 	box-shadow: $shadow-card;
 	animation: fadeInUp 0.35s ease-out both;
+	min-height: 100vh;
 }
 
 .title {

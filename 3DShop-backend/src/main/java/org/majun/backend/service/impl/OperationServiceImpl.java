@@ -79,6 +79,7 @@ public class OperationServiceImpl implements OperationService {
 
         SysBanner banner = new SysBanner();
         banner.setTitle(request.getTitle());
+        banner.setSubtitle(request.getSubtitle());
         banner.setImageUrl(request.getImageUrl());
         banner.setLinkType(request.getLinkType() != null ? request.getLinkType() : 0);
         banner.setLinkValue(request.getLinkValue());
@@ -102,6 +103,9 @@ public class OperationServiceImpl implements OperationService {
 
         if (StringUtils.hasText(request.getTitle())) {
             banner.setTitle(request.getTitle());
+        }
+        if (request.getSubtitle() != null) {
+            banner.setSubtitle(request.getSubtitle());
         }
         if (StringUtils.hasText(request.getImageUrl())) {
             banner.setImageUrl(request.getImageUrl());
@@ -291,6 +295,7 @@ public class OperationServiceImpl implements OperationService {
         BannerVO vo = new BannerVO();
         vo.setId(banner.getId());
         vo.setTitle(banner.getTitle());
+        vo.setSubtitle(banner.getSubtitle());
         vo.setImageUrl(banner.getImageUrl());
         vo.setLinkType(banner.getLinkType());
         vo.setLinkValue(banner.getLinkValue());

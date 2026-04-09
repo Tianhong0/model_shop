@@ -18,6 +18,9 @@ public class BannerVO {
     @Schema(description = "标题")
     private String title;
 
+    @Schema(description = "副标题")
+    private String subtitle;
+
     @Schema(description = "图片地址")
     private String imageUrl;
 

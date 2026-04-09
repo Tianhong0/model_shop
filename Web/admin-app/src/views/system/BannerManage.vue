@@ -16,15 +16,20 @@
 
       <el-table v-loading="loading" :data="records" border stripe>
         <el-table-column prop="id" label="ID" width="180" />
-        <el-table-column prop="title" label="标题" min-width="180" />
-        <el-table-column label="图片" width="140">
+        <el-table-column prop="title" label="标题" min-width="140" />
+        <el-table-column prop="subtitle" label="副标题" min-width="140" show-overflow-tooltip />
+        <el-table-column label="图片" width="100">
           <template #default="scope">
-            <el-image :src="scope.row.imageUrl" style="width: 100px; height: 56px; border-radius: 6px" fit="cover" />
+            <el-image :src="scope.row.imageUrl" style="width: 60px; height: 36px; border-radius: 6px" fit="cover" />
           </template>
         </el-table-column>
-        <el-table-column prop="linkType" label="跳转类型" width="120" />
-        <el-table-column prop="sortNo" label="排序" width="100" />
-        <el-table-column prop="status" label="状态" width="120">
+        <el-table-column prop="linkType" label="跳转类型" width="100">
+          <template #default="scope">
+            {{ ['无跳转', '模型详情', '活动页', '外部链接'][scope.row.linkType] || '无跳转' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="sortNo" label="排序" width="80" />
+        <el-table-column prop="status" label="状态" width="100">
           <template #default="scope">
             <el-switch
               :model-value="scope.row.status === 1"
@@ -32,8 +37,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="scope">
             <el-button link type="primary" @click="openEdit(scope.row)">编辑</el-button>
             <el-button link type="danger" @click="remove(scope.row)">删除</el-button>
@@ -62,6 +66,9 @@
         <el-form-item label="标题">
           <el-input v-model="form.title" maxlength="100" />
         </el-form-item>
+        <el-form-item label="副标题">
+          <el-input v-model="form.subtitle" maxlength="200" placeholder="显示在轮播图标题下方" />
+        </el-form-item>
         <el-form-item label="图片">
           <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
             <el-input v-model="form.imageUrl" placeholder="请上传或粘贴图片URL" />
@@ -70,7 +77,7 @@
           </div>
         </el-form-item>
         <el-form-item label="跳转类型">
-          <el-select v-model="form.linkType" style="width: 100%">
+          <el-select v-model="form.linkType" style="width: 100%" @change="onLinkTypeChange">
             <el-option label="无跳转" :value="0" />
             <el-option label="模型详情" :value="1" />
             <el-option label="活动页" :value="2" />
@@ -78,7 +85,20 @@
           </el-select>
         </el-form-item>
         <el-form-item label="跳转值">
-          <el-input v-model="form.linkValue" />
+          <!-- 无跳转 -->
+          <el-input v-if="form.linkType === 0" disabled placeholder="无需填写跳转值" />
+          <!-- 模型详情：选择器 -->
+          <div v-else-if="form.linkType === 1" style="display: flex; gap: 10px; width: 100%;">
+            <el-input :model-value="selectedModelName" disabled placeholder="点击选择模型" />
+            <el-button @click="openModelSelector">选择模型</el-button>
+          </div>
+          <!-- 活动页：选择器 -->
+          <div v-else-if="form.linkType === 2" style="display: flex; gap: 10px; width: 100%;">
+            <el-input :model-value="selectedEventName" disabled placeholder="点击选择活动" />
+            <el-button @click="openEventSelector">选择活动</el-button>
+          </div>
+          <!-- 外部链接：手动输入 -->
+          <el-input v-else-if="form.linkType === 3" v-model="form.linkValue" placeholder="请输入完整URL，如 https://example.com" />
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sortNo" :min="0" style="width: 100%" />
@@ -95,13 +115,86 @@
         <el-button type="primary" :loading="saving" @click="submit">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 模型选择器对话框 -->
+    <el-dialog v-model="modelSelectorVisible" title="选择模型" width="800px">
+      <div style="margin-bottom: 16px;">
+        <el-input v-model="modelQuery.keyword" clearable placeholder="搜索模型名称" style="width: 300px;" @keyup.enter="searchModels" />
+        <el-button type="primary" style="margin-left: 10px;" @click="searchModels">搜索</el-button>
+      </div>
+      <el-table v-loading="modelLoading" :data="modelRecords" border stripe max-height="400" highlight-current-row @current-change="onModelSelect">
+        <el-table-column prop="id" label="ID" width="180" />
+        <el-table-column label="图片" width="100">
+          <template #default="scope">
+            <el-image :src="scope.row.mainImageUrl || scope.row.thumbnailUrl" style="width: 60px; height: 60px; border-radius: 6px" fit="cover" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="modelName" label="模型名称" min-width="180" />
+        <el-table-column prop="basePrice" label="基础价格" width="120">
+          <template #default="scope">¥{{ scope.row.basePrice || 0 }}</template>
+        </el-table-column>
+      </el-table>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+        <el-pagination
+          v-model:current-page="modelQuery.pageNum"
+          v-model:page-size="modelQuery.pageSize"
+          :total="modelTotal"
+          :page-sizes="[10, 20, 50]"
+          layout="total, prev, pager, next"
+          small
+          @current-change="fetchModelList"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="modelSelectorVisible = false">取消</el-button>
+        <el-button type="primary" :disabled="!tempSelectedModel" @click="confirmModelSelect">确认选择</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 活动选择器对话框 -->
+    <el-dialog v-model="eventSelectorVisible" title="选择活动" width="800px">
+      <div style="margin-bottom: 16px;">
+        <el-input v-model="eventQuery.title" clearable placeholder="搜索活动名称" style="width: 300px;" @keyup.enter="searchEvents" />
+        <el-button type="primary" style="margin-left: 10px;" @click="searchEvents">搜索</el-button>
+      </div>
+      <el-table v-loading="eventLoading" :data="eventRecords" border stripe max-height="400" highlight-current-row @current-change="onEventSelect">
+        <el-table-column prop="id" label="ID" width="180" />
+        <el-table-column label="封面" width="100">
+          <template #default="scope">
+            <el-image :src="scope.row.coverImage" style="width: 60px; height: 60px; border-radius: 6px" fit="cover" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="title" label="活动名称" min-width="180" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? '进行中' : '已结束' }}</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+        <el-pagination
+          v-model:current-page="eventQuery.pageNum"
+          v-model:page-size="eventQuery.pageSize"
+          :total="eventTotal"
+          :page-sizes="[10, 20, 50]"
+          layout="total, prev, pager, next"
+          small
+          @current-change="fetchEventList"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="eventSelectorVisible = false">取消</el-button>
+        <el-button type="primary" :disabled="!tempSelectedEvent" @click="confirmEventSelect">确认选择</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { uploadFileWithProgress } from '../../api/model'
+import { uploadFileWithProgress, getModelList } from '../../api/model'
+import { getEventAdminList } from '../../api/event'
 import {
   createBanner,
   deleteBanner,
@@ -129,11 +222,40 @@ const fileRef = ref(null)
 const form = reactive({
   id: null,
   title: '',
+  subtitle: '',
   imageUrl: '',
   linkType: 0,
   linkValue: '',
   sortNo: 0,
   status: 1
+})
+
+// 模型选择器相关
+const modelSelectorVisible = ref(false)
+const modelLoading = ref(false)
+const modelRecords = ref([])
+const modelTotal = ref(0)
+const tempSelectedModel = ref(null)
+const selectedModelName = ref('')
+const modelQuery = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  keyword: '',
+  status: 1
+})
+
+// 活动选择器相关
+const eventSelectorVisible = ref(false)
+const eventLoading = ref(false)
+const eventRecords = ref([])
+const eventTotal = ref(0)
+const tempSelectedEvent = ref(null)
+const selectedEventName = ref('')
+const eventQuery = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  title: '',
+  status: null
 })
 
 const fetchList = async () => {
@@ -171,11 +293,14 @@ const resetQuery = () => {
 const resetForm = () => {
   form.id = null
   form.title = ''
+  form.subtitle = ''
   form.imageUrl = ''
   form.linkType = 0
   form.linkValue = ''
   form.sortNo = 0
   form.status = 1
+  selectedModelName.value = ''
+  selectedEventName.value = ''
 }
 
 const openCreate = () => {
@@ -184,17 +309,48 @@ const openCreate = () => {
   dialogVisible.value = true
 }
 
-const openEdit = (row) => {
+const openEdit = async (row) => {
   isEdit.value = true
   Object.assign(form, {
     id: row.id,
     title: row.title,
+    subtitle: row.subtitle ?? '',
     imageUrl: row.imageUrl,
     linkType: row.linkType ?? 0,
     linkValue: row.linkValue ?? '',
     sortNo: row.sortNo ?? 0,
     status: row.status ?? 1
   })
+  // 解析已有的 linkValue，显示对应的名称
+  selectedModelName.value = ''
+  selectedEventName.value = ''
+  if (row.linkType === 1 && row.linkValue) {
+    // 模型详情，从 linkValue 中提取模型ID并获取名称
+    const match = row.linkValue.match(/id=(\d+)/)
+    if (match) {
+      try {
+        const res = await getModelList({ pageNum: 1, pageSize: 1, id: match[1] })
+        if (res.records?.[0]) {
+          selectedModelName.value = res.records[0].modelName
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  } else if (row.linkType === 2 && row.linkValue) {
+    // 活动页，从 linkValue 中提取活动ID并获取名称
+    const match = row.linkValue.match(/id=(\d+)/)
+    if (match) {
+      try {
+        const res = await getEventAdminList({ pageNum: 1, pageSize: 1, id: match[1] })
+        if (res.records?.[0]) {
+          selectedEventName.value = res.records[0].title
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
   dialogVisible.value = true
 }
 
@@ -207,6 +363,7 @@ const submit = async () => {
   try {
     const payload = {
       title: form.title,
+      subtitle: form.subtitle,
       imageUrl: form.imageUrl,
       linkType: form.linkType,
       linkValue: form.linkValue,
@@ -274,6 +431,98 @@ const uploadImage = async (event) => {
     uploading.value = false
     event.target.value = ''
   }
+}
+
+// ==================== 跳转类型变更处理 ====================
+
+const onLinkTypeChange = () => {
+  form.linkValue = ''
+  selectedModelName.value = ''
+  selectedEventName.value = ''
+}
+
+// ==================== 模型选择器 ====================
+
+const openModelSelector = () => {
+  modelSelectorVisible.value = true
+  tempSelectedModel.value = null
+  fetchModelList()
+}
+
+const fetchModelList = async () => {
+  modelLoading.value = true
+  try {
+    const res = await getModelList({
+      pageNum: modelQuery.pageNum,
+      pageSize: modelQuery.pageSize,
+      modelName: modelQuery.keyword || undefined,
+      status: modelQuery.status
+    })
+    modelRecords.value = res.records || []
+    modelTotal.value = res.total || 0
+  } catch (error) {
+    console.error('获取模型列表失败:', error)
+  } finally {
+    modelLoading.value = false
+  }
+}
+
+const searchModels = () => {
+  modelQuery.pageNum = 1
+  fetchModelList()
+}
+
+const onModelSelect = (row) => {
+  tempSelectedModel.value = row
+}
+
+const confirmModelSelect = () => {
+  if (!tempSelectedModel.value) return
+  form.linkValue = `/pages/custom/detail?id=${tempSelectedModel.value.id}`
+  selectedModelName.value = tempSelectedModel.value.modelName
+  modelSelectorVisible.value = false
+}
+
+// ==================== 活动选择器 ====================
+
+const openEventSelector = () => {
+  eventSelectorVisible.value = true
+  tempSelectedEvent.value = null
+  fetchEventList()
+}
+
+const fetchEventList = async () => {
+  eventLoading.value = true
+  try {
+    const res = await getEventAdminList({
+      pageNum: eventQuery.pageNum,
+      pageSize: eventQuery.pageSize,
+      title: eventQuery.title || undefined,
+      status: eventQuery.status
+    })
+    eventRecords.value = res.records || []
+    eventTotal.value = res.total || 0
+  } catch (error) {
+    console.error('获取活动列表失败:', error)
+  } finally {
+    eventLoading.value = false
+  }
+}
+
+const searchEvents = () => {
+  eventQuery.pageNum = 1
+  fetchEventList()
+}
+
+const onEventSelect = (row) => {
+  tempSelectedEvent.value = row
+}
+
+const confirmEventSelect = () => {
+  if (!tempSelectedEvent.value) return
+  form.linkValue = `/pages/event/event-detail?id=${tempSelectedEvent.value.id}`
+  selectedEventName.value = tempSelectedEvent.value.title
+  eventSelectorVisible.value = false
 }
 
 onMounted(fetchList)

@@ -42,7 +42,7 @@
 							<view class="banner-meta">
 								<text class="banner-tag">热门推荐</text>
 								<text class="banner-title">{{ item.title || '定制手办专区' }}</text>
-								<text class="banner-sub">{{ item.linkValue || '立即开启你的专属3D创作之旅' }}</text>
+								<text class="banner-sub">{{ item.subtitle || '立即开启你的专属3D创作之旅' }}</text>
 							</view>
 						</view>
 					</swiper-item>
@@ -518,9 +518,44 @@ const handleSearch = () => {
 }
 
 const onBannerTap = (item) => {
-	if (!item?.linkValue) return
-	if (item.linkValue.startsWith('/pages/')) {
-		uni.navigateTo({ url: item.linkValue })
+	if (!item) return
+	const linkType = Number(item.linkType) || 0
+	const linkValue = String(item.linkValue || '').trim()
+
+	switch (linkType) {
+		case 0:
+			// 无跳转
+			break
+		case 1:
+			// 模型详情
+			if (linkValue) {
+				uni.navigateTo({ url: linkValue })
+			}
+			break
+		case 2:
+			// 活动页
+			if (linkValue) {
+				uni.navigateTo({ url: linkValue })
+			}
+			break
+		case 3:
+			// 外部链接
+			if (linkValue) {
+				// #ifdef H5
+				window.open(linkValue, '_blank')
+				// #endif
+				// #ifndef H5
+				uni.navigateTo({
+					url: `/pages/common/webview?url=${encodeURIComponent(linkValue)}`
+				})
+				// #endif
+			}
+			break
+		default:
+			// 兼容旧数据：直接使用 linkValue 作为路径
+			if (linkValue && linkValue.startsWith('/pages/')) {
+				uni.navigateTo({ url: linkValue })
+			}
 	}
 }
 

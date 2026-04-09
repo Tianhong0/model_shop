@@ -17,6 +17,9 @@ public class BannerCreateRequest {
     @Schema(description = "标题")
     private String title;
 
+    @Schema(description = "副标题")
+    private String subtitle;
+
     @NotBlank(message = "图片地址不能为空")
     @Schema(description = "图片地址")
     private String imageUrl;

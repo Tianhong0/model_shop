@@ -9,5 +9,8 @@
 /Web/admin-app/node_modules/
 /Web/mall-app/.tmp-three161/
 /Web/mall-app/.venv/
-
+/3DShop-backend/.idea
+.playwright-mcp
 upload.py
+.mcp.json
+wendang

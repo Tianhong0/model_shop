@@ -32,6 +32,10 @@ public class SysBanner implements Serializable {
     @Schema(description = "轮播图标题")
     private String title;
 
+    @TableField("subtitle")
+    @Schema(description = "副标题")
+    private String subtitle;
+
     @TableField("image_url")
     @Schema(description = "图片地址")
     private String imageUrl;
