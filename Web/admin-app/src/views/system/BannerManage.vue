@@ -161,7 +161,7 @@
         <el-table-column prop="id" label="ID" width="180" />
         <el-table-column label="封面" width="100">
           <template #default="scope">
-            <el-image :src="scope.row.coverImage" style="width: 60px; height: 60px; border-radius: 6px" fit="cover" />
+            <el-image :src="scope.row.bannerUrl" style="width: 60px; height: 60px; border-radius: 6px" fit="cover" />
           </template>
         </el-table-column>
         <el-table-column prop="title" label="活动名称" min-width="180" />
