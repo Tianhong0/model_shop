@@ -45,9 +45,15 @@ import org.majun.backend.vo.WalletRechargePayCreateResponse;
 import org.majun.backend.vo.WalletRechargeStatusVO;
 import org.majun.backend.vo.WalletWithdrawVO;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -77,6 +83,7 @@ public class WalletService {
     private final WalletFrozenRecordRepository walletFrozenRecordRepository;
     private final PaymentProperties paymentProperties;
     private final ObjectMapper objectMapper;
+    private final ResourceLoader resourceLoader;
 
     private static final int USED_ORDER_FROZEN_DAYS = 7;
 
@@ -762,21 +769,29 @@ public class WalletService {
         return notifyUrl;
     }
 
-    private String resolveResourcePath(String path) {
-        if (!StringUtils.hasText(path)) {
+    private String resolveResourcePath(String location) {
+        if (!StringUtils.hasText(location)) {
             throw new BusinessException("支付宝证书路径未配置");
         }
-        if (path.startsWith("classpath:")) {
-            String location = path.substring("classpath:".length());
-            String normalized = location.startsWith("/") ? location.substring(1) : location;
+        if (location.startsWith("classpath:")) {
             try {
-                var resource = new org.springframework.core.io.ClassPathResource(normalized);
-                return resource.getFile().getAbsolutePath();
+                Resource resource = resourceLoader.getResource(location);
+                String fileName = resource.getFilename();
+                String suffix = ".tmp";
+                if (StringUtils.hasText(fileName) && fileName.contains(".")) {
+                    suffix = fileName.substring(fileName.lastIndexOf('.'));
+                }
+                Path tempFile = Files.createTempFile("alipay-cert-", suffix);
+                try (var inputStream = resource.getInputStream()) {
+                    Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+                tempFile.toFile().deleteOnExit();
+                return tempFile.toAbsolutePath().toString();
             } catch (Exception ex) {
-                throw new BusinessException("无法读取支付宝证书文件: " + path, ex);
+                throw new BusinessException("证书文件不存在或不可读: " + location);
             }
         }
-        return path;
+        return location;
     }
 
     private void validateAlipayConfig() {
