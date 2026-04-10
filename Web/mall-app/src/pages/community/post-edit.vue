@@ -271,17 +271,25 @@ const submit = async (status) => {
   }
 
   try {
+    // 显示AI审核提示（发布时才审核）
+    if (status === 1) {
+      uni.showLoading({ title: '智能审核中...', mask: true })
+    }
+
     if (isEdit.value) {
       await updatePostApi({ id: postId.value, ...payload })
+      uni.hideLoading()
       uni.showToast({ title: '更新成功', icon: 'success' })
     } else {
       await createPostApi(payload)
+      uni.hideLoading()
       uni.showToast({ title: status === 1 ? '发布成功' : '草稿已保存', icon: 'success' })
     }
     setTimeout(() => {
       uni.navigateBack()
     }, 500)
   } catch (error) {
+    uni.hideLoading()
     uni.showToast({ title: error.message || '提交失败', icon: 'none' })
   }
 }

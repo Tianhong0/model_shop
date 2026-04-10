@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import org.majun.backend.ai.service.ContentModerationService;
 import org.majun.backend.common.ResultCode;
 import org.majun.backend.common.exception.BusinessException;
 import org.majun.backend.dto.PostCreateRequest;
@@ -69,6 +70,7 @@ public class CommunityServiceImpl implements CommunityService {
     private final SysUserRepository userRepository;
     private final UserNotificationService userNotificationService;
     private final PointService pointService;
+    private final ContentModerationService contentModerationService;
 
     @Override
     public List<PostCategoryVO> getCategoryList() {
@@ -87,11 +89,18 @@ public class CommunityServiceImpl implements CommunityService {
         validateCategory(request.getCategoryId());
         validatePostEditableStatus(request.getStatus());
 
+        // AI内容审核
+        String title = request.getTitle();
+        String content = request.getContent();
+        String[] moderated = contentModerationService.moderateTexts(title, content);
+        title = moderated[0];
+        content = moderated[1];
+
         SysPost post = new SysPost();
         post.setUserId(userId);
         post.setCategoryId(request.getCategoryId());
-        post.setTitle(request.getTitle());
-        post.setContent(request.getContent());
+        post.setTitle(title);
+        post.setContent(content);
         post.setStatus(request.getStatus() == null ? 1 : request.getStatus());
         post.setIsTop(0);
         post.setViewCount(0);
@@ -120,10 +129,12 @@ public class CommunityServiceImpl implements CommunityService {
             post.setCategoryId(request.getCategoryId());
         }
         if (StringUtils.hasText(request.getTitle())) {
-            post.setTitle(request.getTitle());
+            // AI内容审核标题
+            post.setTitle(contentModerationService.moderateText(request.getTitle()));
         }
         if (StringUtils.hasText(request.getContent())) {
-            post.setContent(request.getContent());
+            // AI内容审核内容
+            post.setContent(contentModerationService.moderateText(request.getContent()));
         }
         if (request.getStatus() != null) {
             validatePostEditableStatus(request.getStatus());
@@ -239,11 +250,14 @@ public class CommunityServiceImpl implements CommunityService {
             }
         }
 
+        // AI内容审核回复内容
+        String moderatedContent = contentModerationService.moderateText(request.getContent());
+
         SysPostReply reply = new SysPostReply();
         reply.setPostId(request.getPostId());
         reply.setUserId(userId);
         reply.setParentId(parentId);
-        reply.setContent(request.getContent());
+        reply.setContent(moderatedContent);
         reply.setIsAdopted(0);
         reply.setIsExcellent(0);
         reply.setLikeCount(0);

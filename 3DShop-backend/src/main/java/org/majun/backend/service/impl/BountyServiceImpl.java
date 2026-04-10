@@ -22,35 +22,13 @@ import org.majun.backend.dto.BountyTaskCreateRequest;
 import org.majun.backend.dto.BountyTaskQueryRequest;
 import org.majun.backend.dto.BountyTaskResubmitRequest;
 import org.majun.backend.dto.BountyTaskReviewRequest;
-import org.majun.backend.entity.BountyBid;
-import org.majun.backend.entity.BountyDelivery;
-import org.majun.backend.entity.BountyDeliveryFile;
-import org.majun.backend.entity.BountyEscrow;
-import org.majun.backend.entity.BountyMessage;
-import org.majun.backend.entity.BountyPriceChange;
-import org.majun.backend.entity.BountyRating;
-import org.majun.backend.entity.BountyRatingAppeal;
-import org.majun.backend.entity.BountyStatusLog;
-import org.majun.backend.entity.BountyTask;
-import org.majun.backend.entity.BountyTaskAttachment;
-import org.majun.backend.entity.DesignerReputation;
+import org.majun.backend.entity.*;
 import org.majun.backend.enums.BountyBidStatus;
 import org.majun.backend.enums.BountyDeliveryStatus;
 import org.majun.backend.enums.BountyEscrowStatus;
 import org.majun.backend.enums.BountyPriceChangeStatus;
 import org.majun.backend.enums.BountyTaskStatus;
-import org.majun.backend.repository.BountyBidRepository;
-import org.majun.backend.repository.BountyDeliveryFileRepository;
-import org.majun.backend.repository.BountyDeliveryRepository;
-import org.majun.backend.repository.BountyEscrowRepository;
-import org.majun.backend.repository.BountyMessageRepository;
-import org.majun.backend.repository.BountyPriceChangeRepository;
-import org.majun.backend.repository.BountyRatingAppealRepository;
-import org.majun.backend.repository.BountyRatingRepository;
-import org.majun.backend.repository.BountyStatusLogRepository;
-import org.majun.backend.repository.BountyTaskRepository;
-import org.majun.backend.repository.BountyTaskAttachmentRepository;
-import org.majun.backend.repository.DesignerReputationRepository;
+import org.majun.backend.repository.*;
 import org.majun.backend.service.BountyService;
 import org.majun.backend.service.BountyWebSocketService;
 import org.majun.backend.vo.BountyBidVO;
@@ -95,6 +73,7 @@ public class BountyServiceImpl implements BountyService {
     private final DesignerReputationRepository designerReputationRepository;
     private final BountyRatingAppealRepository bountyRatingAppealRepository;
     private final BountyDeliveryFileRepository bountyDeliveryFileRepository;
+    private final SysUserRepository sysUserRepository;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -851,6 +830,30 @@ public class BountyServiceImpl implements BountyService {
                 .eq(BountyBid::getTaskId, task.getId())
                 .eq(BountyBid::getIsDelete, 0));
         vo.setBidCount(count == null ? 0 : count.intValue());
+
+        // 查询第一张附件图片作为封面
+        BountyTaskAttachment firstAttachment = bountyTaskAttachmentRepository.selectOne(
+                new LambdaQueryWrapper<BountyTaskAttachment>()
+                        .eq(BountyTaskAttachment::getTaskId, task.getId())
+                        .eq(BountyTaskAttachment::getIsDelete, 0)
+                        .orderByAsc(BountyTaskAttachment::getSortNo)
+                        .orderByAsc(BountyTaskAttachment::getId)
+                        .last("limit 1"));
+        if (firstAttachment != null && StringUtils.hasText(firstAttachment.getFileUrl())) {
+            vo.setCoverUrl(firstAttachment.getFileUrl());
+        }
+
+        // 查询发布者昵称
+        if (task.getPublisherId() != null) {
+            SysUser user = sysUserRepository.selectById(task.getPublisherId());
+            if (user != null) {
+                String nickname = StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUserName();
+                vo.setPublisherNickname(StringUtils.hasText(nickname) ? nickname : "用户#" + task.getPublisherId());
+            } else {
+                vo.setPublisherNickname("用户#" + task.getPublisherId());
+            }
+        }
+
         return vo;
     }
 

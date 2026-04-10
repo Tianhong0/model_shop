@@ -29,6 +29,11 @@ public class AiProperties {
      */
     private CustomerServiceConfig customerService = new CustomerServiceConfig();
 
+    /**
+     * 内容审核配置
+     */
+    private ContentModerationConfig contentModeration = new ContentModerationConfig();
+
     @Data
     public static class ZhipuConfig {
         /**
@@ -109,5 +114,38 @@ public class AiProperties {
          * AI 连续无法回答的轮次，超过后自动转人工
          */
         private Integer noAnswerTurns = 2;
+    }
+
+    @Data
+    public static class ContentModerationConfig {
+        /**
+         * 是否启用内容审核
+         */
+        private Boolean enabled = true;
+
+        /**
+         * 审核场景：社区帖子
+         */
+        private Boolean postEnabled = true;
+
+        /**
+         * 审核场景：社区回复
+         */
+        private Boolean replyEnabled = true;
+
+        /**
+         * 审核帖子标题
+         */
+        private Boolean moderatePostTitle = true;
+
+        /**
+         * 审核帖子内容
+         */
+        private Boolean moderatePostContent = true;
+
+        /**
+         * 审核回复内容
+         */
+        private Boolean moderateReplyContent = true;
     }
 }

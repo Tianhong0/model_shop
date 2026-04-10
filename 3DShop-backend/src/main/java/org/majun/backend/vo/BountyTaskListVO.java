@@ -19,4 +19,6 @@ public class BountyTaskListVO {
     private Integer bidCount;
     private LocalDateTime deadlineTime;
     private LocalDateTime createTime;
+    private String coverUrl;
+    private String publisherNickname;
 }

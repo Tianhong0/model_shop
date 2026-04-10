@@ -84,3 +84,11 @@ ai:
         - "投诉"
         - "退款"
       no-answer-turns: 2
+  # 内容审核配置
+  content-moderation:
+    enabled: true
+    post-enabled: true
+    reply-enabled: true
+    moderate-post-title: true
+    moderate-post-content: true
+    moderate-reply-content: true

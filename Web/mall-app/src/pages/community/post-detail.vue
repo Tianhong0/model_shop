@@ -255,12 +255,16 @@ const submitReply = async () => {
     return
   }
   try {
+    // 显示AI审核提示
+    uni.showLoading({ title: '智能审核中...', mask: true })
     await createReplyApi({ postId: postId.value, parentId: replyingTo.value?.id || 0, content: replyContent.value.trim() })
+    uni.hideLoading()
     replyContent.value = ''
     replyingTo.value = null
     uni.showToast({ title: '回复成功', icon: 'success' })
     await fetchDetail()
   } catch (error) {
+    uni.hideLoading()
     uni.showToast({ title: error.message || '回复失败', icon: 'none' })
   }
 }
