@@ -32,6 +32,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/model-list")
 @RequiredArgsConstructor
+/**
+ * 模型列表控制器
+ */
 public class ModelListController {
 
     private final ModelListService modelListService;

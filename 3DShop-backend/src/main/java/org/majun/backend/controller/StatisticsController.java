@@ -27,6 +27,9 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/statistics")
 @RequiredArgsConstructor
+/**
+ * 统计控制器
+ */
 public class StatisticsController {
 
     private final StatisticsService statisticsService;

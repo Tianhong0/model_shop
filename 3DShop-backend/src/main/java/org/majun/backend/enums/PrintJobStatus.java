@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 打印任务状态枚举
+ */
 public enum PrintJobStatus {
     QUEUED(0, "排队中"),
     SLICING(1, "切片中"),

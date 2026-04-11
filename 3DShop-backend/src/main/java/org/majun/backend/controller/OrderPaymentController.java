@@ -31,6 +31,9 @@ import java.util.Map;
 @RequestMapping("/api/orders/pay")
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 订单支付控制器
+ */
 public class OrderPaymentController {
 
     private final OrderPaymentService orderPaymentService;

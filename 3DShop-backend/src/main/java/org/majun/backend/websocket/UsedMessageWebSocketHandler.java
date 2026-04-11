@@ -21,6 +21,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * 二手商品消息 WebSocket 处理器
+ * 用于二手交易中买家与卖家之间的实时协商通信
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

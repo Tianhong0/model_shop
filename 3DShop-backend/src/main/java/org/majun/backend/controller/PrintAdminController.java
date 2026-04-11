@@ -25,6 +25,9 @@ import java.util.List;
 @RequestMapping("/api/print/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+/**
+ * 打印管理后台控制器
+ */
 public class PrintAdminController {
 
     private final PrintJobService printJobService;

@@ -59,6 +59,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 模型服务实现
+ */
 public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> implements ModelService {
 
     private final SysModelRepository modelRepository;

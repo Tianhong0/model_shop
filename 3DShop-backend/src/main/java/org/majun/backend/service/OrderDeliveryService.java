@@ -10,6 +10,9 @@ import org.majun.backend.vo.DeliveryDetailVO;
 import org.majun.backend.vo.DeliveryListVO;
 import org.majun.backend.vo.PageResult;
 
+/**
+ * 订单物流服务接口
+ */
 public interface OrderDeliveryService {
 
     Long shipOrder(DeliveryShipRequest request);

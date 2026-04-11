@@ -5,6 +5,9 @@ import org.majun.backend.vo.*;
 
 import java.util.Map;
 
+/**
+ * 二手交易服务接口
+ */
 public interface UsedTradeService {
 
     PageResult<UsedListingListVO> pageListings(UsedListingQueryRequest request, Long userId, boolean adminMode);

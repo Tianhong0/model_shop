@@ -53,6 +53,9 @@ import java.util.Objects;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 订单评价服务实现
+ */
 public class OrderCommentServiceImpl implements OrderCommentService {
 
     private final SysOrderCommentRepository orderCommentRepository;

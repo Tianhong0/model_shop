@@ -57,6 +57,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 二手交易服务实现
+ */
 public class UsedTradeServiceImpl implements UsedTradeService {
 
     private static final DateTimeFormatter ORDER_SN_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");

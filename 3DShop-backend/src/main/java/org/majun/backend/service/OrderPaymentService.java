@@ -9,6 +9,9 @@ import org.majun.backend.vo.OrderPayStatusVO;
 
 import java.util.Map;
 
+/**
+ * 订单支付服务接口
+ */
 public interface OrderPaymentService {
 
     OrderPayCreateResponse createAppPayOrder(OrderPayCreateRequest request, Long userId);

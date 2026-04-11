@@ -16,6 +16,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 打印进度 WebSocket 服务实现
+ */
 public class PrintWebSocketServiceImpl implements PrintWebSocketService, PrintWebSocketSessionStore {
 
     private final ObjectMapper objectMapper;

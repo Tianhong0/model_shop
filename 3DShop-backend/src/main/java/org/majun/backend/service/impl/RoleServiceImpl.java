@@ -37,6 +37,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 角色服务实现
+ */
 public class RoleServiceImpl implements RoleService {
 
     private final SysRoleRepository roleRepository;

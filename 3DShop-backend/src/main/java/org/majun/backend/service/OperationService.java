@@ -14,6 +14,9 @@ import org.majun.backend.vo.HomeConfigVO;
 import org.majun.backend.vo.NoticeVO;
 import org.majun.backend.vo.PageResult;
 
+/**
+ * 操作服务接口
+ */
 public interface OperationService {
 
     PageResult<BannerVO> getBannerAdminList(BannerQueryRequest request);

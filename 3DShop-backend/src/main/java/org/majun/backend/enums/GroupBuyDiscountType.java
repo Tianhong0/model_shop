@@ -3,6 +3,9 @@ package org.majun.backend.enums;
 /**
  * 拼团折扣类型枚举
  */
+/**
+ * 拼团折扣类型枚举
+ */
 public enum GroupBuyDiscountType {
     FIXED(1, "固定折扣"),
     LADDER(2, "阶梯折扣");

@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 物流状态枚举
+ */
 public enum DeliveryStatus {
     PENDING(0, "Pending shipment"),
     SHIPPED(1, "Shipped"),

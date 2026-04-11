@@ -23,6 +23,9 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 悬赏财务服务
+ */
 public class BountyFinanceService {
 
     private static final int BOUNTY_RELEASE_FROZEN_DAYS = 7;

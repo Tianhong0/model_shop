@@ -25,6 +25,9 @@ import org.majun.backend.vo.BountyTaskListVO;
 import org.majun.backend.vo.DesignerReputationVO;
 import org.majun.backend.vo.PageResult;
 
+/**
+ * 悬赏任务服务接口
+ */
 public interface BountyService {
 
     Long createTask(BountyTaskCreateRequest request, Long userId);

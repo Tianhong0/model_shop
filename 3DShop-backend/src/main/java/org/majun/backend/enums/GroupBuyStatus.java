@@ -3,6 +3,9 @@ package org.majun.backend.enums;
 /**
  * 拼团状态枚举
  */
+/**
+ * 拼团状态枚举
+ */
 public enum GroupBuyStatus {
     IN_PROGRESS(0, "拼团中"),
     SUCCESS(1, "拼团成功"),

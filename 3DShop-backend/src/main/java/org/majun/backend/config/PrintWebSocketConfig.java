@@ -11,6 +11,10 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+/**
+ * WebSocket 配置类
+ * 注册打印进度、售后消息、悬赏消息、二手消息、客服消息等 WebSocket 端点
+ */
 @Configuration
 @EnableWebSocket
 @RequiredArgsConstructor

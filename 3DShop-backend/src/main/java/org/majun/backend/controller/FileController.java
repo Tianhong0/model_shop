@@ -14,6 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/file")
+/**
+ * 文件上传控制器
+ */
 public class FileController {
 
     @Autowired

@@ -18,6 +18,9 @@ import org.majun.backend.vo.PostReplyLikeToggleVO;
 
 import java.util.List;
 
+/**
+ * 社区服务接口
+ */
 public interface CommunityService {
 
     List<PostCategoryVO> getCategoryList();

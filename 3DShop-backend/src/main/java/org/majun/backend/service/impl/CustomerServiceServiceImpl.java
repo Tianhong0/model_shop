@@ -33,6 +33,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 客服系统服务实现
+ */
 public class CustomerServiceServiceImpl implements CustomerServiceService {
 
     private final CsConversationRepository conversationRepository;

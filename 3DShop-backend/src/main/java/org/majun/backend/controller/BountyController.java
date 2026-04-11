@@ -55,6 +55,9 @@ import java.util.Map;
 @RequestMapping("/api/bounty")
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 悬赏任务控制器
+ */
 public class BountyController {
 
     private final BountyService bountyService;

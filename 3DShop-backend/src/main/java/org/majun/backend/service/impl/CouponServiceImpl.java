@@ -35,6 +35,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 优惠券服务实现
+ */
 public class CouponServiceImpl implements CouponService {
 
     private static final String BIZ_COUPON_EXCHANGE = "COUPON_EXCHANGE";

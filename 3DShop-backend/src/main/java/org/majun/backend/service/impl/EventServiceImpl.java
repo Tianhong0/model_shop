@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 活动赛事服务实现
+ */
 public class EventServiceImpl implements EventService {
 
     private final SysEventRepository eventRepository;

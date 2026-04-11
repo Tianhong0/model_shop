@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 二手订单状态枚举
+ */
 public enum UsedOrderStatus {
     PENDING_PAYMENT(0, "待支付"),
     WAIT_SHIPMENT(1, "待发货"),

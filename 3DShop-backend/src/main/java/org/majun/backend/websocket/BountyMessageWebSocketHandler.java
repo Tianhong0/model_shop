@@ -24,6 +24,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * 悬赏消息 WebSocket 处理器
+ * 用于悬赏任务中发布者与设计师之间的实时协商通信
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

@@ -31,6 +31,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/orders/delivery")
 @RequiredArgsConstructor
+/**
+ * 订单物流控制器
+ */
 public class OrderDeliveryController {
 
     private final OrderDeliveryService orderDeliveryService;

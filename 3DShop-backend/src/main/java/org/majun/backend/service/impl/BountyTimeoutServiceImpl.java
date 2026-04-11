@@ -33,6 +33,9 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 悬赏超时服务实现
+ */
 public class BountyTimeoutServiceImpl implements BountyTimeoutService {
 
     private final BountyEscrowRepository escrowRepository;

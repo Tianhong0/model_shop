@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 二手出价状态枚举
+ */
 public enum UsedOfferStatus {
     PENDING(0, "待处理"),
     ACCEPTED(1, "已接受"),

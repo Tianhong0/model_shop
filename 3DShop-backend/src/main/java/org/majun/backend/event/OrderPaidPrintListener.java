@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+/**
+ * 订单支付完成监听器
+ * 监听订单支付事件，自动触发打印任务创建
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

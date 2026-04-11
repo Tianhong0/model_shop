@@ -37,6 +37,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/orders/after-sale")
 @RequiredArgsConstructor
+/**
+ * 订单售后控制器
+ */
 public class OrderAfterSaleController {
 
     private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024L;

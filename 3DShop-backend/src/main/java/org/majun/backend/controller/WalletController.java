@@ -37,6 +37,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RequestMapping("/api/wallet")
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 钱包控制器
+ */
 public class WalletController {
 
     private final WalletService walletService;

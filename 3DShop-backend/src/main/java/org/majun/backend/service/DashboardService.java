@@ -5,6 +5,9 @@ import org.majun.backend.vo.DashboardMessageVO;
 
 import java.util.List;
 
+/**
+ * 仪表盘服务接口
+ */
 public interface DashboardService {
 
     DashboardOverviewVO getAdminOverview();

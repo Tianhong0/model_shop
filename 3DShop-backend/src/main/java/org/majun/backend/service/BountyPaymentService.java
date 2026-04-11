@@ -5,6 +5,9 @@ import org.majun.backend.vo.BountyPayStatusVO;
 
 import java.util.Map;
 
+/**
+ * 悬赏支付服务接口
+ */
 public interface BountyPaymentService {
 
     // ==================== 托管金支付 ====================

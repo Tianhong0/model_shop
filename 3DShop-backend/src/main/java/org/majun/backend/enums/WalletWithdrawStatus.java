@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 钱包提现状态枚举
+ */
 public enum WalletWithdrawStatus {
 
     APPLIED(0, "待审核"),

@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+/**
+ * 打印任务重试监听器
+ * 监听重试事件，重新执行打印流程
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

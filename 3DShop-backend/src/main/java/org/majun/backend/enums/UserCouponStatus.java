@@ -8,6 +8,9 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
+/**
+ * 用户优惠券状态枚举
+ */
 public enum UserCouponStatus {
 
     UNUSED(0, "未使用"),

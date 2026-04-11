@@ -23,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * OctoPrint 打印机服务实现
+ */
 public class OctoPrintServiceImpl implements OctoPrintService {
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");

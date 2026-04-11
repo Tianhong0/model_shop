@@ -59,6 +59,9 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 社区服务实现
+ */
 public class CommunityServiceImpl implements CommunityService {
 
     private final SysPostCategoryRepository postCategoryRepository;

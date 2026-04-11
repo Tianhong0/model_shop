@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/points")
 @RequiredArgsConstructor
+/**
+ * 积分控制器
+ */
 public class PointController {
 
     private final PointService pointService;

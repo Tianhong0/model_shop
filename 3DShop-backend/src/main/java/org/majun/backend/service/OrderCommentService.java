@@ -18,6 +18,9 @@ import org.majun.backend.vo.OrderCommentReplyVO;
 import org.majun.backend.vo.OrderCommentStatsVO;
 import org.majun.backend.vo.PageResult;
 
+/**
+ * 订单评价服务接口
+ */
 public interface OrderCommentService {
 
     Long createComment(OrderCommentCreateRequest request, Long userId);

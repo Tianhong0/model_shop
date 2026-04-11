@@ -17,6 +17,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 二手消息 WebSocket 服务实现
+ */
 public class UsedMessageWebSocketServiceImpl implements UsedMessageWebSocketService, UsedMessageWebSocketSessionStore {
 
     private final ObjectMapper objectMapper;

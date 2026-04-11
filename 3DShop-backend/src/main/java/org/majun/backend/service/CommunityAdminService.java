@@ -18,6 +18,9 @@ import org.majun.backend.vo.PostReplyVO;
 
 import java.util.List;
 
+/**
+ * 社区管理后台服务接口
+ */
 public interface CommunityAdminService {
 
     PageResult<PostListVO> getAdminPostPage(PostAdminQueryRequest request);

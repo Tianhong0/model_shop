@@ -2,6 +2,9 @@ package org.majun.backend.service;
 
 import java.math.BigDecimal;
 
+/**
+ * OctoPrint 打印机服务接口
+ */
 public interface OctoPrintService {
 
     default void verifyConnection(String baseUrl) {

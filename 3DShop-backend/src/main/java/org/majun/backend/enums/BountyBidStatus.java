@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 悬赏投标状态枚举
+ */
 public enum BountyBidStatus {
 
     SUBMITTED(0, "已提交"),

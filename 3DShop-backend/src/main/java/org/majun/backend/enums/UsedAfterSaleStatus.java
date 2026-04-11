@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 二手售后状态枚举
+ */
 public enum UsedAfterSaleStatus {
     APPLIED(0, "待处理"),
     APPROVED(1, "已同意"),

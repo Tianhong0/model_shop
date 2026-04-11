@@ -19,6 +19,9 @@ import org.majun.backend.vo.ModelListShareListVO;
 import org.majun.backend.vo.ModelListStatisticsVO;
 import org.majun.backend.vo.PageResult;
 
+/**
+ * 模型列表服务接口
+ */
 public interface ModelListService {
 
     Long createList(ModelListCreateRequest request, Long userId);

@@ -8,6 +8,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+/**
+ * 打印进度 WebSocket 处理器
+ * 用于向前端推送打印任务的实时进度
+ */
 @Component
 @RequiredArgsConstructor
 public class PrintProgressWebSocketHandler extends TextWebSocketHandler {

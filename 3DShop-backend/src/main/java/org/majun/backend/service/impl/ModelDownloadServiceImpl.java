@@ -28,6 +28,9 @@ import java.util.Objects;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 模型下载服务实现
+ */
 public class ModelDownloadServiceImpl implements ModelDownloadService {
 
     private static final int DEFAULT_PRESIGNED_EXPIRE_SECONDS = 3600; // 1小时

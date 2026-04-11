@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 悬赏任务状态枚举
+ */
 public enum BountyTaskStatus {
 
     PENDING_REVIEW(-1, "待审核"),

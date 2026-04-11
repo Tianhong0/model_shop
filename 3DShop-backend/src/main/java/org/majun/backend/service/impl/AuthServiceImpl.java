@@ -58,6 +58,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 认证服务实现
+ */
 public class AuthServiceImpl implements AuthService {
 
     private final SysUserRepository userRepository;

@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 账户删除状态枚举
+ */
 public enum DeletionStatus {
     PENDING("pending", "待审批"),
     APPROVED("approved", "已批准"),

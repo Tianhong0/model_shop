@@ -27,6 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/model-list/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+/**
+ * 模型管理后台控制器
+ */
 public class ModelListAdminController {
 
     private final ModelListService modelListService;

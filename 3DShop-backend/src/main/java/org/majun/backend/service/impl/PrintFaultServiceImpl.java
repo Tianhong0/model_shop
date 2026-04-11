@@ -37,6 +37,9 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 打印故障服务实现
+ */
 public class PrintFaultServiceImpl implements PrintFaultService {
 
     private static final int MAX_RETRY_COUNT = 3;

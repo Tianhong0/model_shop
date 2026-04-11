@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 悬赏托管状态枚举
+ */
 public enum BountyEscrowStatus {
 
     WAIT_PAY(0, "待支付"),

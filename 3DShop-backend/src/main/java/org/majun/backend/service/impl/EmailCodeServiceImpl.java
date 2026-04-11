@@ -18,6 +18,9 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 邮箱验证码服务实现
+ */
 public class EmailCodeServiceImpl implements EmailCodeService {
 
     private static final long CODE_EXPIRE_SECONDS = 300;

@@ -69,6 +69,9 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 钱包服务
+ */
 public class WalletService {
 
     private static final String APP_PAY_PRODUCT_CODE = "QUICK_MSECURITY_PAY";

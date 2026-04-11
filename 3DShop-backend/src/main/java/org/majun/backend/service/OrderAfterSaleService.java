@@ -11,6 +11,9 @@ import org.majun.backend.vo.AfterSaleListVO;
 import org.majun.backend.vo.AfterSaleMessageVO;
 import org.majun.backend.vo.PageResult;
 
+/**
+ * 订单售后服务接口
+ */
 public interface OrderAfterSaleService {
 
     Long createAfterSale(AfterSaleCreateRequest request, Long userId);

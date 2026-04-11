@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 二手举报状态枚举
+ */
 public enum UsedReportStatus {
     PENDING(0, "待处理"),
     PROCESSING(1, "处理中"),

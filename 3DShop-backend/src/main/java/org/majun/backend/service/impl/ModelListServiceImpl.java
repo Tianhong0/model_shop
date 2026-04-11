@@ -55,6 +55,9 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 模型列表服务实现
+ */
 public class ModelListServiceImpl implements ModelListService {
 
     private final SysModelListRepository listRepository;

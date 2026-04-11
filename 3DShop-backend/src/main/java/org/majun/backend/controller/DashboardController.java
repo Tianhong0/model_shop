@@ -21,6 +21,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
+/**
+ * 仪表盘控制器
+ */
 public class DashboardController {
 
     private final DashboardService dashboardService;

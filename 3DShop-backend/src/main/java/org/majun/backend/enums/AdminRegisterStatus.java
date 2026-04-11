@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 管理员注册审核状态枚举
+ */
 public enum AdminRegisterStatus {
     PENDING("pending", "待审核"),
     APPROVED("approved", "已通过"),

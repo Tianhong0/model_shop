@@ -17,6 +17,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 悬赏消息 WebSocket 服务实现
+ */
 public class BountyWebSocketServiceImpl implements BountyWebSocketService, BountyWebSocketSessionStore {
 
     private final ObjectMapper objectMapper;

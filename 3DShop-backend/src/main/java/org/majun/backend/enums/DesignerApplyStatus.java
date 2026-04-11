@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 设计师申请状态枚举
+ */
 public enum DesignerApplyStatus {
     PENDING("pending", "待审核"),
     APPROVED("approved", "已通过"),

@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 售后状态枚举
+ */
 public enum AfterSaleStatus {
     APPLIED(0, "Applied"),
     REVIEWING(1, "Reviewing"),

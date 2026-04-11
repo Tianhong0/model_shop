@@ -50,6 +50,9 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 社区管理后台服务实现
+ */
 public class CommunityAdminServiceImpl implements CommunityAdminService {
 
     private final SysPostRepository postRepository;

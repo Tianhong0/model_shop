@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 悬赏改价状态枚举
+ */
 public enum BountyPriceChangeStatus {
 
     PENDING(0, "待确认"),

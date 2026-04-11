@@ -20,6 +20,9 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 配置服务实现
+ */
 public class ConfigServiceImpl implements ConfigService {
 
     private final SysConfigRepository configRepository;

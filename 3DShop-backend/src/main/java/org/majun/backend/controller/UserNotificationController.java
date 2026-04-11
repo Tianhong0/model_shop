@@ -26,6 +26,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/notification")
 @RequiredArgsConstructor
+/**
+ * 用户通知控制器
+ */
 public class UserNotificationController {
 
     private final UserNotificationService userNotificationService;

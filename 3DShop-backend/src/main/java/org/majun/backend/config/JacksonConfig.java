@@ -9,6 +9,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
+/**
+ * Jackson JSON 配置类
+ * 配置日期时间序列化和 Long 转 String 防止精度丢失
+ */
 @Configuration
 public class JacksonConfig {
     @Bean

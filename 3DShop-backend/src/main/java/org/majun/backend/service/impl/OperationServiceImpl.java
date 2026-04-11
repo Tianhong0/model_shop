@@ -37,6 +37,9 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+/**
+ * 操作服务实现
+ */
 public class OperationServiceImpl implements OperationService {
 
     private final SysBannerRepository bannerRepository;

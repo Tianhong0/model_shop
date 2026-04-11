@@ -8,6 +8,9 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
+/**
+ * 操作类型枚举
+ */
 public enum OperationType {
 
     // 通用操作

@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 钱包流水方向枚举
+ */
 public enum WalletLedgerDirection {
 
     INCOME(1, "收入"),

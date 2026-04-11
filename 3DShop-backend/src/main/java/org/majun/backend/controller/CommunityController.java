@@ -36,6 +36,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/community")
 @RequiredArgsConstructor
+/**
+ * 社区前台控制器
+ */
 public class CommunityController {
 
     private final CommunityService communityService;

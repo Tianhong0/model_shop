@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 悬赏交付状态枚举
+ */
 public enum BountyDeliveryStatus {
 
     WAIT_SUBMIT(0, "待提交"),

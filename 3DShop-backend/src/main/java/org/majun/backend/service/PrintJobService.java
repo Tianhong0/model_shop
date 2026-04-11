@@ -12,6 +12,9 @@ import org.majun.backend.vo.PrintPrinterVO;
 
 import java.util.List;
 
+/**
+ * 打印任务服务接口
+ */
 public interface PrintJobService {
 
     void createAndDispatchFromPaidOrder(Long orderId);

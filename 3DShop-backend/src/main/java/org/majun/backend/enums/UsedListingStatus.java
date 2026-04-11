@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 二手商品状态枚举
+ */
 public enum UsedListingStatus {
     DRAFT(0, "草稿"),
     ON_SALE(1, "在售"),

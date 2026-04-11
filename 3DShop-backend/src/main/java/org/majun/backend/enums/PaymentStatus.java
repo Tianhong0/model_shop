@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 支付状态枚举
+ */
 public enum PaymentStatus {
     PENDING(0, "Pending"),
     SUCCESS(1, "Success"),

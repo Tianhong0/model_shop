@@ -29,6 +29,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * 售后消息 WebSocket 处理器
+ * 用于买家与客服之间的售后协商实时通信
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

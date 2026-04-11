@@ -3,6 +3,9 @@ package org.majun.backend.enums;
 /**
  * 拼团参与状态枚举
  */
+/**
+ * 拼团参与状态枚举
+ */
 public enum ParticipantStatus {
     PENDING_PAYMENT(0, "待支付"),
     PAID(1, "已支付"),

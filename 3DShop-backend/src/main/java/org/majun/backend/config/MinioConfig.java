@@ -9,6 +9,10 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Collections;
 
+/**
+ * MinIO 对象存储配置类
+ * 配置文件存储服务的客户端连接
+ */
 @Configuration
 public class MinioConfig {
 

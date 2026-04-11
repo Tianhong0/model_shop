@@ -16,6 +16,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+/**
+ * 客服 WebSocket 处理器
+ * 用于用户与客服之间的实时通信
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

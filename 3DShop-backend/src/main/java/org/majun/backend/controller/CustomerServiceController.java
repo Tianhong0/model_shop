@@ -20,6 +20,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cs")
 @RequiredArgsConstructor
+/**
+ * 客服系统控制器
+ */
 public class CustomerServiceController {
 
     private final CustomerServiceService customerServiceService;

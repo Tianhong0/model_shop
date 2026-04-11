@@ -17,6 +17,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 售后消息 WebSocket 服务实现
+ */
 public class AfterSaleWebSocketServiceImpl implements AfterSaleWebSocketService, AfterSaleWebSocketSessionStore {
 
     private final ObjectMapper objectMapper;

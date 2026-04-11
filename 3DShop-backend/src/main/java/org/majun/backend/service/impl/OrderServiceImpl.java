@@ -62,6 +62,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 订单服务实现
+ */
 public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> implements OrderService {
 
     private static final int ORDER_SN_RANDOM_BOUND = 10000;
@@ -458,7 +461,7 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
         BigDecimal scale = request.getScale() != null ? request.getScale() : BigDecimal.ONE;
         BigDecimal fillPercent = request.getFillPercent() != null ? request.getFillPercent() : BigDecimal.valueOf(100);
         BigDecimal fillFactor = fillPercent.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-        BigDecimal materialPrice = material != null && material.getPrice() != null
+        BigDecimal m = material != null && material.getPrice() != null
                 ? BigDecimal.valueOf(material.getPrice())
                 : BigDecimal.ZERO;
 

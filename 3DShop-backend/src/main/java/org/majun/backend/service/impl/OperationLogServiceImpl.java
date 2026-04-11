@@ -23,6 +23,9 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 操作日志服务实现
+ */
 public class OperationLogServiceImpl implements OperationLogService {
 
     private final SysOperationLogRepository operationLogRepository;

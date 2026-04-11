@@ -25,6 +25,9 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 用户通知服务实现
+ */
 public class UserNotificationServiceImpl implements UserNotificationService {
 
     public static final String CATEGORY_TRADE = "TRADE";

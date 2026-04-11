@@ -25,6 +25,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Validated
 @Slf4j
+/**
+ * 二手交易控制器
+ */
 public class UsedTradeController {
 
     private final UsedTradeService usedTradeService;

@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 售后类型枚举
+ */
 public enum AfterSaleType {
     REFUND_ONLY(1, "Refund only"),
     RETURN_REFUND(2, "Return and refund"),

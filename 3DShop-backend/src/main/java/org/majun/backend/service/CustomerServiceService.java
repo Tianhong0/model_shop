@@ -8,6 +8,9 @@ import org.majun.backend.vo.CsMessageVO;
 import org.majun.backend.vo.CsStatsVO;
 import org.majun.backend.vo.PageResult;
 
+/**
+ * 客服系统服务接口
+ */
 public interface CustomerServiceService {
 
     // ==================== 用户端 ====================

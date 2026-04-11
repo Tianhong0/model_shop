@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 打印机状态枚举
+ */
 public enum PrintPrinterStatus {
     IDLE(0, "Idle"),
     BUSY(1, "Busy"),

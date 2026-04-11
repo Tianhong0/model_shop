@@ -24,6 +24,9 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/api/community/file")
 @RequiredArgsConstructor
+/**
+ * 社区文件控制器
+ */
 public class CommunityFileController {
 
     private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024L;

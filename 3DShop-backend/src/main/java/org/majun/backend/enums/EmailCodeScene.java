@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 邮箱验证码场景枚举
+ */
 public enum EmailCodeScene {
     REGISTER("register"),
     ADMIN_REGISTER("admin-register"),

@@ -2,6 +2,10 @@ package org.majun.backend.event;
 
 import lombok.Getter;
 
+/**
+ * 打印任务完成事件
+ * 用于触发打印完成后的业务流程（如自动发货）
+ */
 @Getter
 public class PrintJobDoneEvent {
 

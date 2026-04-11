@@ -45,6 +45,9 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 订单物流服务实现
+ */
 public class OrderDeliveryServiceImpl implements OrderDeliveryService {
 
     private static final List<String> AUTO_SIM_COMPANY_LIST = List.of("顺丰速运", "中通快递", "圆通速递", "韵达快递", "申通快递", "京东快递", "EMS");

@@ -40,6 +40,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * AI 聊天服务实现
+ */
 public class AiChatServiceImpl implements AiChatService {
 
     private final AiModelProvider aiModelProvider;

@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 订单状态枚举
+ */
 public enum OrderStatus {
     PENDING_PAYMENT(0, "Pending payment"),
     IN_PRODUCTION(1, "In production"),

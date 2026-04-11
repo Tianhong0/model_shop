@@ -59,6 +59,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 悬赏支付服务实现
+ */
 public class BountyPaymentServiceImpl implements BountyPaymentService {
 
     private static final String APP_PAY_PRODUCT_CODE = "QUICK_MSECURITY_PAY";

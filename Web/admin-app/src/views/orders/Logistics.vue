@@ -38,7 +38,7 @@
             <el-button link type="primary" @click="handleDetail(scope.row)">详情</el-button>
             <el-button link type="primary" @click="openStatusDialog(scope.row)">更新状态</el-button>
             <el-button link type="primary" @click="openTrackDialog(scope.row)">追加轨迹</el-button>
-            <el-button link type="success" @click="simulateTrack(scope.row)">轨迹仿真</el-button>
+            <!-- <el-button link type="success" @click="simulateTrack(scope.row)">轨迹仿真</el-button> -->
           </template>
         </el-table-column>
       </el-table>

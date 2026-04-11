@@ -34,6 +34,9 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 图片水印服务实现
+ */
 public class ImageWatermarkServiceImpl implements ImageWatermarkService {
 
     private static final String DEFAULT_WATERMARK_TEXT = "3D打印定制商城";

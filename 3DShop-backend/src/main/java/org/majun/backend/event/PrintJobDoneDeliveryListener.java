@@ -11,6 +11,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+/**
+ * 打印完成自动发货监听器
+ * 监听打印完成事件，自动触发发货流程
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 客服消息类型枚举
+ */
 public enum CsMessageType {
 
     TEXT(1, "文本"),

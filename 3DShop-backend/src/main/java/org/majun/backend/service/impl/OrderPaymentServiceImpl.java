@@ -76,6 +76,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 订单支付服务实现
+ */
 public class OrderPaymentServiceImpl implements OrderPaymentService {
 
     private static final String APP_PAY_PRODUCT_CODE = "QUICK_MSECURITY_PAY";

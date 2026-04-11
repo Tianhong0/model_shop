@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 售后退款状态枚举
+ */
 public enum AfterSaleRefundStatus {
     NONE(0, "None"),
     PENDING(1, "Pending"),

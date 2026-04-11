@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 客服会话状态枚举
+ */
 public enum CsConversationStatus {
 
     WAITING(0, "等待分配"),

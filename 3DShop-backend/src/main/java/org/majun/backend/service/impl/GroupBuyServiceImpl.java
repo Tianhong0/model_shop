@@ -32,6 +32,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 拼团服务实现
+ */
 public class GroupBuyServiceImpl implements GroupBuyService {
 
     private final SysGroupBuyActivityRepository activityRepository;

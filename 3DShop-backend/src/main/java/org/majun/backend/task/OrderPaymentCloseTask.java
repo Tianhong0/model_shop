@@ -6,6 +6,10 @@ import org.majun.backend.service.OrderPaymentService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * 订单支付超时关闭定时任务
+ * 每分钟检查并关闭超时未支付的订单
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

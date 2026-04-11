@@ -4,6 +4,10 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+/**
+ * OctoPrint 3D打印机配置属性
+ * 用于连接和控制3D打印机
+ */
 @Data
 @Component
 @ConfigurationProperties(prefix = "octoprint")

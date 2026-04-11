@@ -8,6 +8,9 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
+/**
+ * 优惠券类型枚举
+ */
 public enum CouponType {
 
     FULL_REDUCTION(1, "满减券"),

@@ -8,6 +8,9 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
+/**
+ * 数据范围类型枚举
+ */
 public enum DataScopeType {
 
     /**

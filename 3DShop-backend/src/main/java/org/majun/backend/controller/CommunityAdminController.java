@@ -42,6 +42,9 @@ import java.util.List;
 @RequestMapping("/api/community/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+/**
+ * 社区管理后台控制器
+ */
 public class CommunityAdminController {
 
     private final CommunityAdminService communityAdminService;

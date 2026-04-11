@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * 物流轨迹自动推进定时任务
+ * 自动模拟物流轨迹更新
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

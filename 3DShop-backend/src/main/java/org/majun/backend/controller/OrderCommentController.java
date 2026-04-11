@@ -42,6 +42,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/orders/comment")
 @RequiredArgsConstructor
+/**
+ * 订单评价控制器
+ */
 public class OrderCommentController {
 
     private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024L;

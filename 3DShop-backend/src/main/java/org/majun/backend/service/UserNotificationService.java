@@ -8,6 +8,9 @@ import org.majun.backend.vo.UserNotificationVO;
 
 import java.util.List;
 
+/**
+ * 用户通知服务接口
+ */
 public interface UserNotificationService {
 
     void createNotification(UserNotificationCreateCommand command);

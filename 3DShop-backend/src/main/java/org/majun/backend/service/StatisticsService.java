@@ -9,6 +9,9 @@ import org.majun.backend.vo.statistics.UserStatisticsVO;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * 统计服务接口
+ */
 public interface StatisticsService {
 
     /**

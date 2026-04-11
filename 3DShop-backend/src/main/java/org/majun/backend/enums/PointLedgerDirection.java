@@ -1,5 +1,8 @@
 package org.majun.backend.enums;
 
+/**
+ * 积分流水方向枚举
+ */
 public enum PointLedgerDirection {
 
     INCOME(1, "收入"),

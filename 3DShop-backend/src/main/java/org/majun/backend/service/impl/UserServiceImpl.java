@@ -57,6 +57,9 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+/**
+ * 用户服务实现
+ */
 public class UserServiceImpl implements UserService {
 
     private final SysUserRepository userRepository;

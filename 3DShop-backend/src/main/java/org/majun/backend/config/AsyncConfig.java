@@ -7,6 +7,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+/**
+ * 异步任务线程池配置
+ * 配置打印任务和日志任务的线程池
+ */
 @Configuration
 @EnableAsync
 public class AsyncConfig {

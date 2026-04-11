@@ -62,6 +62,9 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 订单售后服务实现
+ */
 public class OrderAfterSaleServiceImpl extends ServiceImpl<SysOrderAfterSaleRepository, SysOrderAfterSale> implements OrderAfterSaleService {
 
     private static final DateTimeFormatter AFTER_SALE_SN_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");

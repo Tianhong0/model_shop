@@ -29,6 +29,9 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * 统计服务实现
+ */
 public class StatisticsServiceImpl implements StatisticsService {
 
     private final StatisticsMapper statisticsMapper;
