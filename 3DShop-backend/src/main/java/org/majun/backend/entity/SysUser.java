@@ -103,4 +103,18 @@ public class SysUser implements Serializable {
     @TableField("avatar")
     @Schema(description = "用户头像")
     private String avatar;
+
+    /**
+     * 邀请码ID
+     */
+    @TableField("invite_code_id")
+    @Schema(description = "邀请码ID")
+    private Long inviteCodeId;
+
+    /**
+     * 邀请人ID
+     */
+    @TableField("inviter_id")
+    @Schema(description = "邀请人ID")
+    private Long inviterId;
 }

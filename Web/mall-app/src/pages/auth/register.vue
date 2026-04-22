@@ -47,6 +47,10 @@
 					<uni-icons type="locked" size="20" color="#8a9aaa"></uni-icons>
 					<input type="password" v-model="form.confirmPassword" placeholder="确认密码" />
 				</view>
+				<view class="input-row">
+					<uni-icons type="gift" size="20" color="#8a9aaa"></uni-icons>
+					<input type="text" v-model="form.inviteCode" placeholder="邀请码（可选，填写后双方可获积分奖励）" />
+				</view>
 			</view>
 
 			<button class="btn-primary" @click="handleRegister">注册并登录</button>
@@ -61,6 +65,7 @@
 
 <script setup>
 import { reactive, ref, onUnmounted } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { loginApi, registerApi, sendRegisterEmailCodeApi } from '../../api/auth'
 
 const form = reactive({
@@ -70,7 +75,15 @@ const form = reactive({
 	email: '',
 	emailCode: '',
 	password: '',
-	confirmPassword: ''
+	confirmPassword: '',
+	inviteCode: ''
+})
+
+// 从URL参数中读取邀请码
+onLoad((options) => {
+	if (options?.inviteCode) {
+		form.inviteCode = options.inviteCode
+	}
 })
 
 const codeCountDown = ref(0)
@@ -167,7 +180,8 @@ const handleRegister = async () => {
 			nickname: form.nickname.trim(),
 			mobile: form.mobile || null,
 			email: String(form.email || '').trim().toLowerCase(),
-			emailCode: String(form.emailCode || '').trim()
+			emailCode: String(form.emailCode || '').trim(),
+				inviteCode: form.inviteCode ? form.inviteCode.trim().toUpperCase() : null
 		})
 
 		let data = registerData

@@ -298,6 +298,12 @@ const routes = [
             meta: { title: '悬赏统计', requiresAuth: true }
           }
         ]
+      },
+      {
+        path: 'system/promotion-config',
+        name: 'PromotionConfig',
+        component: () => import('../views/promotion/PromotionConfig.vue'),
+        meta: { title: '推广配置', requiresAuth: true }
       }
     ]
   }

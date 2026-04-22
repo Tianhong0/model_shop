@@ -465,7 +465,7 @@ public class OrderServiceImpl extends ServiceImpl<SysOrderRepository, SysOrder> 
                 ? BigDecimal.valueOf(material.getPrice())
                 : BigDecimal.ZERO;
 
-        BigDecimal rawMaterialCost = volume.multiply(scale).multiply(fillFactor).multiply(materialPrice).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal rawMaterialCost = volume.multiply(scale).multiply(fillFactor).multiply(m).setScale(2, RoundingMode.HALF_UP);
         BigDecimal materialCost = rawMaterialCost.max(BigDecimal.ZERO).min(MAX_CUSTOM_PREMIUM).setScale(2, RoundingMode.HALF_UP);
         BigDecimal goodsAmount = basePrice.add(materialCost).setScale(2, RoundingMode.HALF_UP);
         BigDecimal shippingFee = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);

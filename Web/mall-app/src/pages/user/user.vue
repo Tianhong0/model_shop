@@ -286,6 +286,7 @@ const loadOrderOverview = async () => {
 const menus = computed(() => {
   const isDesigner = isDesignerRole(userRole.value)
   const list = [
+    { name: '推广中心', icon: 'staff', path: '/pages/promotion/index', iconColor: '#ff6b35' },
     { name: '活动赛事', icon: 'flag', path: '/pages/event/list', iconColor: '#667eea' },
     { name: '二手好物广场', icon: 'shop', path: '/pages/used/index', iconColor: '#00bfff' },
     { name: isDesigner ? '悬赏任务广场' : '我的悬赏任务', icon: 'fire', path: '/pages/reward/index', iconColor: '#fbbf24' },
@@ -293,7 +294,7 @@ const menus = computed(() => {
     { name: '我的互动', icon: 'heart', path: '/pages/community/my-interactions', iconColor: '#ff4d6d' },
     { name: '我的清单', icon: 'list', path: '/pages/user/params', role: 'user', iconColor: '#5a6a7a' },
     { name: '在线客服', icon: 'headphones', iconColor: '#00bfff', path: '/pages/custom/customer-service' },
- 
+
   ]
   return list.filter(item => !item.role || item.role === userRole.value)
 })

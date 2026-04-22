@@ -27,6 +27,7 @@ import org.majun.backend.repository.SysUserRoleRepository;
 import org.majun.backend.security.LoginUser;
 import org.majun.backend.service.AuthService;
 import org.majun.backend.service.EmailCodeService;
+import org.majun.backend.service.PromotionService;
 import org.majun.backend.service.RoleService;
 import org.majun.backend.util.JwtUtil;
 import org.majun.backend.util.RedisUtil;
@@ -76,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailCodeService emailCodeService;
     private final JavaMailSender mailSender;
     private final RoleService roleService;
+    private final PromotionService promotionService;
 
     @Value("${spring.mail.username:}")
     private String mailFrom;
@@ -207,6 +209,16 @@ public class AuthServiceImpl implements AuthService {
             userRoleRepository.insert(userRoleRelation);
         } else {
             log.warn("未找到 ROLE_USER 角色，用户 {} 未分配角色", request.getUserName());
+        }
+
+        // 5.5. 处理邀请注册（如果有邀请码）
+        if (StringUtils.hasText(request.getInviteCode())) {
+            try {
+                promotionService.handleInviteRegister(user.getId(), request.getInviteCode());
+            } catch (Exception e) {
+                log.warn("处理邀请注册失败, userId={}, inviteCode={}, error={}",
+                    user.getId(), request.getInviteCode(), e.getMessage());
+            }
         }
 
         // 6. 生成 Token

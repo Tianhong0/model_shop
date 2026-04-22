@@ -274,6 +274,10 @@
                 <el-icon><document /></el-icon>
                 <span>操作日志</span>
               </el-menu-item>
+              <el-menu-item index="/system/promotion-config">
+                <el-icon><Share /></el-icon>
+                <span>推广配置</span>
+              </el-menu-item>
             </el-sub-menu>
 
             <el-sub-menu index="statistics-mgmt">

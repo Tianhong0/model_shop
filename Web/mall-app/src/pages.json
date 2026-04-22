@@ -1,459 +1,489 @@
 {
-	"pages": [
-		{
-			"path": "pages/splash/index",
-			"style": {
-				"navigationBarTitleText": "3D定制商城",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/auth/login",
-			"style": {
-				"navigationBarTitleText": "登录",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/auth/register",
-			"style": {
-				"navigationBarTitleText": "注册"
-			}
-		},
-		{
-			"path": "pages/index/index",
-			"style": {
-				"navigationBarTitleText": "3D打印定制商城",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true,
-				"backgroundTextStyle": "dark"
-			}
-		},
-		{
-			"path": "pages/mall/list",
-			"style": {
-				"navigationBarTitleText": "模型商城",
-				"enablePullDownRefresh": true,
-				"backgroundTextStyle": "dark"
-			}
-		},
-		{
-			"path": "pages/mall/search",
-			"style": {
-				"navigationBarTitleText": "搜索结果"
-			}
-		},
-		{
-			"path": "pages/community/index",
-			"style": {
-				"navigationBarTitleText": "技术社区"
-			}
-		},
-		{
-			"path": "pages/community/post-detail",
-			"style": {
-				"navigationBarTitleText": "帖子详情"
-			}
-		},
-		{
-			"path": "pages/community/post-edit",
-			"style": {
-				"navigationBarTitleText": "发布帖子"
-			}
-		},
-		{
-			"path": "pages/community/my-interactions",
-			"style": {
-				"navigationBarTitleText": "我的互动"
-			}
-		},
-		{
-			"path": "pages/community/my-posts",
-			"style": {
-				"navigationBarTitleText": "我的帖子"
-			}
-		},
-		{
-			"path": "pages/custom/detail",
-			"style": {
-				"navigationBarTitleText": "模型定制",
-				"enablePullDownRefresh": true,
-				"backgroundTextStyle": "dark"
-			}
-		},
-		{
-			"path": "pages/custom/comment-detail",
-			"style": {
-				"navigationBarTitleText": "评价详情"
-			}
-		},
-		{
-			"path": "pages/custom/comment-list",
-			"style": {
-				"navigationBarTitleText": "全部评价"
-			}
-		},
-		{
-			"path": "pages/custom/customer-service",
-			"style": {
-				"navigationBarTitleText": "在线客服",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/cart/cart",
-			"style": {
-				"navigationBarTitleText": "购物车"
-			}
-		},
-		{
-			"path": "pages/reward/index",
-			"style": {
-				"navigationBarTitleText": "悬赏中心"
-			}
-		},
-		{
-			"path": "pages/user/user",
-			"style": {
-				"navigationBarTitleText": "个人中心"
-			}
-		},
-		{
-			"path": "pages/user/orders",
-			"style": {
-				"navigationBarTitleText": "我的订单"
-			}
-		},
-		{
-			"path": "pages/cart/checkout",
-			"style": {
-				"navigationBarTitleText": "确认订单"
-			}
-		},
-		{
-			"path": "pages/user/address",
-			"style": {
-				"navigationBarTitleText": "收货地址"
-			}
-		},
-		{
-			"path": "pages/user/wallet",
-			"style": {
-				"navigationBarTitleText": "我的钱包"
-			}
-		},
-		{
-			"path": "pages/user/points",
-			"style": {
-				"navigationBarTitleText": "我的积分"
-			}
-		},
-		{
-			"path": "pages/user/coupons",
-			"style": {
-				"navigationBarTitleText": "优惠券"
-			}
-		},
-		{
-			"path": "pages/user/profile",
-			"style": {
-				"navigationBarTitleText": "个人资料"
-			}
-		},
-		{
-			"path": "pages/user/settings",
-			"style": {
-				"navigationBarTitleText": "系统设置"
-			}
-		},
-		{
-			"path": "pages/user/message-center",
-			"style": {
-				"navigationBarTitleText": "消息中心"
-			}
-		},
-		{
-			"path": "pages/user/designer-apply",
-			"style": {
-				"navigationBarTitleText": "申请成为设计者"
-			}
-		},
-		{
-			"path": "pages/user/models",
-			"style": {
-				"navigationBarTitleText": "我的模型"
-			}
-		},
-		{
-			"path": "pages/user/params",
-			"style": {
-				"navigationBarTitleText": "我的清单"
-			}
-		},
-		{
-			"path": "pages/user/favorite-models",
-			"style": {
-				"navigationBarTitleText": "收藏模型"
-			}
-		},
-		{
-			"path": "pages/event/list",
-			"style": {
-				"navigationBarTitleText": "活动赛事"
-			}
-		},
-		{
-			"path": "pages/event/event-detail",
-			"style": {
-				"navigationBarTitleText": "活动详情"
-			}
-		},
-		{
-			"path": "pages/event/submissions",
-			"style": {
-				"navigationBarTitleText": "参赛作品"
-			}
-		},
-		{
-			"path": "pages/event/my-submission",
-			"style": {
-				"navigationBarTitleText": "我的作品"
-			}
-		},
-		{
-			"path": "pages/event/submission-detail",
-			"style": {
-				"navigationBarTitleText": "作品详情"
-			}
-		},
-		{
-			"path": "pages/event/my-events",
-			"style": {
-				"navigationBarTitleText": "我参与的活动"
-			}
-		},
-		{
-			"path": "pages/user/order-detail",
-			"style": {
-				"navigationBarTitleText": "订单详情"
-			}
-		},
-		{
-			"path": "pages/user/logistics-detail",
-			"style": {
-				"navigationBarTitleText": "物流详情"
-			}
-		},
-		{
-			"path": "pages/user/order-comment-create",
-			"style": {
-				"navigationBarTitleText": "订单评价"
-			}
-		},
-		{
-			"path": "pages/user/after-sale-list",
-			"style": {
-				"navigationBarTitleText": "售后记录"
-			}
-		},
-		{
-			"path": "pages/user/after-sale-detail",
-			"style": {
-				"navigationBarTitleText": "售后详情"
-			}
-		},
-		{
-			"path": "pages/user/after-sale-create",
-			"style": {
-				"navigationBarTitleText": "申请售后"
-			}
-		},
-		{
-			"path": "pages/reward/detail",
-			"style": {
-				"navigationBarTitleText": "悬赏详情"
-			}
-		},
-		{
-			"path": "pages/reward/publish",
-			"style": {
-				"navigationBarTitleText": "发布悬赏"
-			}
-		},
-		{
-			"path": "pages/reward/bid",
-			"style": {
-				"navigationBarTitleText": "竞标方案"
-			}
-		},
-		{
-			"path": "pages/reward/rating",
-			"style": {
-				"navigationBarTitleText": "评价设计者"
-			}
-		},
-		{
-			"path": "pages/reward/model-preview",
-			"style": {
-				"navigationBarTitleText": "模型预览"
-			}
-		},
-		{
-			"path": "pages/reward/video-preview",
-			"style": {
-				"navigationBarTitleText": "视频预览"
-			}
-		},
-		{
-			"path": "pages/reward/designer-profile",
-			"style": {
-				"navigationBarTitleText": "设计者档案"
-			}
-		},
-		{
-			"path": "pages/reward/delivery",
-			"style": {
-				"navigationBarTitleText": "提交交付"
-			}
-		},
-		{
-			"path": "pages/reward/messages",
-			"style": {
-				"navigationBarTitleText": "在线沟通"
-			}
-		},
-		{
-			"path": "pages/reward/my-ratings",
-			"style": {
-				"navigationBarTitleText": "我的评价"
-			}
-		},
-		{
-			"path": "pages/reward/my-appeals",
-			"style": {
-				"navigationBarTitleText": "我的申诉"
-			}
-		},
-		{
-			"path": "pages/used/index",
-			"style": {
-				"navigationBarTitleText": "二手好物"
-			}
-		},
-		{
-			"path": "pages/used/detail",
-			"style": {
-				"navigationBarTitleText": "二手详情"
-			}
-		},
-		{
-			"path": "pages/used/publish",
-			"style": {
-				"navigationBarTitleText": "发布闲置"
-			}
-		},
-		{
-			"path": "pages/used/my-sales",
-			"style": {
-				"navigationBarTitleText": "我的出售"
-			}
-		},
-		{
-			"path": "pages/used/my-purchases",
-			"style": {
-				"navigationBarTitleText": "我的购买"
-			}
-		},
-		{
-			"path": "pages/used/order-detail",
-			"style": {
-				"navigationBarTitleText": "二手订单详情"
-			}
-		},
-		{
-			"path": "pages/used/chat",
-			"style": {
-				"navigationBarTitleText": "商品沟通"
-			}
-		},
-		{
-			"path": "pages/used/report",
-			"style": {
-				"navigationBarTitleText": "举报反馈"
-			}
-		},
-		{
-			"path": "pages/used/after-sale-create",
-			"style": {
-				"navigationBarTitleText": "申请二手售后"
-			}
-		},
-		{
-			"path": "pages/model-list/index",
-			"style": {
-				"navigationBarTitleText": "清单广场"
-			}
-		},
-		{
-			"path": "pages/model-list/detail",
-			"style": {
-				"navigationBarTitleText": "清单详情"
-			}
-		},
-		{
-			"path": "pages/common/webview",
-			"style": {
-				"navigationBarTitleText": "详情"
-			}
-		},
-		{
-			"path": "pages/group-buy/list",
-			"style": {
-				"navigationBarTitleText": "拼团专区"
-			}
-		},
-		{
-			"path": "pages/group-buy/activity-detail",
-			"style": {
-				"navigationBarTitleText": "活动详情"
-			}
-		},
-		{
-			"path": "pages/group-buy/create",
-			"style": {
-				"navigationBarTitleText": "发起拼团"
-			}
-		},
-		{
-			"path": "pages/group-buy/group-detail",
-			"style": {
-				"navigationBarTitleText": "拼团详情"
-			}
-		},
-		{
-			"path": "pages/group-buy/join",
-			"style": {
-				"navigationBarTitleText": "参与拼团"
-			}
-		},
-		{
-			"path": "pages/group-buy/my-groups",
-			"style": {
-				"navigationBarTitleText": "我的拼团"
-			}
-		}
-	],
-	"easycom": {
-		"autoscan": true,
-		"custom": {
-			"uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
-			"^u-(.*)": "uview-plus/components/u-$1/u-$1.vue"
-		}
-	},
-	"globalStyle": {
-		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "3D定制商城",
-		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
-	}
+  "pages": [
+    {
+      "path": "pages/splash/index",
+      "style": {
+        "navigationBarTitleText": "3D定制商城",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/auth/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/auth/register",
+      "style": {
+        "navigationBarTitleText": "注册"
+      }
+    },
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "3D打印定制商城",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/mall/list",
+      "style": {
+        "navigationBarTitleText": "模型商城",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/mall/search",
+      "style": {
+        "navigationBarTitleText": "搜索结果"
+      }
+    },
+    {
+      "path": "pages/community/index",
+      "style": {
+        "navigationBarTitleText": "技术社区"
+      }
+    },
+    {
+      "path": "pages/community/post-detail",
+      "style": {
+        "navigationBarTitleText": "帖子详情"
+      }
+    },
+    {
+      "path": "pages/community/post-edit",
+      "style": {
+        "navigationBarTitleText": "发布帖子"
+      }
+    },
+    {
+      "path": "pages/community/my-interactions",
+      "style": {
+        "navigationBarTitleText": "我的互动"
+      }
+    },
+    {
+      "path": "pages/community/my-posts",
+      "style": {
+        "navigationBarTitleText": "我的帖子"
+      }
+    },
+    {
+      "path": "pages/custom/detail",
+      "style": {
+        "navigationBarTitleText": "模型定制",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/custom/comment-detail",
+      "style": {
+        "navigationBarTitleText": "评价详情"
+      }
+    },
+    {
+      "path": "pages/custom/comment-list",
+      "style": {
+        "navigationBarTitleText": "全部评价"
+      }
+    },
+    {
+      "path": "pages/custom/customer-service",
+      "style": {
+        "navigationBarTitleText": "在线客服",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/cart/cart",
+      "style": {
+        "navigationBarTitleText": "购物车"
+      }
+    },
+    {
+      "path": "pages/reward/index",
+      "style": {
+        "navigationBarTitleText": "悬赏中心"
+      }
+    },
+    {
+      "path": "pages/user/user",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/user/orders",
+      "style": {
+        "navigationBarTitleText": "我的订单"
+      }
+    },
+    {
+      "path": "pages/cart/checkout",
+      "style": {
+        "navigationBarTitleText": "确认订单"
+      }
+    },
+    {
+      "path": "pages/user/address",
+      "style": {
+        "navigationBarTitleText": "收货地址"
+      }
+    },
+    {
+      "path": "pages/user/wallet",
+      "style": {
+        "navigationBarTitleText": "我的钱包"
+      }
+    },
+    {
+      "path": "pages/user/points",
+      "style": {
+        "navigationBarTitleText": "我的积分"
+      }
+    },
+    {
+      "path": "pages/user/coupons",
+      "style": {
+        "navigationBarTitleText": "优惠券"
+      }
+    },
+    {
+      "path": "pages/user/profile",
+      "style": {
+        "navigationBarTitleText": "个人资料"
+      }
+    },
+    {
+      "path": "pages/user/settings",
+      "style": {
+        "navigationBarTitleText": "系统设置"
+      }
+    },
+    {
+      "path": "pages/user/message-center",
+      "style": {
+        "navigationBarTitleText": "消息中心"
+      }
+    },
+    {
+      "path": "pages/user/designer-apply",
+      "style": {
+        "navigationBarTitleText": "申请成为设计者"
+      }
+    },
+    {
+      "path": "pages/user/models",
+      "style": {
+        "navigationBarTitleText": "我的模型"
+      }
+    },
+    {
+      "path": "pages/user/params",
+      "style": {
+        "navigationBarTitleText": "我的清单"
+      }
+    },
+    {
+      "path": "pages/user/favorite-models",
+      "style": {
+        "navigationBarTitleText": "收藏模型"
+      }
+    },
+    {
+      "path": "pages/event/list",
+      "style": {
+        "navigationBarTitleText": "活动赛事"
+      }
+    },
+    {
+      "path": "pages/event/event-detail",
+      "style": {
+        "navigationBarTitleText": "活动详情"
+      }
+    },
+    {
+      "path": "pages/event/submissions",
+      "style": {
+        "navigationBarTitleText": "参赛作品"
+      }
+    },
+    {
+      "path": "pages/event/my-submission",
+      "style": {
+        "navigationBarTitleText": "我的作品"
+      }
+    },
+    {
+      "path": "pages/event/submission-detail",
+      "style": {
+        "navigationBarTitleText": "作品详情"
+      }
+    },
+    {
+      "path": "pages/event/my-events",
+      "style": {
+        "navigationBarTitleText": "我参与的活动"
+      }
+    },
+    {
+      "path": "pages/user/order-detail",
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
+    },
+    {
+      "path": "pages/user/logistics-detail",
+      "style": {
+        "navigationBarTitleText": "物流详情"
+      }
+    },
+    {
+      "path": "pages/user/order-comment-create",
+      "style": {
+        "navigationBarTitleText": "订单评价"
+      }
+    },
+    {
+      "path": "pages/user/after-sale-list",
+      "style": {
+        "navigationBarTitleText": "售后记录"
+      }
+    },
+    {
+      "path": "pages/user/after-sale-detail",
+      "style": {
+        "navigationBarTitleText": "售后详情"
+      }
+    },
+    {
+      "path": "pages/user/after-sale-create",
+      "style": {
+        "navigationBarTitleText": "申请售后"
+      }
+    },
+    {
+      "path": "pages/reward/detail",
+      "style": {
+        "navigationBarTitleText": "悬赏详情"
+      }
+    },
+    {
+      "path": "pages/reward/publish",
+      "style": {
+        "navigationBarTitleText": "发布悬赏"
+      }
+    },
+    {
+      "path": "pages/reward/bid",
+      "style": {
+        "navigationBarTitleText": "竞标方案"
+      }
+    },
+    {
+      "path": "pages/reward/rating",
+      "style": {
+        "navigationBarTitleText": "评价设计者"
+      }
+    },
+    {
+      "path": "pages/reward/model-preview",
+      "style": {
+        "navigationBarTitleText": "模型预览"
+      }
+    },
+    {
+      "path": "pages/reward/video-preview",
+      "style": {
+        "navigationBarTitleText": "视频预览"
+      }
+    },
+    {
+      "path": "pages/reward/designer-profile",
+      "style": {
+        "navigationBarTitleText": "设计者档案"
+      }
+    },
+    {
+      "path": "pages/reward/delivery",
+      "style": {
+        "navigationBarTitleText": "提交交付"
+      }
+    },
+    {
+      "path": "pages/reward/messages",
+      "style": {
+        "navigationBarTitleText": "在线沟通"
+      }
+    },
+    {
+      "path": "pages/reward/my-ratings",
+      "style": {
+        "navigationBarTitleText": "我的评价"
+      }
+    },
+    {
+      "path": "pages/reward/my-appeals",
+      "style": {
+        "navigationBarTitleText": "我的申诉"
+      }
+    },
+    {
+      "path": "pages/used/index",
+      "style": {
+        "navigationBarTitleText": "二手好物"
+      }
+    },
+    {
+      "path": "pages/used/detail",
+      "style": {
+        "navigationBarTitleText": "二手详情"
+      }
+    },
+    {
+      "path": "pages/used/publish",
+      "style": {
+        "navigationBarTitleText": "发布闲置"
+      }
+    },
+    {
+      "path": "pages/used/my-sales",
+      "style": {
+        "navigationBarTitleText": "我的出售"
+      }
+    },
+    {
+      "path": "pages/used/my-purchases",
+      "style": {
+        "navigationBarTitleText": "我的购买"
+      }
+    },
+    {
+      "path": "pages/used/order-detail",
+      "style": {
+        "navigationBarTitleText": "二手订单详情"
+      }
+    },
+    {
+      "path": "pages/used/chat",
+      "style": {
+        "navigationBarTitleText": "商品沟通"
+      }
+    },
+    {
+      "path": "pages/used/report",
+      "style": {
+        "navigationBarTitleText": "举报反馈"
+      }
+    },
+    {
+      "path": "pages/used/after-sale-create",
+      "style": {
+        "navigationBarTitleText": "申请二手售后"
+      }
+    },
+    {
+      "path": "pages/model-list/index",
+      "style": {
+        "navigationBarTitleText": "清单广场"
+      }
+    },
+    {
+      "path": "pages/model-list/detail",
+      "style": {
+        "navigationBarTitleText": "清单详情"
+      }
+    },
+    {
+      "path": "pages/common/webview",
+      "style": {
+        "navigationBarTitleText": "详情"
+      }
+    },
+    {
+      "path": "pages/group-buy/list",
+      "style": {
+        "navigationBarTitleText": "拼团专区"
+      }
+    },
+    {
+      "path": "pages/group-buy/activity-detail",
+      "style": {
+        "navigationBarTitleText": "活动详情"
+      }
+    },
+    {
+      "path": "pages/group-buy/create",
+      "style": {
+        "navigationBarTitleText": "发起拼团"
+      }
+    },
+    {
+      "path": "pages/group-buy/group-detail",
+      "style": {
+        "navigationBarTitleText": "拼团详情"
+      }
+    },
+    {
+      "path": "pages/group-buy/join",
+      "style": {
+        "navigationBarTitleText": "参与拼团"
+      }
+    },
+    {
+      "path": "pages/group-buy/my-groups",
+      "style": {
+        "navigationBarTitleText": "我的拼团"
+      }
+    },
+    {
+      "path": "pages/promotion/index",
+      "style": {
+        "navigationBarTitleText": "推广中心"
+      }
+    },
+    {
+      "path": "pages/promotion/invitees",
+      "style": {
+        "navigationBarTitleText": "我的邀请"
+      }
+    },
+    {
+      "path": "pages/promotion/rewards",
+      "style": {
+        "navigationBarTitleText": "推广收益"
+      }
+    },
+    {
+      "path": "pages/promotion/rank",
+      "style": {
+        "navigationBarTitleText": "推广排行"
+      }
+    },
+    {
+      "path": "pages/promotion/poster",
+      "style": {
+        "navigationBarTitleText": "推广海报"
+      }
+    }
+  ],
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
+      "^u-(.*)": "uview-plus/components/u-$1/u-$1.vue"
+    }
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "3D定制商城",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  }
 }

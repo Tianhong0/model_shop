@@ -71,4 +71,10 @@ public class RegisterRequest {
      */
     @Schema(description = "用户头像URL", example = "https://example.com/avatar.jpg")
     private String avatar;
+
+    /**
+     * 邀请码
+     */
+    @Schema(description = "邀请码", example = "ABC123")
+    private String inviteCode;
 }

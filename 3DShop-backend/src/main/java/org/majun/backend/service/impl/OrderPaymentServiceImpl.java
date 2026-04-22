@@ -43,6 +43,7 @@ import org.majun.backend.service.OrderPaymentService;
 import org.majun.backend.service.GroupBuyService;
 import org.majun.backend.service.CouponService;
 import org.majun.backend.service.PointService;
+import org.majun.backend.service.PromotionService;
 import org.majun.backend.vo.OrderBatchPayCreateResponse;
 import org.majun.backend.vo.OrderBatchPayStatusVO;
 import org.majun.backend.vo.OrderPayCreateResponse;
@@ -106,6 +107,7 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     private final PointService pointService;
     private final GroupBuyService groupBuyService;
     private final CouponService couponService;
+    private final PromotionService promotionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -767,6 +769,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                     handleGroupBuyPaid(order);
                     // 标记优惠券已使用
                     useCouponIfApplicable(order);
+                    // 推广奖励：首单奖励和消费返积分
+                    handlePromotionReward(order);
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(order.getId()));
                 }
             }
@@ -842,6 +846,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                         handleGroupBuyPaid(order);
                         // 标记优惠券已使用
                         useCouponIfApplicable(order);
+                        // 推广奖励：首单奖励和消费返积分
+                        handlePromotionReward(order);
                     }
                     applicationEventPublisher.publishEvent(new OrderPaidEvent(item.getOrderId()));
                 }
@@ -1226,6 +1232,33 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
             return couponIdNode.asLong();
         } catch (Exception ex) {
             return null;
+        }
+    }
+
+    /**
+     * 处理推广奖励（首单奖励和消费返积分）
+     */
+    private void handlePromotionReward(SysOrder order) {
+        if (order == null) {
+            return;
+        }
+        try {
+            // 首单奖励
+            promotionService.handleFirstOrderReward(
+                order.getUserId(),
+                order.getId(),
+                order.getOrderSn(),
+                order.getOrderPrice()
+            );
+            // 消费返积分
+            promotionService.handleConsumeRebate(
+                order.getUserId(),
+                order.getId(),
+                order.getOrderSn(),
+                order.getOrderPrice()
+            );
+        } catch (Exception ex) {
+            log.warn("处理推广奖励失败 orderId={}, userId={}", order.getId(), order.getUserId(), ex);
         }
     }
 }
