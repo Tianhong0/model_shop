@@ -152,7 +152,7 @@
 							</view>
 						</view>
 						<view class="card-info">
-							<text class="card-name u-line-2">{{ model.modelName }}</text>
+							<view class="card-name-row"><text class="card-name u-line-2">{{ model.modelName }}</text><text v-if="model.sourceType === 2" class="card-source-tag">设计者</text></view>
 							<view class="card-meta">
 								<view class="card-rate" v-if="model.avgScore > 0">
 									<u-icon name="star-fill" size="11" color="#f59e0b"></u-icon>
@@ -1038,6 +1038,22 @@ $gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 }
 
 .card-name {
+	.card-name-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 6rpx;
+	}
+
+	.card-source-tag {
+		font-size: 18rpx;
+		color: #16a34a;
+		background: #dcfce7;
+		padding: 2rpx 8rpx;
+		border-radius: 999rpx;
+		font-weight: 600;
+		flex-shrink: 0;
+		margin-top: 2rpx;
+	}
 	font-size: 26rpx;
 	color: $text-primary;
 	line-height: 1.4;

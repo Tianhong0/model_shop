@@ -72,6 +72,12 @@ const routes = [
             meta: { title: '模型分类', requiresAuth: true }
           },
           {
+            path: 'audit',
+            name: 'ModelAudit',
+            component: () => import('../views/models/ModelAudit.vue'),
+            meta: { title: '模型审核', requiresAuth: true }
+          },
+          {
             path: 'list',
             name: 'ModelList',
             component: () => import('../views/models/ModelMall.vue'),
@@ -224,6 +230,12 @@ const routes = [
         name: 'FinanceWithdraws',
         component: () => import('../views/finance/WithdrawManage.vue'),
         meta: { title: '提现管理', requiresAuth: true }
+      },
+      {
+        path: 'finance/designer-settlements',
+        name: 'DesignerSettlements',
+        component: () => import('../views/finance/DesignerSettlements.vue'),
+        meta: { title: '设计师分润结算', requiresAuth: true }
       },
       {
         path: 'events',

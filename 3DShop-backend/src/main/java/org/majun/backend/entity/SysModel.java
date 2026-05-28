@@ -52,6 +52,13 @@ public class SysModel implements Serializable {
     private Long designerId;
 
     /**
+     * 来源: 1-OFFICIAL(官方), 2-DESIGNER(设计师上传)
+     */
+    @TableField("source_type")
+    @Schema(description = "来源: 1-官方, 2-设计者作品")
+    private Integer sourceType;
+
+    /**
      * 分类ID (关联sys_model_category.id)
      */
     @TableField("category_id")
@@ -64,6 +71,13 @@ public class SysModel implements Serializable {
     @TableField("base_price")
     @Schema(description = "基础价格")
     private BigDecimal basePrice;
+
+    /**
+     * 设计师分润比例(百分比)
+     */
+    @TableField("profit_share_ratio")
+    @Schema(description = "设计师分润比例(百分比)")
+    private Integer profitShareRatio;
 
     /**
      * 原始体积 (mm³)
@@ -127,6 +141,27 @@ public class SysModel implements Serializable {
     @TableField("status")
     @Schema(description = "上架状态: 0-审核中, 1-上架, 2-下架")
     private Integer status;
+
+    /**
+     * 审核人ID
+     */
+    @TableField("audit_by")
+    @Schema(description = "审核人ID")
+    private Long auditBy;
+
+    /**
+     * 审核时间
+     */
+    @TableField("audit_time")
+    @Schema(description = "审核时间")
+    private String auditTime;
+
+    /**
+     * 审核备注/驳回原因
+     */
+    @TableField("audit_note")
+    @Schema(description = "审核备注/驳回原因")
+    private String auditNote;
 
     /**
      * 逻辑删除: 1-已删, 0-未删

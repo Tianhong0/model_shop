@@ -5,12 +5,14 @@ import org.majun.backend.dto.CategoryCreateRequest;
 import org.majun.backend.dto.CategoryUpdateRequest;
 import org.majun.backend.dto.MaterialAddRequest;
 import org.majun.backend.dto.MaterialUpdateRequest;
+import org.majun.backend.dto.ModelAuditRequest;
 import org.majun.backend.dto.ModelCreateRequest;
 import org.majun.backend.dto.ModelQueryRequest;
 import org.majun.backend.dto.ModelUpdateRequest;
 import org.majun.backend.entity.SysModelCategory;
 import org.majun.backend.vo.CategoryVO;
 import org.majun.backend.vo.MaterialVO;
+import org.majun.backend.vo.ModelAuditRecordVO;
 import org.majun.backend.vo.ModelFavoriteToggleVO;
 import org.majun.backend.vo.ModelDetailVO;
 import org.majun.backend.vo.ModelListVO;
@@ -27,7 +29,7 @@ public interface ModelService {
     /**
      * 分页查询模型列表
      */
-    PageResult<?> getModelList(ModelQueryRequest queryRequest);
+    PageResult<ModelListVO> getModelList(ModelQueryRequest queryRequest);
 
     /**
      * 根据ID查询模型详情
@@ -159,4 +161,19 @@ public interface ModelService {
      * 获取模型水印状态
      */
     WatermarkStatusVO getWatermarkStatus(Long modelId);
+
+    /**
+     * 审核模型
+     */
+    void auditModel(ModelAuditRequest request, Long adminId);
+
+    /**
+     * 查询模型审核记录
+     */
+    PageResult<ModelAuditRecordVO> getAuditRecords(Long modelId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 设计者查询自己的模型列表
+     */
+    PageResult<ModelListVO> getDesignerModels(ModelQueryRequest request, Long designerId);
 }

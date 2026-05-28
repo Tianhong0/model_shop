@@ -44,6 +44,11 @@
 						<uni-icons :type="isFavorited ? 'heart-filled' : 'heart'" size="18" :color="isFavorited ? '#ef4444' : '#5a6a7a'"></uni-icons>
 					</view>
 				</view>
+					<view class="source-row">
+						<text v-if="modelInfo.sourceType === 2" class="source-badge designer">设计者作品</text>
+						<text v-else-if="modelInfo.sourceType === 1" class="source-badge official">官方出品</text>
+						<text v-if="modelInfo.designerName" class="designer-text">by {{ modelInfo.designerName }}</text>
+					</view>
 				<text class="desc">{{ modelInfo.desc }}</text>
 				<view class="price-row">
 					<view class="price-box">
@@ -290,17 +295,20 @@ import { getModelOrderCommentsApi, toggleModelCommentLikeApi, getMyOrdersApi } f
 import { ensureLoginOrRedirect } from '../../utils/auth'
 import { getApiBaseUrl } from '../../utils/apiBase'
 
-const modelInfo = ref({
-	id: null,
-	name: '模型加载中...',
-	desc: '',
-	image: '',
-	basePrice: 0,
-	baseVolume: 45,
-	baseSize: '--',
-	modelUrl: '',
-	modelType: 'glb'
-})
+	const modelInfo = ref({
+		id: null,
+		name: '模型加载中...',
+		desc: '',
+		image: '',
+		basePrice: 0,
+		baseVolume: 45,
+		baseSize: '--',
+		modelUrl: '',
+		modelType: 'glb',
+		sourceType: null,
+		sourceTypeDesc: '',
+		designerName: ''
+	})
 const modelImages = ref([])
 
 const materialMapping = ['standard', 'physical', 'shiny']
@@ -795,7 +803,10 @@ const loadModelDetail = async (modelId, forceUpdate = false) => {
 			baseVolume: Number(detail?.baseVolume || 45),
 			baseSize: detail?.baseSize || '--',
 			modelUrl,
-			modelType
+			modelType,
+			sourceType: detail?.sourceType,
+			sourceTypeDesc: detail?.sourceTypeDesc || '',
+			designerName: detail?.designerName || '',
 		}
 		modelFileSize.value = formatFileSize(detail?.fileSize || detail?.file_size || detail?.size)
 		// 优先使用水印图片，如果没有则使用原图
@@ -1240,6 +1251,28 @@ $gradient-primary: linear-gradient(135deg, #00bfff 0%, #5ce1ff 100%);
 		line-height: 1.4;
 	}
 }
+
+	.source-row {
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+		margin-top: 12rpx;
+		flex-wrap: wrap;
+	}
+
+	.source-badge {
+		font-size: 22rpx;
+		padding: 4rpx 16rpx;
+		border-radius: 999rpx;
+		font-weight: 600;
+		&.official { background-color: #dbeafe; color: #2563eb; }
+		&.designer { background-color: #dcfce7; color: #16a34a; }
+	}
+
+	.designer-text {
+		font-size: 24rpx;
+		color: $text-secondary;
+	}
 
 .fav-btn {
 	width: 64rpx;

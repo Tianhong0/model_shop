@@ -16,7 +16,7 @@
       host: smtp.163.com
       port: 465
       username: 15693096384@163.com
-      password: ZB8VL33TUWyfh693
+      password: RA7R83Bj7YVxAv3B
       protocol: smtp
       properties:
         mail:

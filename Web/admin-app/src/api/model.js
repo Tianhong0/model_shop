@@ -313,3 +313,32 @@ export const rebuildSemanticIndex = () => {
     method: 'post'
   })
 }
+
+// ==================== 模型审核 ====================
+
+// 审核模型
+export const auditModel = (data) => {
+  return request({
+    url: '/api/model/audit',
+    method: 'post',
+    data
+  })
+}
+
+// 查询模型审核记录
+export const getModelAuditRecords = (modelId, params) => {
+  return request({
+    url: `/api/model/audit/records/${modelId}`,
+    method: 'get',
+    params
+  })
+}
+
+// 设计者查询自己的模型
+export const getMyModels = (data) => {
+  return request({
+    url: '/api/model/my/list',
+    method: 'post',
+    data
+  })
+}

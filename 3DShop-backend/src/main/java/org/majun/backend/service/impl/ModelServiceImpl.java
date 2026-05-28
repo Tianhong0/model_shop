@@ -10,9 +10,11 @@ import org.majun.backend.dto.CategoryCreateRequest;
 import org.majun.backend.dto.CategoryUpdateRequest;
 import org.majun.backend.dto.MaterialAddRequest;
 import org.majun.backend.dto.MaterialUpdateRequest;
+import org.majun.backend.dto.ModelAuditRequest;
 import org.majun.backend.dto.ModelCreateRequest;
 import org.majun.backend.dto.ModelQueryRequest;
 import org.majun.backend.dto.ModelUpdateRequest;
+import org.majun.backend.entity.ModelAuditRecord;
 import org.majun.backend.entity.SysModel;
 import org.majun.backend.entity.SysModelFavorite;
 import org.majun.backend.entity.SysModelImage;
@@ -22,6 +24,8 @@ import org.majun.backend.entity.SysUser;
 import org.majun.backend.entity.ModelMaterial;
 import org.majun.backend.entity.ModelImageWatermark;
 import org.majun.backend.entity.SysOrderComment;
+import org.majun.backend.enums.ModelSourceType;
+import org.majun.backend.repository.ModelAuditRecordRepository;
 import org.majun.backend.repository.SysModelRepository;
 import org.majun.backend.repository.SysModelFavoriteRepository;
 import org.majun.backend.repository.SysModelImageRepository;
@@ -41,6 +45,8 @@ import org.majun.backend.util.RedisUtil;
 import org.majun.backend.vo.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.Collections;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -76,9 +82,10 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
     private final ImageWatermarkService imageWatermarkService;
     private final ModelImageWatermarkRepository watermarkRepository;
     private final SysOrderCommentRepository orderCommentRepository;
+    private final ModelAuditRecordRepository auditRecordRepository;
 
     @Override
-    public PageResult<?> getModelList(ModelQueryRequest queryRequest) {
+    public PageResult<ModelListVO> getModelList(ModelQueryRequest queryRequest) {
         // 构建缓存键
         String cacheKey = buildModelListCacheKey(queryRequest);
 
@@ -123,6 +130,11 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         // 上架状态筛选
         if (queryRequest.getStatus() != null) {
             queryWrapper.eq(SysModel::getStatus, queryRequest.getStatus());
+        }
+
+        // 来源类型筛选
+        if (queryRequest.getSourceType() != null) {
+            queryWrapper.eq(SysModel::getSourceType, queryRequest.getSourceType());
         }
 
         // 排序
@@ -211,6 +223,8 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
             vo.setStatus(model.getStatus());
             vo.setImageCount(0);
             vo.setDownloadCount(model.getDownloadCount() != null ? model.getDownloadCount() : 0);
+            vo.setSourceType(model.getSourceType());
+            vo.setSourceTypeDesc(ModelSourceType.descriptionOf(model.getSourceType()));
             return vo;
         }).collect(Collectors.toList());
 
@@ -348,6 +362,10 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
                 .previewUrl(previewUrl)
                 .fileSize(model.getFileSize())
                 .downloadCount(model.getDownloadCount())
+                .sourceType(model.getSourceType())
+                .sourceTypeDesc(ModelSourceType.descriptionOf(model.getSourceType()))
+                .profitShareRatio(model.getProfitShareRatio())
+                .auditNote(model.getAuditNote())
                 .build();
     }
 
@@ -457,6 +475,13 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
         model.setDesignerId(designerId);
         model.setStatus(request.getStatus() != null ? request.getStatus() : 0); // 默认为审核中
         model.setIsDelete(0);
+
+        // 根据当前用户角色设置来源类型
+        boolean isAdmin = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        model.setSourceType(isAdmin ? ModelSourceType.OFFICIAL.getCode() : ModelSourceType.DESIGNER.getCode());
 
         modelRepository.insert(model);
         log.info("创建模型成功, modelId: {}", model.getId());
@@ -570,6 +595,123 @@ public class ModelServiceImpl extends ServiceImpl<SysModelRepository, SysModel> 
             throw new RuntimeException("模型不存在或已删除");
         }
         return model.getDesignerId();
+    }
+
+    // ==================== 模型审核实现 ====================
+
+    @Override
+    @Transactional
+    public void auditModel(ModelAuditRequest request, Long adminId) {
+        SysModel model = modelRepository.selectById(request.getModelId());
+        if (model == null || model.getIsDelete() == 1) {
+            throw new RuntimeException("模型不存在或已删除");
+        }
+        // 允许对任意状态的模型进行复审：
+        //   - status=0 待审核 -> 走首次审核
+        //   - status=1 上架   -> 管理员复审，可调价/调分润/驳回下架
+        //   - status=2 下架   -> 管理员复审，可改判通过重新上架
+
+        String now = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        if (request.getAction() == 1) {
+            // 通过 / 维持上架
+            model.setStatus(1);
+            if (request.getProfitShareRatio() != null) {
+                model.setProfitShareRatio(request.getProfitShareRatio());
+            }
+        } else if (request.getAction() == 2) {
+            // 驳回 / 下架
+            model.setStatus(2);
+            if (request.getNote() == null || request.getNote().isBlank()) {
+                throw new RuntimeException("驳回时必须填写审核备注");
+            }
+        } else {
+            throw new RuntimeException("无效的审核动作");
+        }
+
+        // 管理员可调参数
+        if (request.getBasePrice() != null) {
+            model.setBasePrice(request.getBasePrice());
+        }
+        if (request.getBaseVolume() != null) {
+            model.setBaseVolume(request.getBaseVolume());
+        }
+        if (request.getBaseSize() != null && !request.getBaseSize().isBlank()) {
+            model.setBaseSize(request.getBaseSize());
+        }
+
+        model.setAuditBy(adminId);
+        model.setAuditTime(now);
+        model.setAuditNote(request.getNote());
+        modelRepository.updateById(model);
+
+        // 插入审核记录
+        ModelAuditRecord record = new ModelAuditRecord();
+        record.setModelId(model.getId());
+        record.setAuditBy(adminId);
+        record.setAction(request.getAction());
+        record.setProfitShareRatio(request.getProfitShareRatio() != null ? request.getProfitShareRatio() : model.getProfitShareRatio());
+        record.setNote(request.getNote());
+        record.setIsDelete(0);
+        record.setCreateTime(now);
+        try {
+            record.setSnapshotData(new ObjectMapper().writeValueAsString(model));
+        } catch (JsonProcessingException ignored) {
+        }
+        auditRecordRepository.insert(record);
+
+        clearAllModelCache();
+        log.info("审核模型完成, modelId: {}, action: {}, auditBy: {}", model.getId(), request.getAction(), adminId);
+    }
+
+    @Override
+    public PageResult<ModelAuditRecordVO> getAuditRecords(Long modelId, Integer pageNum, Integer pageSize) {
+        Page<ModelAuditRecord> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<ModelAuditRecord> qw = new LambdaQueryWrapper<>();
+        qw.eq(ModelAuditRecord::getModelId, modelId)
+                .eq(ModelAuditRecord::getIsDelete, 0)
+                .orderByDesc(ModelAuditRecord::getCreateTime);
+        auditRecordRepository.selectPage(page, qw);
+
+        Set<Long> adminIds = page.getRecords().stream().map(ModelAuditRecord::getAuditBy).collect(Collectors.toSet());
+        Map<Long, String> adminNameMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(adminIds)) {
+            List<SysUser> admins = userRepository.selectBatchIds(adminIds);
+            for (SysUser u : admins) {
+                if (u != null) {
+                    adminNameMap.put(u.getId(), u.getNickname() != null ? u.getNickname() : u.getUserName());
+                }
+            }
+        }
+
+        List<ModelAuditRecordVO> records = page.getRecords().stream().map(r -> {
+            String actionDesc = r.getAction() == 1 ? "通过" : "驳回";
+            return ModelAuditRecordVO.builder()
+                    .id(r.getId())
+                    .modelId(r.getModelId())
+                    .auditBy(r.getAuditBy())
+                    .auditByName(adminNameMap.getOrDefault(r.getAuditBy(), "未知"))
+                    .action(r.getAction())
+                    .actionDesc(actionDesc)
+                    .profitShareRatio(r.getProfitShareRatio())
+                    .note(r.getNote())
+                    .createTime(r.getCreateTime())
+                    .build();
+        }).collect(Collectors.toList());
+
+        return PageResult.<ModelAuditRecordVO>builder()
+                .records(records)
+                .total(page.getTotal())
+                .pageNum((int) page.getCurrent())
+                .pageSize((int) page.getSize())
+                .pages((int) page.getPages())
+                .build();
+    }
+
+    @Override
+    public PageResult<ModelListVO> getDesignerModels(ModelQueryRequest request, Long designerId) {
+        request.setDesignerId(designerId);
+        return getModelList(request);
     }
 
     // ==================== 分类管理实现 ====================

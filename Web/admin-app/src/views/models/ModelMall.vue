@@ -14,6 +14,10 @@
             <el-option label="已上架" :value="1" />
             <el-option label="已下架" :value="2" />
           </el-select>
+          <el-select v-model="queryParams.sourceType" placeholder="来源类型" clearable style="width: 120px" @change="handleSearch">
+            <el-option label="官方" :value="1" />
+            <el-option label="设计者作品" :value="2" />
+          </el-select>
           <el-select v-model="queryParams.orderBy" placeholder="排序方式" style="width: 140px" @change="handleSearch">
             <el-option label="创建时间" value="create_time" />
             <el-option label="价格升序" value="price_asc" />
@@ -47,7 +51,14 @@
               {{ scope.row.categoryName || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="designerName" label="设计者" width="180" />
+          <el-table-column prop="designerName" label="设计者" width="150" />
+          <el-table-column label="来源" width="110">
+            <template #default="scope">
+              <el-tag :type="scope.row.sourceType === 1 ? 'primary' : 'success'" effect="light" round>
+                {{ scope.row.sourceTypeDesc || '-' }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="basePrice" label="基础价格" width="100">
             <template #default="scope">
               ￥{{ Number(scope.row.basePrice).toFixed(2) }}
@@ -502,6 +513,7 @@ const queryParams = reactive({
   categoryId: null,
   designerId: null,
   status: null,
+  sourceType: null,
   orderBy: 'create_time',
   pageNum: 1,
   pageSize: 10

@@ -48,6 +48,12 @@ public class ModelQueryRequest {
     private Integer status;
 
     /**
+     * 来源类型: 1-OFFICIAL(官方), 2-DESIGNER(设计者作品)
+     */
+    @Schema(description = "来源类型: 1-官方, 2-设计者作品")
+    private Integer sourceType;
+
+    /**
      * 排序字段: create_time-创建时间降序, create_time_asc-创建时间升序,
      *          price_asc-价格升序, price_desc-价格降序,
      *          sales-销量降序, sales_asc-销量升序,

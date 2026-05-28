@@ -140,4 +140,28 @@ public class ModelDetailVO {
      */
     @Schema(description = "可用材质列表")
     private List<MaterialVO> materials;
+
+    /**
+     * 模型来源类型: 1-OFFICIAL(官方), 2-DESIGNER(设计者作品)
+     */
+    @Schema(description = "模型来源类型")
+    private Integer sourceType;
+
+    /**
+     * 模型来源描述
+     */
+    @Schema(description = "模型来源描述")
+    private String sourceTypeDesc;
+
+    /**
+     * 设计师分润比例(百分比)
+     */
+    @Schema(description = "设计师分润比例(百分比)")
+    private Integer profitShareRatio;
+
+    /**
+     * 审核备注/驳回原因
+     */
+    @Schema(description = "审核备注/驳回原因")
+    private String auditNote;
 }

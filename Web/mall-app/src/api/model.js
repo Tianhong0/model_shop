@@ -101,3 +101,36 @@ export const getSemanticSearchStatusApi = () => {
     method: 'GET'
   })
 }
+
+/**
+ * 设计者创建模型
+ */
+export const createModelApi = (data) => {
+  return request({
+    url: '/api/model/create',
+    method: 'POST',
+    data
+  })
+}
+
+/**
+ * 设计者更新模型
+ */
+export const updateModelApi = (data) => {
+  return request({
+    url: '/api/model/update',
+    method: 'POST',
+    data
+  })
+}
+
+/**
+ * 设计者查询自己的模型列表
+ */
+export const getMyModelsApi = (data) => {
+  return request({
+    url: '/api/model/my/list',
+    method: 'POST',
+    data
+  })
+}

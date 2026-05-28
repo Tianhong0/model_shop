@@ -98,6 +98,10 @@
                 <el-icon><List /></el-icon>
                 <span>模型管理</span>
               </el-menu-item>
+              <el-menu-item index="/models/audit">
+                <el-icon><Checked /></el-icon>
+                <span>模型审核</span>
+              </el-menu-item>
               <el-menu-item index="/models/model-lists">
                 <el-icon><Collection /></el-icon>
                 <span>清单管理</span>
@@ -254,6 +258,10 @@
               <el-menu-item index="/finance/withdraws">
                 <el-icon><tickets /></el-icon>
                 <span>提现管理</span>
+              </el-menu-item>
+              <el-menu-item index="/finance/designer-settlements">
+                <el-icon><CreditCard /></el-icon>
+                <span>设计师分润结算</span>
               </el-menu-item>
             </el-sub-menu>
 

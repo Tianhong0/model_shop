@@ -40,7 +40,7 @@
 							<image :src="item.watermarkedMainImageUrl || item.mainImageUrl || defaultBanner" mode="aspectFill"></image>
 						</view>
 						<view class="grid-info">
-							<text class="name">{{item.modelName}}</text>
+							<view class="name-row"><text class="name">{{item.modelName}}</text><text v-if="item.sourceType === 2" class="source-tag">设计者</text></view>
 							<text class="price">￥{{item.basePrice || '0.00'}} 起</text>
 						</view>
 					</view>
@@ -394,6 +394,21 @@ $gradient-primary: linear-gradient(135deg, $sky-blue 0%, $sky-light 100%);
 .grid-info {
 	padding: 16rpx 18rpx 18rpx;
 
+		.name-row {
+			display: flex;
+			align-items: center;
+			gap: 6rpx;
+		}
+
+		.source-tag {
+			font-size: 18rpx;
+			color: #16a34a;
+			background: #dcfce7;
+			padding: 2rpx 8rpx;
+			border-radius: 999rpx;
+			font-weight: 600;
+			flex-shrink: 0;
+		}
 	.name {
 		font-size: 26rpx;
 		color: $text-primary;

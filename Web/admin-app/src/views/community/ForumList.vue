@@ -138,7 +138,16 @@
             <el-table-column prop="status" label="状态" width="80" />
             <el-table-column prop="isExcellent" label="优质" width="80" />
             <el-table-column prop="isAdopted" label="采纳" width="80" />
-            <el-table-column prop="createTime" label="时间" width="170" />
+            <el-table-column prop="createTime" label="时间" width="160" />
+            <el-table-column label="操作" width="80" fixed="right">
+              <template #default="scope">
+                <el-popconfirm title="确认删除该回复？" @confirm="removeReply(scope.row)">
+                  <template #reference>
+                    <el-button link type="danger" size="small">删除</el-button>
+                  </template>
+                </el-popconfirm>
+              </template>
+            </el-table-column>
           </el-table>
         </template>
       </div>
@@ -154,6 +163,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   deleteAdminPost,
+  deleteAdminReply,
   getAdminCategoryList,
   getAdminPostDetail,
   getAdminPostPage,
@@ -265,6 +275,15 @@ const removePost = async (row) => {
   await deleteAdminPost(row.id)
   ElMessage.success('帖子已删除')
   fetchList()
+}
+
+const removeReply = async (row) => {
+  await deleteAdminReply(row.id)
+  ElMessage.success('回复已删除')
+  // 刷新帖子详情中的回复列表
+  if (postDetail.value?.post?.id) {
+    postDetail.value = await getAdminPostDetail(postDetail.value.post.id)
+  }
 }
 
 onMounted(async () => {

@@ -8,11 +8,14 @@ import org.majun.backend.annotation.OperationLog;
 import org.majun.backend.common.Result;
 import org.majun.backend.dto.*;
 import org.majun.backend.security.LoginUser;
+import org.majun.backend.dto.ModelAuditRequest;
 import org.majun.backend.service.DataExportService;
 import org.majun.backend.service.ModelService;
 import org.majun.backend.vo.CategoryVO;
 import org.majun.backend.vo.MaterialVO;
+import org.majun.backend.vo.ModelAuditRecordVO;
 import org.majun.backend.vo.ModelFavoriteToggleVO;
+import org.majun.backend.vo.ModelListVO;
 import org.majun.backend.vo.PageResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -291,6 +294,45 @@ public class ModelController {
         request.setMaterialId(materialId);
         modelService.updateMaterialInModel(modelId, request);
         return Result.success();
+    }
+
+    // ==================== 模型审核 ====================
+
+    /**
+     * 审核模型
+     */
+    @Operation(summary = "审核模型", description = "管理员审核设计者提交的模型")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @OperationLog(type = "AUDIT", module = "模型管理", description = "审核模型", targetType = "MODEL")
+    @PostMapping("/audit")
+    public Result<Void> auditModel(@Valid @RequestBody ModelAuditRequest request) {
+        Long adminId = getCurrentUserId();
+        modelService.auditModel(request, adminId);
+        return Result.success();
+    }
+
+    /**
+     * 查询模型审核记录
+     */
+    @Operation(summary = "查询审核记录", description = "查询模型的审核历史记录")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/audit/records/{modelId}")
+    public Result<PageResult<ModelAuditRecordVO>> getAuditRecords(
+            @PathVariable Long modelId,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.success(modelService.getAuditRecords(modelId, pageNum, pageSize));
+    }
+
+    /**
+     * 设计者查询自己的模型列表
+     */
+    @Operation(summary = "我的模型列表", description = "设计者分页查询自己上传的模型")
+    @PreAuthorize("hasAuthority('ROLE_DESIGNER')")
+    @PostMapping("/my/list")
+    public Result<PageResult<ModelListVO>> getMyModels(@Valid @RequestBody ModelQueryRequest request) {
+        Long designerId = getCurrentUserId();
+        return Result.success(modelService.getDesignerModels(request, designerId));
     }
 
     /**

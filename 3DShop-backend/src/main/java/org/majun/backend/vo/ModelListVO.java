@@ -94,4 +94,16 @@ public class ModelListVO {
      */
     @Schema(description = "平均评分")
     private Double avgScore;
+
+    /**
+     * 模型来源类型: 1-OFFICIAL(官方), 2-DESIGNER(设计者作品)
+     */
+    @Schema(description = "模型来源类型")
+    private Integer sourceType;
+
+    /**
+     * 模型来源描述
+     */
+    @Schema(description = "模型来源描述")
+    private String sourceTypeDesc;
 }
