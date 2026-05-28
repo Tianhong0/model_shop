@@ -262,7 +262,7 @@ const convertCanvasToImage = () => {
 // 生成二维码
 const generateQRCode = async (ctx, x, y, size) => {
 	try {
-		const link = inviteLink.value || `https://your-domain.com/pages/auth/register?inviteCode=${inviteCode.value}`
+		const link = inviteLink.value || `https://your-domain.com/invite/${inviteCode.value}`
 		const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(link)}`
 
 		// #ifdef APP-PLUS

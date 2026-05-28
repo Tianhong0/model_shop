@@ -591,7 +591,7 @@ public class PromotionServiceImpl implements PromotionService {
             // 默认使用当前服务器的地址
             baseUrl = "https://your-domain.com";
         }
-        return baseUrl + "/pages/auth/register?inviteCode=" + inviteCode;
+        return baseUrl + "/invite/" + inviteCode;
     }
 
     private String generatePosterUrl(String inviteCode) {

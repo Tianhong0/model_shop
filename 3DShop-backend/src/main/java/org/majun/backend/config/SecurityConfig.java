@@ -103,7 +103,11 @@ public class SecurityConfig {
                     .requestMatchers("/error").permitAll()
                         // Swagger UI 放行
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        // 静态资源放行
+                        // 邀请落地页放行
+                    .requestMatchers("/invite/**").permitAll()
+                    // 拼团分享落地页放行
+                    .requestMatchers("/group-buy/**").permitAll()
+                    // 静态资源放行
                         .requestMatchers("/static/**", "/favicon.ico").permitAll()
                         // 其他请求需要认证
                         .anyRequest().authenticated()

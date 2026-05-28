@@ -178,7 +178,7 @@ const shareToFriend = () => {
 			} else if (res.tapIndex === 1) {
 				await shareWithPoster('WXSceneTimeline')
 			} else if (res.tapIndex === 2) {
-				const link = inviteCode.value.inviteLink || `https://your-domain.com/pages/auth/register?inviteCode=${code}`
+				const link = inviteCode.value.inviteLink || `https://your-domain.com/invite/${code}`
 				copyShareLink(code, link)
 			}
 		}
@@ -392,7 +392,7 @@ const drawPosterContent = (ctx, w, h, code, config, qrcodeSize, titleColor, code
 	ctx.fillText(tipsText, w / 2, h - 10)
 
 	// 生成二维码并绘制
-	const link = inviteCode.value.inviteLink || `https://your-domain.com/pages/auth/register?inviteCode=${code}`
+	const link = inviteCode.value.inviteLink || `https://your-domain.com/invite/${code}`
 	const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrcodeSize}x${qrcodeSize}&data=${encodeURIComponent(link)}`
 
 	uni.downloadFile({

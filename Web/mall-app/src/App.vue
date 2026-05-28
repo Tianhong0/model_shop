@@ -2,12 +2,60 @@
 	import { hasValidLogin } from './utils/auth'
 	import { startNotificationRuntime, stopNotificationRuntime } from './utils/notificationRuntime'
 
+	function parseInviteCode(args) {
+		if (!args) return null
+		const url = typeof args === 'string' ? args : (args.path || args.url || '')
+		const match = url.match(/[?&]inviteCode=([A-Za-z0-9]+)/)
+		return match ? match[1] : null
+	}
+
+	function parseGroupBuyShareCode(args) {
+		if (!args) return null
+		const url = typeof args === 'string' ? args : (args.path || args.url || '')
+		const match = url.match(/[?&]shareCode=([A-Za-z0-9]+)/)
+		return match ? match[1] : null
+	}
+
+	function handleInviteDeepLink(inviteCode) {
+		if (!inviteCode) return
+		if (hasValidLogin()) {
+			uni.showToast({ title: '您已注册，无法接受邀请', icon: 'none', duration: 3000 })
+		} else {
+			uni.navigateTo({ url: '/pages/auth/register?inviteCode=' + inviteCode })
+		}
+	}
+
+	function handleGroupBuyDeepLink(shareCode) {
+		if (!shareCode) return
+		uni.navigateTo({ url: '/pages/group-buy/group-detail?shareCode=' + shareCode })
+	}
+
 	export default {
 		onLaunch: function() {
 			console.log('App Launch')
 			if (hasValidLogin()) {
 				startNotificationRuntime()
 			}
+
+			// 冷启动时处理 deep link
+			// #ifdef APP-PLUS
+			try {
+				const args = plus.runtime.arguments
+				if (args) {
+					const inviteCode = parseInviteCode(args)
+					if (inviteCode) {
+						this.$options.globalData.pendingInviteCode = inviteCode
+					}
+					const shareCode = parseGroupBuyShareCode(args)
+					if (shareCode) {
+						this.$options.globalData.pendingGroupBuyShareCode = shareCode
+					}
+				}
+			} catch (e) {
+				console.warn('读取启动参数失败:', e)
+			}
+			// #endif
+
 			if (hasValidLogin()) {
 				setTimeout(() => {
 					uni.switchTab({ url: '/pages/index/index' })
@@ -21,10 +69,49 @@
 			} else {
 				stopNotificationRuntime()
 			}
+
+			// 热启动时处理 deep link
+			// #ifdef APP-PLUS
+			try {
+				const args = plus.runtime.arguments
+				if (args) {
+					const inviteCode = parseInviteCode(args)
+					if (inviteCode) {
+						handleInviteDeepLink(inviteCode)
+					}
+					const shareCode = parseGroupBuyShareCode(args)
+					if (shareCode) {
+						handleGroupBuyDeepLink(shareCode)
+					}
+				}
+			} catch (e) {
+				console.warn('读取启动参数失败:', e)
+			}
+
+			// 处理冷启动时暂存的码（页面加载完成后处理）
+			const pendingInviteCode = this.$options.globalData.pendingInviteCode
+			if (pendingInviteCode) {
+				this.$options.globalData.pendingInviteCode = null
+				setTimeout(() => {
+					handleInviteDeepLink(pendingInviteCode)
+				}, 500)
+			}
+			const pendingGroupBuyShareCode = this.$options.globalData.pendingGroupBuyShareCode
+			if (pendingGroupBuyShareCode) {
+				this.$options.globalData.pendingGroupBuyShareCode = null
+				setTimeout(() => {
+					handleGroupBuyDeepLink(pendingGroupBuyShareCode)
+				}, 500)
+			}
+			// #endif
 		},
 		onHide: function() {
 			console.log('App Hide')
 			stopNotificationRuntime()
+		},
+		globalData: {
+			pendingInviteCode: null,
+			pendingGroupBuyShareCode: null
 		}
 	}
 </script>

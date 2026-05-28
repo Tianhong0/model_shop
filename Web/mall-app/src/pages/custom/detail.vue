@@ -1041,7 +1041,7 @@ const buyNow = async () => {
 }
 
 const goCart = () => {
-	uni.switchTab({ url: '/pages/cart/cart' })
+	uni.navigateTo({ url: '/pages/cart/cart' })
 }
 
 const goGroupBuy = () => {

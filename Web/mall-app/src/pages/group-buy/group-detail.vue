@@ -93,8 +93,8 @@
       </template>
 
       <button class="share-btn" v-if="group.status === 0" @click="handleShare">
-        <uni-icons type="redo" size="18" />
-        <text>邀请好友</text>
+        <uni-icons type="link" size="18" />
+        <text>复制链接</text>
       </button>
     </view>
   </view>
@@ -436,46 +436,15 @@ const handleShare = () => {
     return
   }
 
-  // #ifdef APP-PLUS
-  // App端使用原生分享
-  const shareTitle = `快来和我一起拼团「${activity.value?.activityName || '好物'}」`
-  const shareContent = `还差${group.value.targetPeople - group.value.currentPeople}人即可成团，拼团价¥${activity.value?.groupPrice}`
-  const shareUrl = `${getApiBaseUrl()}/pages/group-buy/group-detail?shareCode=${group.value.shareCode}`
+  const baseUrl = getApiBaseUrl()
+  const shareUrl = `${baseUrl}/group-buy/${group.value.shareCode}`
 
-  uni.share({
-    provider: 'weixin',
-    scene: 'WXSceneSession',
-    type: 0,
-    title: shareTitle,
-    summary: shareContent,
-    href: shareUrl,
-    imageUrl: activity.value?.modelImage || '',
-    success: () => {
-      uni.showToast({ title: '分享成功', icon: 'success' })
-    },
-    fail: (err) => {
-      console.error('分享失败', err)
-      // 尝试复制链接
-      uni.setClipboardData({
-        data: shareUrl,
-        success: () => {
-          uni.showToast({ title: '链接已复制', icon: 'success' })
-        }
-      })
-    }
-  })
-  // #endif
-
-  // #ifndef APP-PLUS
-  // H5/小程序端复制分享链接
-  const shareLink = `/pages/group-buy/group-detail?shareCode=${group.value.shareCode}`
   uni.setClipboardData({
-    data: `${getApiBaseUrl()}${shareLink}`,
+    data: shareUrl,
     success: () => {
-      uni.showToast({ title: '分享链接已复制', icon: 'success' })
+      uni.showToast({ title: '链接已复制，发送给好友即可', icon: 'success' })
     }
   })
-  // #endif
 }
 
 onLoad((options) => {
