@@ -117,7 +117,7 @@
           <text>图片</text>
         </view>
         <view class="media-option" @click="chooseVideo">
-          <u-icon name="video-camera" size="24"></u-icon>
+          <u-icon name="play-circle-fill" size="24"></u-icon>
           <text>视频</text>
         </view>
       </view>

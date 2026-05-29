@@ -91,7 +91,7 @@ export const uploadCsMediaApi = (filePath, mediaType) => {
         try {
           const data = JSON.parse(res.data)
           if (data.code === 200) {
-            resolve(data.data)
+            resolve(data.data || data.message)
           } else {
             reject(new Error(data.message || '上传失败'))
           }

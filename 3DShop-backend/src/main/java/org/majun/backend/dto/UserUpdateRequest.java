@@ -13,7 +13,6 @@ import lombok.Data;
 @Schema(description = "用户信息更新请求")
 public class UserUpdateRequest {
 
-    @NotNull(message = "用户ID不能为空")
     @Schema(description = "用户ID")
     private Long id;
 
@@ -34,7 +33,7 @@ public class UserUpdateRequest {
     @Schema(description = "邮箱")
     private String email;
 
-    @Pattern(regexp = "^\\d{6}$", message = "邮箱验证码格式不正确")
-    @Schema(description = "邮箱验证码", example = "123456")
+    @Pattern(regexp = "^(|\\d{6})$", message = "邮箱验证码格式不正确")
+    @Schema(description = "邮箱验证码（修改邮箱时必填）", example = "123456")
     private String emailCode;
 }
