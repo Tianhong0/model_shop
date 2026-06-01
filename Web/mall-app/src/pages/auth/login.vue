@@ -4,6 +4,11 @@
 		<view class="bg-orb bg-orb--top"></view>
 		<view class="bg-orb bg-orb--bottom"></view>
 
+		<!-- Settings icon (top-right corner) -->
+		<view class="settings-icon" @click="openSettingsPanel">
+			<uni-icons type="gear" size="22" color="#8a9aaa"></uni-icons>
+		</view>
+
 		<!-- Header area -->
 		<view class="login-header">
 			<view class="logo-wrapper">
@@ -44,6 +49,33 @@
 			<view class="register-link">
 				<text>没有账号? </text>
 				<text class="link" @click="goRegister">立即注册</text>
+			</view>
+		</view>
+
+		<!-- Settings panel overlay -->
+		<view class="overlay-mask" v-if="settingsVisible" @click="closeSettingsPanel"></view>
+		<view class="settings-panel" v-if="settingsVisible">
+			<view class="settings-panel__header">
+				<text class="settings-panel__title">后端地址配置</text>
+				<text class="settings-panel__desc">设置API请求的后端服务器地址</text>
+			</view>
+			<view class="settings-panel__body">
+				<view class="panel-field">
+					<text class="panel-field__label">地址</text>
+					<input
+						class="panel-field__input"
+						type="text"
+						v-model="settingsForm.apiBaseUrl"
+						placeholder="例如 http://192.168.1.100:9999"
+					/>
+				</view>
+				<view class="settings-panel__hint">
+					<text>当前地址：{{ currentBaseUrl }}</text>
+				</view>
+			</view>
+			<view class="settings-panel__actions">
+				<button class="btn-reset" @click="resetBaseUrl">恢复默认</button>
+				<button class="btn-confirm" @click="saveBaseUrl">保存</button>
 			</view>
 		</view>
 
@@ -92,6 +124,7 @@ import { loginApi, sendForgotPasswordEmailCodeApi, resetPasswordByEmailApi } fro
 import { getDesignerListApi } from '../../api/user'
 import { hasValidLogin } from '../../utils/auth'
 import { normalizeUserRole } from '../../utils/role'
+import { getApiBaseUrl } from '../../utils/apiBase'
 
 const username = ref('')
 const password = ref('')
@@ -110,6 +143,43 @@ const forgotForm = ref({
 	newPassword: '',
 	confirmNewPassword: ''
 })
+
+const settingsVisible = ref(false)
+const settingsForm = ref({ apiBaseUrl: '' })
+const currentBaseUrl = ref('')
+
+const openSettingsPanel = () => {
+	currentBaseUrl.value = getApiBaseUrl()
+	settingsForm.value.apiBaseUrl = currentBaseUrl.value
+	settingsVisible.value = true
+}
+
+const closeSettingsPanel = () => {
+	settingsVisible.value = false
+}
+
+const saveBaseUrl = () => {
+	const url = String(settingsForm.value.apiBaseUrl || '').trim().replace(/\/+$/, '')
+	if (!url) {
+		uni.showToast({ title: '请输入后端地址', icon: 'none' })
+		return
+	}
+	if (!/^https?:\/\/.+/.test(url)) {
+		uni.showToast({ title: '地址需以 http:// 或 https:// 开头', icon: 'none' })
+		return
+	}
+	uni.setStorageSync('api_base_url', url)
+	currentBaseUrl.value = url
+	settingsVisible.value = false
+	uni.showToast({ title: '地址已保存', icon: 'success' })
+}
+
+const resetBaseUrl = () => {
+	uni.removeStorageSync('api_base_url')
+	currentBaseUrl.value = getApiBaseUrl()
+	settingsForm.value.apiBaseUrl = currentBaseUrl.value
+	uni.showToast({ title: '已恢复默认地址', icon: 'none' })
+}
 
 const goHome = () => {
 	uni.switchTab({
@@ -574,6 +644,90 @@ $radius-pill: 999rpx;
 		&:active {
 			opacity: 0.7;
 		}
+	}
+}
+
+/* --- Settings icon --- */
+.settings-icon {
+	position: fixed;
+	top: calc(env(safe-area-inset-top) + 24rpx);
+	right: 32rpx;
+	width: 64rpx;
+	height: 64rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.85);
+	border-radius: 50%;
+	z-index: 10;
+	backdrop-filter: blur(8px);
+	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+
+	&:active {
+		transform: scale(0.9);
+		opacity: 0.8;
+	}
+}
+
+/* --- Settings panel --- */
+.settings-panel {
+	position: fixed;
+	left: 32rpx;
+	right: 32rpx;
+	bottom: 32rpx;
+	background: $card;
+	border-radius: $radius-card;
+	box-shadow: 0 -8rpx 60rpx rgba(0, 0, 0, 0.1);
+	padding: 0;
+	z-index: 1001;
+	animation: fadeInUp 0.35s ease-out both;
+	overflow: hidden;
+
+	&__header {
+		padding: 36rpx 36rpx 0 36rpx;
+	}
+
+	&__title {
+		font-size: 30rpx;
+		font-weight: 700;
+		color: $text-1;
+	}
+
+	&__desc {
+		display: block;
+		font-size: 24rpx;
+		color: $text-3;
+		margin-top: 8rpx;
+	}
+
+	&__body {
+		padding: 20rpx 36rpx 0 36rpx;
+	}
+
+	&__hint {
+		padding: 12rpx 0;
+		font-size: 22rpx;
+		color: $text-3;
+	}
+
+	&__actions {
+		display: flex;
+		gap: 24rpx;
+		padding: 28rpx 36rpx 36rpx 36rpx;
+	}
+}
+
+.btn-reset {
+	flex: 1;
+	height: 84rpx;
+	border-radius: $radius-pill;
+	font-size: 28rpx;
+	font-weight: 600;
+	background: $bg;
+	color: $text-2;
+
+	&:active {
+		transform: scale(0.96);
 	}
 }
 

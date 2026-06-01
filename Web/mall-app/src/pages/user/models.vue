@@ -7,20 +7,31 @@
 
 		<view v-if="currentTab === 0" class="tab-content">
 			<view class="model-list" v-if="myModels.length > 0">
-				<view class="model-card" v-for="model in myModels" :key="model.id" @click="goDetail(model.id)">
-					<image :src="model.mainImageUrl || '/static/icons/tools.png'" class="preview" mode="aspectFill"></image>
-					<view class="info">
-						<view class="name-row">
-							<text class="name">{{ model.modelName }}</text>
-							<text class="status" :class="getStatusClass(model.status)">{{ getStatusText(model.status) }}</text>
+				<view class="model-card" v-for="model in myModels" :key="model.id">
+					<view class="card-main" @tap="goDetail(model.id)">
+						<image :src="model.mainImageUrl || '/static/icons/tools.png'" class="preview" mode="aspectFill"></image>
+						<view class="info">
+							<view class="name-row">
+								<text class="name">{{ model.modelName }}</text>
+								<text class="status" :class="getStatusClass(model.status)">{{ getStatusText(model.status) }}</text>
+							</view>
+							<text class="meta">分类: {{ model.categoryName || '-' }}</text>
+							<text class="meta">价格: ￥{{ model.basePrice || '0.00' }}</text>
+							<view class="stats">
+								<text>下载: {{ model.downloadCount || 0 }}</text>
+								<text class="source-badge" :class="model.sourceType === 1 ? 'official' : 'designer'">
+									{{ model.sourceTypeDesc || '官方' }}
+								</text>
+							</view>
 						</view>
-						<text class="meta">分类: {{ model.categoryName || '-' }}</text>
-						<text class="meta">价格: ￥{{ model.basePrice || '0.00' }}</text>
-						<view class="stats">
-							<text>下载: {{ model.downloadCount || 0 }}</text>
-							<text class="source-badge" :class="model.sourceType === 1 ? 'official' : 'designer'">
-								{{ model.sourceTypeDesc || '官方' }}
-							</text>
+					</view>
+					<view class="card-actions">
+						<view class="action-btn edit-btn" @tap.stop="goEdit(model.id)">编辑</view>
+						<view v-if="model.status === 1" class="action-btn delist-btn" @tap.stop="confirmDelist(model)">
+							下架
+						</view>
+						<view v-if="model.status === 2" class="action-btn relist-btn" @tap.stop="confirmRelist(model)">
+							上架
 						</view>
 					</view>
 				</view>
@@ -133,7 +144,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { onReachBottom } from '@dcloudio/uni-app'
 import { isDesignerRole } from '../../utils/role'
-import { createModelApi, getMyModelsApi, getCategoryTreeApi } from '../../api/model'
+import { createModelApi, getMyModelsApi, getCategoryTreeApi, updateModelApi } from '../../api/model'
 
 const userRole = ref(uni.getStorageSync('user_role') || 'user')
 const canAccess = computed(() => isDesignerRole(userRole.value))
@@ -176,13 +187,62 @@ const switchTab = (tab) => {
 }
 
 const getStatusText = (status) => {
-	const map = { 0: '审核中', 1: '已上架', 2: '已驳回' }
+	const map = { 0: '审核中', 1: '已上架', 2: '已下架' }
 	return map[status] || '未知'
 }
 
 const getStatusClass = (status) => {
-	const map = { 0: 'pending', 1: 'approved', 2: 'rejected' }
+	const map = { 0: 'pending', 1: 'approved', 2: 'delisted' }
 	return map[status] || ''
+}
+
+const goEdit = (id) => {
+	uni.navigateTo({
+		url: `/pages/user/model-edit?id=${id}`,
+		fail: (err) => {
+			uni.showToast({ title: err.errMsg || '跳转失败', icon: 'none' })
+		}
+	})
+}
+
+const confirmDelist = (model) => {
+	uni.showModal({
+		title: '确认下架',
+		content: `确定要将模型「${model.modelName}」下架吗？下架后用户将无法搜索和购买该模型。`,
+		confirmText: '确认下架',
+		confirmColor: '#ff4d6d',
+		success: async (res) => {
+			if (res.confirm) {
+				try {
+					await updateModelApi({ id: model.id, status: 2 })
+					uni.showToast({ title: '已下架', icon: 'success' })
+					fetchMyModels(true)
+				} catch (e) {
+					uni.showToast({ title: e.message || '操作失败', icon: 'none' })
+				}
+			}
+		}
+	})
+}
+
+const confirmRelist = (model) => {
+	uni.showModal({
+		title: '确认上架',
+		content: `确定要将模型「${model.modelName}」重新上架吗？`,
+		confirmText: '确认上架',
+		confirmColor: '#00bfff',
+		success: async (res) => {
+		if (res.confirm) {
+			try {
+				await updateModelApi({ id: model.id, status: 1 })
+				uni.showToast({ title: '已上架', icon: 'success' })
+				fetchMyModels(true)
+			} catch (e) {
+				uni.showToast({ title: e.message || '操作失败', icon: 'none' })
+			}
+		}
+		}
+	})
 }
 
 const getFileName = (path) => {
@@ -581,19 +641,22 @@ $shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
 }
 
 .model-card {
-	display: flex;
 	padding: 24rpx;
 	margin-bottom: 20rpx;
-	align-items: center;
 	background: $card;
 	border-radius: 24rpx;
 	box-shadow: $shadow;
 	animation: fadeInUp 0.4s ease both;
+	.card-main {
+		display: flex;
+		align-items: center;
+	}
 	.preview {
 		width: 140rpx;
 		height: 140rpx;
 		border-radius: 16rpx;
 		background-color: $bg;
+		flex-shrink: 0;
 	}
 	.info {
 		flex: 1;
@@ -610,7 +673,7 @@ $shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
 				font-weight: 600;
 				&.pending { background-color: #fef3c7; color: #d97706; }
 				&.approved { background-color: #dcfce7; color: #16a34a; }
-				&.rejected { background-color: #fee2e2; color: #dc2626; }
+				&.delisted { background-color: #f1f5f9; color: #64748b; }
 			}
 		}
 		.meta { font-size: 22rpx; color: $text2; margin-top: 4rpx; display: block; }
@@ -628,6 +691,37 @@ $shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
 				font-weight: 600;
 				&.official { background-color: #dbeafe; color: #2563eb; }
 				&.designer { background-color: #dcfce7; color: #16a34a; }
+			}
+		}
+	}
+	.card-actions {
+		display: flex;
+		gap: 16rpx;
+		margin-top: 20rpx;
+		padding-top: 20rpx;
+		border-top: 1rpx solid #f1f5f9;
+		.action-btn {
+			flex: 1;
+			height: 60rpx;
+			line-height: 60rpx;
+			font-size: 24rpx;
+			font-weight: 600;
+			border-radius: 12rpx;
+			text-align: center;
+			&.edit-btn {
+				background: $bg;
+				color: $primary;
+				&:active { opacity: 0.7; }
+			}
+			&.delist-btn {
+				background: #fee2e2;
+				color: $danger;
+				&:active { opacity: 0.7; }
+			}
+			&.relist-btn {
+				background: #dcfce7;
+				color: #16a34a;
+				&:active { opacity: 0.7; }
 			}
 		}
 	}

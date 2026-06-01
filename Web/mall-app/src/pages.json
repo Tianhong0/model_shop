@@ -185,6 +185,12 @@
       }
     },
     {
+      "path": "pages/user/model-edit",
+      "style": {
+        "navigationBarTitleText": "编辑模型"
+      }
+    },
+    {
       "path": "pages/user/params",
       "style": {
         "navigationBarTitleText": "我的清单"

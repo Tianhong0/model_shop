@@ -134,3 +134,56 @@ export const getMyModelsApi = (data) => {
     data
   })
 }
+
+/**
+ * 设计者删除模型（软删除）
+ */
+export const deleteModelApi = (id) => {
+  return request({
+    url: `/api/model/delete/${id}`,
+    method: 'DELETE'
+  })
+}
+
+/**
+ * 添加模型图片
+ */
+export const addModelImageApi = (data) => {
+  return request({
+    url: '/api/model/image/add',
+    method: 'POST',
+    data
+  })
+}
+
+/**
+ * 设置主图
+ */
+export const setModelMainImageApi = (data) => {
+  return request({
+    url: '/api/model/image/set-main',
+    method: 'POST',
+    data
+  })
+}
+
+/**
+ * 删除模型图片
+ */
+export const deleteModelImageApi = (imageId) => {
+  return request({
+    url: `/api/model/image/delete/${imageId}`,
+    method: 'DELETE'
+  })
+}
+
+/**
+ * 更新图片排序
+ */
+export const updateImageSortApi = (data) => {
+  return request({
+    url: '/api/model/image/sort',
+    method: 'POST',
+    data
+  })
+}

@@ -141,7 +141,7 @@ public class ModelController {
      * 更新模型
      */
     @Operation(summary = "更新模型", description = "设计者更新模型信息")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or #request.id == modelService.getModelDesignerId(#request.id)")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or @modelServiceImpl.getModelDesignerId(#request.id) == authentication.principal.id")
     @OperationLog(type = "UPDATE", module = "模型管理", description = "更新模型", targetType = "MODEL")
     @PostMapping("/update")
     public Result<Void> updateModel(@Valid @RequestBody ModelUpdateRequest request) {
@@ -153,7 +153,7 @@ public class ModelController {
      * 删除模型
      */
     @Operation(summary = "删除模型", description = "设计者删除模型（逻辑删除）")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or #id == modelService.getModelDesignerId(#id)")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or @modelServiceImpl.getModelDesignerId(#id) == authentication.principal.id")
     @OperationLog(type = "DELETE", module = "模型管理", description = "删除模型", targetType = "MODEL")
     @DeleteMapping("/delete/{id}")
     public Result<Void> deleteModel(@PathVariable Long id) {
