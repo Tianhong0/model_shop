@@ -26,12 +26,14 @@ public class PromotionAdminController {
 
     private final PromotionService promotionService;
 
+    /** 获取所有推广配置 */
     @Operation(summary = "获取所有推广配置")
     @GetMapping("/configs")
     public Result<List<PromotionConfigVO>> getAllConfigs() {
         return Result.success(promotionService.getAllConfigs());
     }
 
+    /** 更新推广配置 */
     @Operation(summary = "更新推广配置")
     @PostMapping("/config/update")
     public Result<Void> updateConfig(@RequestBody @Valid PromotionConfigUpdateRequest request) {
@@ -39,6 +41,7 @@ public class PromotionAdminController {
         return Result.success();
     }
 
+    /** 批量更新推广配置 */
     @Operation(summary = "批量更新推广配置")
     @PostMapping("/configs/batch")
     public Result<Void> batchUpdateConfigs(@RequestBody List<PromotionConfigUpdateRequest> requests) {

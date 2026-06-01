@@ -72,6 +72,7 @@ public class ModelController {
         return Result.success(modelService.getModelDetail(id, userId));
     }
 
+    /** 收藏模型切换 */
     @Operation(summary = "收藏模型切换", description = "再次点击取消收藏")
     @PostMapping("/favorite/toggle")
     public Result<ModelFavoriteToggleVO> toggleFavorite(@AuthenticationPrincipal LoginUser loginUser,
@@ -79,6 +80,7 @@ public class ModelController {
         return Result.success(modelService.toggleFavorite(request.getModelId(), loginUser.getId()));
     }
 
+    /** 我的收藏模型分页 */
     @Operation(summary = "我的收藏模型分页", description = "查询当前用户收藏的模型")
     @PostMapping("/favorite/my/list")
     public Result<PageResult<?>> getMyFavoriteModels(@AuthenticationPrincipal LoginUser loginUser,
@@ -86,6 +88,7 @@ public class ModelController {
         return Result.success(modelService.getMyFavoriteModels(request.getPageNum(), request.getPageSize(), loginUser.getId()));
     }
 
+    /** 我的收藏模型ID列表 */
     @Operation(summary = "我的收藏模型ID列表", description = "用于前端快速判断收藏状态")
     @GetMapping("/favorite/my/ids")
     public Result<List<Long>> getMyFavoriteModelIds(@AuthenticationPrincipal LoginUser loginUser) {

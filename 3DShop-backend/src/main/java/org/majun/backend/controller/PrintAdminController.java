@@ -32,6 +32,7 @@ public class PrintAdminController {
 
     private final PrintJobService printJobService;
 
+    /** 任务列表 */
     @Operation(summary = "任务列表")
     @PostMapping("/jobs")
     public Result<PageResult<PrintJobVO>> list(@RequestBody(required = false) PrintJobQueryRequest request) {
@@ -41,6 +42,7 @@ public class PrintAdminController {
         return Result.success(printJobService.adminList(request));
     }
 
+    /** 打印机列表 */
     @Operation(summary = "打印机列表")
     @GetMapping("/printers")
     public Result<PageResult<PrintPrinterVO>> printers(
@@ -51,6 +53,7 @@ public class PrintAdminController {
         return Result.success(printJobService.listPrinters(status, keyword, pageNum, pageSize));
     }
 
+    /** 新增打印机 */
     @Operation(summary = "新增打印机")
     @PostMapping("/printers")
     public Result<Void> createPrinter(@Valid @RequestBody PrintPrinterCreateRequest request) {
@@ -58,6 +61,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 更新打印机 */
     @Operation(summary = "更新打印机")
     @PutMapping("/printers")
     public Result<Void> updatePrinter(@Valid @RequestBody PrintPrinterUpdateRequest request) {
@@ -65,6 +69,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 删除打印机 */
     @Operation(summary = "删除打印机")
     @DeleteMapping("/printers/{id}")
     public Result<Void> deletePrinter(@PathVariable Long id) {
@@ -72,6 +77,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 手动排单 */
     @Operation(summary = "手动排单")
     @PostMapping("/dispatch")
     public Result<Void> dispatch(@Valid @RequestBody PrintJobDispatchRequest request) {
@@ -79,6 +85,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 调整任务 */
     @Operation(summary = "调整任务")
     @PutMapping("/adjust")
     public Result<Void> adjust(@Valid @RequestBody PrintJobAdjustRequest request) {
@@ -86,6 +93,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 终止任务 */
     @Operation(summary = "终止任务")
     @PostMapping("/stop/{jobId}")
     public Result<Void> stop(@PathVariable Long jobId) {
@@ -93,6 +101,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 重试任务 */
     @Operation(summary = "重试任务")
     @PostMapping("/retry/{jobId}")
     public Result<Void> retry(@PathVariable Long jobId) {
@@ -100,6 +109,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 删除任务 */
     @Operation(summary = "删除任务")
     @DeleteMapping("/jobs/{jobId}")
     public Result<Void> delete(@PathVariable Long jobId) {
@@ -107,6 +117,7 @@ public class PrintAdminController {
         return Result.success();
     }
 
+    /** 任务事件日志 */
     @Operation(summary = "任务事件日志")
     @GetMapping("/jobs/{jobId}/events")
     public Result<List<PrintJobEventVO>> events(@PathVariable Long jobId,

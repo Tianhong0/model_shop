@@ -34,6 +34,9 @@ public class StatisticsController {
 
     private final StatisticsService statisticsService;
 
+    /**
+     * 订单统计
+     */
     @Operation(summary = "订单统计")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/orders")
@@ -45,6 +48,9 @@ public class StatisticsController {
         return Result.success(statisticsService.getOrderStatistics(query));
     }
 
+    /**
+     * 用户统计
+     */
     @Operation(summary = "用户统计")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/users")
@@ -56,6 +62,9 @@ public class StatisticsController {
         return Result.success(statisticsService.getUserStatistics(query));
     }
 
+    /**
+     * 模型统计
+     */
     @Operation(summary = "模型统计")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/models")
@@ -67,6 +76,9 @@ public class StatisticsController {
         return Result.success(statisticsService.getModelStatistics(query));
     }
 
+    /**
+     * 财务统计
+     */
     @Operation(summary = "财务统计")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/finance")
@@ -78,6 +90,9 @@ public class StatisticsController {
         return Result.success(statisticsService.getFinanceStatistics(query));
     }
 
+    /**
+     * 悬赏统计
+     */
     @Operation(summary = "悬赏统计")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/bounty")
@@ -89,6 +104,9 @@ public class StatisticsController {
         return Result.success(statisticsService.getBountyStatistics(query));
     }
 
+    /**
+     * 导出统计报表
+     */
     @Operation(summary = "导出统计报表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "EXPORT", module = "统计报表", description = "导出统计报表", targetType = "STATISTICS")

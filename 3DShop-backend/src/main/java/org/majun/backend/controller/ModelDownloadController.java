@@ -26,6 +26,7 @@ public class ModelDownloadController {
 
     private final ModelDownloadService modelDownloadService;
 
+    /** 获取模型下载链接 */
     @Operation(summary = "获取模型下载链接", description = "生成带过期时间的模型下载链接，需要购买权限")
     @GetMapping("/url/{modelId}")
     @PreAuthorize("isAuthenticated()")
@@ -42,6 +43,7 @@ public class ModelDownloadController {
         return Result.success(vo);
     }
 
+    /** 获取预览模型链接 */
     @Operation(summary = "获取预览模型链接", description = "获取模型预览文件链接，无需购买权限")
     @GetMapping("/preview/{modelId}")
     public Result<String> getPreviewUrl(@PathVariable Long modelId) {
@@ -49,6 +51,7 @@ public class ModelDownloadController {
         return Result.success(previewUrl);
     }
 
+    /** 检查下载权限 */
     @Operation(summary = "检查下载权限", description = "检查当前用户是否有权下载指定模型")
     @GetMapping("/can-download/{modelId}")
     @PreAuthorize("isAuthenticated()")

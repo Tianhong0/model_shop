@@ -27,6 +27,9 @@ public class WatermarkController {
     private final ImageWatermarkService imageWatermarkService;
     private final ModelService modelService;
 
+    /**
+     * 为模型图片添加水印
+     */
     @Operation(summary = "为模型图片添加水印", description = "批量为指定模型的所有图片添加水印")
     @OperationLog(type = "UPDATE", module = "水印管理", description = "生成模型水印", targetType = "MODEL")
     @PostMapping("/generate/{modelId}")
@@ -39,6 +42,9 @@ public class WatermarkController {
         return Result.success(result);
     }
 
+    /**
+     * 检查模型水印状态
+     */
     @Operation(summary = "检查模型水印状态", description = "检查模型是否已生成水印，返回详细状态信息")
     @GetMapping("/status/{modelId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -47,6 +53,9 @@ public class WatermarkController {
         return Result.success(status);
     }
 
+    /**
+     * 重新生成水印
+     */
     @Operation(summary = "重新生成水印", description = "强制重新生成水印，使用最新的水印配置")
     @OperationLog(type = "UPDATE", module = "水印管理", description = "重新生成水印", targetType = "MODEL")
     @PostMapping("/regenerate/{modelId}")
@@ -60,6 +69,9 @@ public class WatermarkController {
         return Result.success(result);
     }
 
+    /**
+     * 批量生成水印
+     */
     @Operation(summary = "批量生成水印", description = "批量为多个模型生成水印")
     @OperationLog(type = "UPDATE", module = "水印管理", description = "批量生成水印", targetType = "MODEL")
     @PostMapping("/batch-generate")
@@ -85,6 +97,9 @@ public class WatermarkController {
         return Result.success(result);
     }
 
+    /**
+     * 删除模型水印
+     */
     @Operation(summary = "删除模型水印", description = "删除指定模型的所有水印记录")
     @OperationLog(type = "DELETE", module = "水印管理", description = "删除水印", targetType = "MODEL")
     @DeleteMapping("/delete/{modelId}")
@@ -94,6 +109,9 @@ public class WatermarkController {
         return Result.success();
     }
 
+    /**
+     * 生成缩略图
+     */
     @Operation(summary = "生成缩略图", description = "为指定模型生成缩略图（用于渐进式加载）")
     @OperationLog(type = "UPDATE", module = "水印管理", description = "生成缩略图", targetType = "MODEL")
     @PostMapping("/thumbnails/{modelId}")
@@ -106,6 +124,9 @@ public class WatermarkController {
         return Result.success(result);
     }
 
+    /**
+     * 批量生成缩略图
+     */
     @Operation(summary = "批量生成缩略图", description = "批量为多个模型生成缩略图")
     @OperationLog(type = "UPDATE", module = "水印管理", description = "批量生成缩略图", targetType = "MODEL")
     @PostMapping("/batch-thumbnails")

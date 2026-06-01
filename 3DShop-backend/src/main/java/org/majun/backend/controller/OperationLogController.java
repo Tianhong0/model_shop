@@ -22,6 +22,7 @@ public class OperationLogController {
 
     private final OperationLogService operationLogService;
 
+    /** 分页查询操作日志 */
     @Operation(summary = "分页查询操作日志", description = "管理员分页查询操作日志")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/page")
@@ -32,6 +33,7 @@ public class OperationLogController {
         return Result.success(operationLogService.queryPage(request));
     }
 
+    /** 查询日志详情 */
     @Operation(summary = "查询日志详情", description = "管理员查询日志详情")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/{id}")
@@ -40,6 +42,7 @@ public class OperationLogController {
         return detail != null ? Result.success(detail) : Result.fail("日志不存在");
     }
 
+    /** 清理历史日志 */
     @Operation(summary = "清理历史日志", description = "管理员清理指定天数前的日志")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/clean")

@@ -33,6 +33,9 @@ public class UserNotificationController {
 
     private final UserNotificationService userNotificationService;
 
+    /**
+     * 消息分页
+     */
     @Operation(summary = "消息分页")
     @PostMapping("/page")
     public Result<PageResult<UserNotificationVO>> page(@AuthenticationPrincipal LoginUser loginUser,
@@ -40,12 +43,18 @@ public class UserNotificationController {
         return Result.success(userNotificationService.pageNotifications(request, loginUser.getId()));
     }
 
+    /**
+     * 未读统计
+     */
     @Operation(summary = "未读统计")
     @GetMapping("/unread/summary")
     public Result<UserNotificationUnreadSummaryVO> unreadSummary(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(userNotificationService.getUnreadSummary(loginUser.getId()));
     }
 
+    /**
+     * 标记单条已读
+     */
     @Operation(summary = "标记单条已读")
     @PostMapping("/read/{notificationId}")
     public Result<Void> markRead(@AuthenticationPrincipal LoginUser loginUser,
@@ -54,6 +63,9 @@ public class UserNotificationController {
         return Result.success();
     }
 
+    /**
+     * 全部标记已读
+     */
     @Operation(summary = "全部标记已读")
     @PostMapping("/read/all")
     public Result<Void> markAllRead(@AuthenticationPrincipal LoginUser loginUser,
@@ -62,6 +74,9 @@ public class UserNotificationController {
         return Result.success();
     }
 
+    /**
+     * 待弹窗消息
+     */
     @Operation(summary = "待弹窗消息")
     @GetMapping("/popup/pending")
     public Result<List<UserNotificationVO>> listPendingPopup(@AuthenticationPrincipal LoginUser loginUser,
@@ -69,6 +84,9 @@ public class UserNotificationController {
         return Result.success(userNotificationService.listPendingPopupNotifications(loginUser.getId(), limit));
     }
 
+    /**
+     * 确认已弹窗
+     */
     @Operation(summary = "确认已弹窗")
     @PostMapping("/popup/ack")
     public Result<Void> ackPopup(@AuthenticationPrincipal LoginUser loginUser,

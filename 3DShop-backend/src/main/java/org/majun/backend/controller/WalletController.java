@@ -44,18 +44,27 @@ public class WalletController {
 
     private final WalletService walletService;
 
+    /**
+     * 钱包账户概览
+     */
     @GetMapping("/account")
     @Operation(summary = "钱包账户概览")
     public Result<WalletAccountVO> getAccount(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(walletService.getAccount(loginUser.getId()));
     }
 
+    /**
+     * 冻结资金记录列表
+     */
     @GetMapping("/frozen/list")
     @Operation(summary = "冻结资金记录列表")
     public Result<java.util.List<WalletFrozenDetailVO>> listFrozenRecords(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(walletService.listFrozenRecords(loginUser.getId()));
     }
 
+    /**
+     * 钱包流水分页
+     */
     @PostMapping("/ledger/page")
     @Operation(summary = "钱包流水分页")
     public Result<PageResult<WalletLedgerVO>> pageLedger(@AuthenticationPrincipal LoginUser loginUser,
@@ -64,6 +73,9 @@ public class WalletController {
         return Result.success(walletService.pageLedger(req, loginUser.getId()));
     }
 
+    /**
+     * 钱包充值下单
+     */
     @PostMapping("/recharge/app/create")
     @Operation(summary = "钱包充值下单")
     public Result<WalletRechargePayCreateResponse> createRechargeOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -71,6 +83,9 @@ public class WalletController {
         return Result.success(walletService.createRechargePayOrder(request, loginUser.getId()));
     }
 
+    /**
+     * 同步充值状态
+     */
     @PostMapping("/recharge/sync/{outTradeNo}")
     @Operation(summary = "同步充值状态")
     public Result<WalletRechargeStatusVO> syncRechargeStatus(@AuthenticationPrincipal LoginUser loginUser,
@@ -78,6 +93,9 @@ public class WalletController {
         return Result.success(walletService.syncRechargeStatus(outTradeNo, loginUser.getId()));
     }
 
+    /**
+     * 支付宝充值回调
+     */
     @PostMapping("/recharge/alipay/notify")
     @Operation(summary = "支付宝充值回调")
     public String rechargeAlipayNotify(HttpServletRequest request) {
@@ -89,6 +107,9 @@ public class WalletController {
         }
     }
 
+    /**
+     * 申请提现
+     */
     @PostMapping("/withdraw/apply")
     @Operation(summary = "申请提现")
     public Result<String> applyWithdraw(@AuthenticationPrincipal LoginUser loginUser,
@@ -96,6 +117,9 @@ public class WalletController {
         return Result.success(walletService.applyWithdraw(request, loginUser.getId()));
     }
 
+    /**
+     * 我的提现记录
+     */
     @PostMapping("/withdraw/my/page")
     @Operation(summary = "我的提现记录")
     public Result<PageResult<WalletWithdrawVO>> pageMyWithdraw(@AuthenticationPrincipal LoginUser loginUser,
@@ -104,6 +128,9 @@ public class WalletController {
         return Result.success(walletService.pageMyWithdraw(req, loginUser.getId()));
     }
 
+    /**
+     * 管理员-提现记录分页
+     */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/withdraw/page")
     @Operation(summary = "管理员-提现记录分页")
@@ -112,6 +139,9 @@ public class WalletController {
         return Result.success(walletService.pageAdminWithdraw(req));
     }
 
+    /**
+     * 管理员-提现审核
+     */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "REVIEW", module = "财务管理", description = "提现审核", targetType = "WITHDRAW")
     @PostMapping("/admin/withdraw/audit")
@@ -122,6 +152,9 @@ public class WalletController {
         return Result.success();
     }
 
+    /**
+     * 管理员-提现打款
+     */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "PAY", module = "财务管理", description = "提现打款", targetType = "WITHDRAW")
     @PostMapping("/admin/withdraw/pay")

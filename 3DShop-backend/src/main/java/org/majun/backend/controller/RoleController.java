@@ -30,6 +30,9 @@ public class RoleController {
 
     private final RoleService roleService;
 
+    /**
+     * 创建角色
+     */
     @Operation(summary = "创建角色", description = "管理员创建新角色")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "CREATE", module = "角色管理", description = "创建角色", targetType = "ROLE")
@@ -38,6 +41,9 @@ public class RoleController {
         return Result.success(roleService.createRole(request));
     }
 
+    /**
+     * 更新角色
+     */
     @Operation(summary = "更新角色", description = "管理员更新角色信息")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "UPDATE", module = "角色管理", description = "更新角色", targetType = "ROLE")
@@ -47,6 +53,9 @@ public class RoleController {
         return Result.success();
     }
 
+    /**
+     * 删除角色
+     */
     @Operation(summary = "删除角色", description = "管理员删除角色")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "DELETE", module = "角色管理", description = "删除角色", targetType = "ROLE")
@@ -56,6 +65,9 @@ public class RoleController {
         return Result.success();
     }
 
+    /**
+     * 获取角色详情
+     */
     @Operation(summary = "获取角色详情", description = "管理员获取角色详情")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/{id}")
@@ -64,6 +76,9 @@ public class RoleController {
         return detail != null ? Result.success(detail) : Result.fail("角色不存在");
     }
 
+    /**
+     * 分页查询角色
+     */
     @Operation(summary = "分页查询角色", description = "管理员分页查询角色列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/page")
@@ -74,6 +89,9 @@ public class RoleController {
         return Result.success(roleService.queryRoles(request));
     }
 
+    /**
+     * 获取所有启用的角色
+     */
     @Operation(summary = "获取所有启用的角色", description = "获取所有启用状态的角色列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/enabled")
@@ -81,6 +99,9 @@ public class RoleController {
         return Result.success(roleService.getAllEnabledRoles());
     }
 
+    /**
+     * 分配用户角色
+     */
     @Operation(summary = "分配用户角色", description = "管理员为用户分配角色")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "UPDATE", module = "角色管理", description = "分配用户角色", targetType = "USER")
@@ -90,6 +111,9 @@ public class RoleController {
         return Result.success();
     }
 
+    /**
+     * 获取用户的角色
+     */
     @Operation(summary = "获取用户的角色", description = "获取用户已分配的角色ID列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/user/{userId}")
@@ -97,6 +121,9 @@ public class RoleController {
         return Result.success(roleService.getUserRoleIds(userId));
     }
 
+    /**
+     * 获取所有权限
+     */
     @Operation(summary = "获取所有权限", description = "获取权限树形结构")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/permissions")
@@ -104,6 +131,9 @@ public class RoleController {
         return Result.success(roleService.getAllPermissions());
     }
 
+    /**
+     * 获取角色的权限
+     */
     @Operation(summary = "获取角色的权限", description = "获取角色已分配的权限ID列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/{id}/permissions")

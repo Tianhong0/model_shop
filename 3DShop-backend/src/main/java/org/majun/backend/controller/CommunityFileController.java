@@ -35,6 +35,7 @@ public class CommunityFileController {
 
     private final MinioUtil minioUtil;
 
+    /** 上传社区媒体 */
     @Operation(summary = "上传社区媒体", description = "type: postImg/postVideo/model")
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_DESIGNER') or hasAuthority('ROLE_ADMIN')")
     @PostMapping("/upload")

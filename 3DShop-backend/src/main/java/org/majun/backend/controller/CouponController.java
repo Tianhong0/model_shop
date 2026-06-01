@@ -33,6 +33,7 @@ public class CouponController {
 
     // ========== 用户端接口 ==========
 
+    /** 可兑换优惠券列表 */
     @GetMapping("/templates/available")
     @Operation(summary = "可兑换优惠券列表")
     public Result<PageResult<CouponTemplateVO>> listAvailableTemplates(
@@ -40,6 +41,7 @@ public class CouponController {
         return Result.success(couponService.listAvailableTemplates(loginUser.getId()));
     }
 
+    /** 积分兑换优惠券 */
     @PostMapping("/exchange/{templateId}")
     @Operation(summary = "积分兑换优惠券")
     public Result<Void> exchangeCoupon(
@@ -49,6 +51,7 @@ public class CouponController {
         return Result.success("兑换成功");
     }
 
+    /** 我的优惠券列表 */
     @PostMapping("/my/list")
     @Operation(summary = "我的优惠券列表")
     public Result<PageResult<UserCouponVO>> listMyCoupons(
@@ -58,6 +61,7 @@ public class CouponController {
         return Result.success(couponService.listMyCoupons(req, loginUser.getId()));
     }
 
+    /** 订单可用优惠券列表 */
     @GetMapping("/available-for-order")
     @Operation(summary = "订单可用优惠券列表")
     public Result<List<UserCouponVO>> listAvailableCouponsForOrder(
@@ -66,6 +70,7 @@ public class CouponController {
         return Result.success(couponService.listAvailableCouponsForOrder(orderAmount, loginUser.getId()));
     }
 
+    /** 计算优惠券折扣金额 */
     @PostMapping("/calculate-discount")
     @Operation(summary = "计算优惠券折扣金额")
     public Result<BigDecimal> calculateCouponDiscount(
@@ -77,6 +82,7 @@ public class CouponController {
 
     // ========== 管理端接口 ==========
 
+    /** 创建优惠券模板 */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/templates")
     @Operation(summary = "创建优惠券模板")
@@ -84,6 +90,7 @@ public class CouponController {
         return Result.success(couponService.createTemplate(request));
     }
 
+    /** 更新优惠券模板状态 */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/admin/templates/{templateId}/status")
     @Operation(summary = "更新优惠券模板状态")
@@ -94,6 +101,7 @@ public class CouponController {
         return Result.success();
     }
 
+    /** 管理端优惠券模板列表 */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/templates/list")
     @Operation(summary = "管理端优惠券模板列表")
@@ -103,6 +111,7 @@ public class CouponController {
         return Result.success(couponService.listTemplatesForAdmin(req));
     }
 
+    /** 获取优惠券模板详情 */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/templates/{templateId}")
     @Operation(summary = "获取优惠券模板详情")
@@ -110,6 +119,7 @@ public class CouponController {
         return Result.success(couponService.getTemplateDetail(templateId));
     }
 
+    /** 更新优惠券模板 */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/admin/templates/{templateId}")
     @Operation(summary = "更新优惠券模板")
@@ -120,6 +130,7 @@ public class CouponController {
         return Result.success("更新成功");
     }
 
+    /** 删除优惠券模板 */
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/admin/templates/{templateId}")
     @Operation(summary = "删除优惠券模板")

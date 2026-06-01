@@ -28,12 +28,14 @@ public class PointController {
 
     private final PointService pointService;
 
+    /** 积分账户概览 */
     @GetMapping("/account")
     @Operation(summary = "积分账户概览")
     public Result<PointAccountVO> getAccount(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(pointService.getAccount(loginUser.getId()));
     }
 
+    /** 积分流水分页 */
     @PostMapping("/ledger/page")
     @Operation(summary = "积分流水分页")
     public Result<PageResult<PointLedgerVO>> pageLedger(@AuthenticationPrincipal LoginUser loginUser,

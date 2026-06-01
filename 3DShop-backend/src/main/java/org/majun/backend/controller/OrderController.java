@@ -38,6 +38,7 @@ public class OrderController {
     private final PrintFaultService printFaultService;
     private final DataExportService dataExportService;
 
+    /** 创建订单 */
     @Operation(summary = "Create order", description = "Create a custom order")
     @PostMapping("/create")
     public Result<OrderCreateResponse> createOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -46,6 +47,7 @@ public class OrderController {
         return Result.success(response);
     }
 
+    /** 我的订单列表 */
     @Operation(summary = "List my orders", description = "List current user orders")
     @PostMapping("/list")
     public Result<PageResult<OrderListVO>> listOrders(@AuthenticationPrincipal LoginUser loginUser,
@@ -57,6 +59,7 @@ public class OrderController {
         return Result.success(result);
     }
 
+    /** 订单详情 */
     @Operation(summary = "Order detail", description = "Get current user order detail")
     @GetMapping("/detail/{orderId}")
     public Result<OrderDetailVO> getOrderDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -64,6 +67,7 @@ public class OrderController {
         return Result.success(orderService.getOrderDetail(orderId, loginUser.getId()));
     }
 
+    /** 根据订单编号查询订单详情 */
     @Operation(summary = "Order detail by serial number", description = "Get current user order detail by order serial number")
     @GetMapping("/detail/by-sn/{orderSn}")
     public Result<OrderDetailVO> getOrderDetailByOrderSn(@AuthenticationPrincipal LoginUser loginUser,
@@ -71,6 +75,7 @@ public class OrderController {
         return Result.success(orderService.getOrderDetailByOrderSn(orderSn, loginUser.getId()));
     }
 
+    /** 取消订单 */
     @Operation(summary = "Cancel order", description = "Cancel an order in pending payment")
     @PutMapping("/cancel/{orderId}")
     public Result<Void> cancelOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -79,6 +84,7 @@ public class OrderController {
         return Result.success();
     }
 
+    /** 删除订单 */
     @Operation(summary = "Delete order", description = "Delete current user canceled/completed order")
     @DeleteMapping("/delete/{orderId}")
     public Result<Void> deleteOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -87,6 +93,7 @@ public class OrderController {
         return Result.success();
     }
 
+    /** 管理员订单列表 */
     @Operation(summary = "Admin list orders", description = "Admin list orders with filters")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/list")
@@ -94,6 +101,7 @@ public class OrderController {
         return Result.success(orderService.getAdminOrders(request));
     }
 
+    /** 管理员订单详情 */
     @Operation(summary = "Admin order detail", description = "Admin get order detail")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/detail/{orderId}")
@@ -101,6 +109,7 @@ public class OrderController {
         return Result.success(orderService.getAdminOrderDetail(orderId));
     }
 
+    /** 管理员更新订单状态 */
     @Operation(summary = "Admin update status", description = "Admin update order status")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "STATUS_CHANGE", module = "订单管理", description = "更新订单状态", targetType = "ORDER")
@@ -110,6 +119,7 @@ public class OrderController {
         return Result.success();
     }
 
+    /** 导出订单 */
     @Operation(summary = "Export orders", description = "Admin export orders to Excel")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "EXPORT", module = "订单管理", description = "导出订单数据", targetType = "ORDER")
@@ -120,6 +130,7 @@ public class OrderController {
 
     // ========== 打印故障诊断接口 ==========
 
+    /** 获取打印故障诊断 */
     @Operation(summary = "Get print fault diagnosis", description = "Get fault diagnosis for a failed print job")
     @GetMapping("/print/fault/diagnosis/{orderId}")
     public Result<PrintFaultDiagnosisVO> getFaultDiagnosis(@AuthenticationPrincipal LoginUser loginUser,
@@ -127,6 +138,7 @@ public class OrderController {
         return Result.success(printFaultService.diagnoseByOrderId(orderId, loginUser.getId()));
     }
 
+    /** 重试打印任务 */
     @Operation(summary = "Retry print job", description = "User retry a failed print job")
     @PostMapping("/print/fault/retry/{orderId}")
     public Result<Void> userRetryPrint(@AuthenticationPrincipal LoginUser loginUser,

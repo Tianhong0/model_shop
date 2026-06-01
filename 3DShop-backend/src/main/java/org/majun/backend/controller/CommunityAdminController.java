@@ -52,18 +52,21 @@ public class CommunityAdminController {
     private final CommunityFileController communityFileController;
     private final MinioUtil minioUtil;
 
+    /** 帖子管理分页 */
     @Operation(summary = "帖子管理分页")
     @PostMapping("/post/page")
     public Result<PageResult<PostListVO>> getAdminPostPage(@Valid @RequestBody PostAdminQueryRequest request) {
         return Result.success(communityAdminService.getAdminPostPage(request));
     }
 
+    /** 帖子管理详情 */
     @Operation(summary = "帖子管理详情")
     @GetMapping("/post/detail/{postId}")
     public Result<PostDetailVO> getAdminPostDetail(@PathVariable Long postId) {
         return Result.success(communityAdminService.getAdminPostDetail(postId));
     }
 
+    /** 更新帖子状态 */
     @Operation(summary = "更新帖子状态")
     @PostMapping("/post/status")
     public Result<Void> updatePostStatus(@Valid @RequestBody PostStatusUpdateRequest request) {
@@ -71,6 +74,7 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 更新帖子置顶 */
     @Operation(summary = "更新帖子置顶")
     @PostMapping("/post/top")
     public Result<Void> updatePostTop(@Valid @RequestBody PostTopUpdateRequest request) {
@@ -78,6 +82,7 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 更新帖子分类 */
     @Operation(summary = "更新帖子分类")
     @PostMapping("/post/category")
     public Result<Void> updatePostCategory(@Valid @RequestBody PostCategoryAssignRequest request) {
@@ -85,6 +90,7 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 删除帖子 */
     @Operation(summary = "删除帖子")
     @PostMapping("/post/delete/{postId}")
     public Result<Void> deletePost(@PathVariable Long postId) {
@@ -92,12 +98,14 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 回复管理分页 */
     @Operation(summary = "回复管理分页")
     @PostMapping("/reply/page")
     public Result<PageResult<PostReplyVO>> getAdminReplyPage(@Valid @RequestBody PostReplyAdminQueryRequest request) {
         return Result.success(communityAdminService.getAdminReplyPage(request));
     }
 
+    /** 更新回复状态 */
     @Operation(summary = "更新回复状态")
     @PostMapping("/reply/status")
     public Result<Void> updateReplyStatus(@Valid @RequestBody PostReplyStatusUpdateRequest request) {
@@ -105,6 +113,7 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 更新优质回复 */
     @Operation(summary = "更新优质回复")
     @PostMapping("/reply/excellent")
     public Result<Void> updateReplyExcellent(@Valid @RequestBody PostReplyExcellentRequest request) {
@@ -112,6 +121,7 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 删除回复 */
     @Operation(summary = "删除回复")
     @PostMapping("/reply/delete/{replyId}")
     public Result<Void> deleteReply(@PathVariable Long replyId) {
@@ -119,24 +129,28 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 分类管理列表 */
     @Operation(summary = "分类管理列表")
     @GetMapping("/category/list")
     public Result<List<PostCategoryVO>> getCategoryAdminList() {
         return Result.success(communityAdminService.getCategoryAdminList());
     }
 
+    /** 分类管理分页 */
     @Operation(summary = "分类管理分页")
     @GetMapping("/category/page")
     public Result<PageResult<PostCategoryVO>> getCategoryAdminPage(@Valid PostCategoryAdminQueryRequest request) {
         return Result.success(communityAdminService.getCategoryAdminPage(request));
     }
 
+    /** 创建分类 */
     @Operation(summary = "创建分类")
     @PostMapping("/category/create")
     public Result<Long> createCategory(@Valid @RequestBody PostCategoryCreateRequest request) {
         return Result.success(communityAdminService.createCategory(request));
     }
 
+    /** 更新分类 */
     @Operation(summary = "更新分类")
     @PostMapping("/category/update")
     public Result<Void> updateCategory(@Valid @RequestBody PostCategoryUpdateRequest request) {
@@ -144,6 +158,7 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 删除分类 */
     @Operation(summary = "删除分类")
     @PostMapping("/category/delete/{categoryId}")
     public Result<Void> deleteCategory(@PathVariable Long categoryId) {
@@ -151,6 +166,7 @@ public class CommunityAdminController {
         return Result.success();
     }
 
+    /** 批量生成视频封面 */
     @Operation(summary = "批量生成视频封面", description = "为所有缺少封面的视频生成封面（需要服务器安装FFmpeg）")
     @PostMapping("/video/generate-covers")
     public Result<String> generateVideoCovers() {

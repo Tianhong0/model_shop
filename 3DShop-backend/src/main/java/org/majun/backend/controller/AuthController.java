@@ -69,6 +69,7 @@ public class AuthController {
         return Result.success("注册成功", response);
     }
 
+    /** 发送注册邮箱验证码 */
     @Operation(summary = "发送注册邮箱验证码", description = "发送用于注册的邮箱验证码")
     @PostMapping("/email-code/register")
     public Result<Void> sendRegisterEmailCode(@Valid @RequestBody EmailCodeSendRequest request) {
@@ -76,6 +77,7 @@ public class AuthController {
         return Result.success("验证码已发送，请注意查收邮箱");
     }
 
+    /** 发送后台管理员注册验证码 */
     @Operation(summary = "发送后台管理员注册验证码", description = "发送用于后台管理员注册申请的邮箱验证码")
     @PostMapping("/email-code/admin-register")
     public Result<Void> sendAdminRegisterEmailCode(@Valid @RequestBody EmailCodeSendRequest request) {
@@ -83,6 +85,7 @@ public class AuthController {
         return Result.success("验证码已发送，请注意查收邮箱");
     }
 
+    /** 提交后台管理员注册申请 */
     @Operation(summary = "提交后台管理员注册申请", description = "提交后台管理员账号注册申请，需已有管理员审核")
     @PostMapping("/admin/register-request")
     public Result<Void> submitAdminRegisterRequest(@Valid @RequestBody AdminRegisterApplyRequest request) {
@@ -90,6 +93,7 @@ public class AuthController {
         return Result.success("注册申请已提交，等待管理员审核");
     }
 
+    /** 分页查询后台管理员注册申请 */
     @Operation(summary = "分页查询后台管理员注册申请", description = "管理员分页查询后台管理员注册申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/register-requests")
@@ -100,6 +104,7 @@ public class AuthController {
         return Result.success("查询成功", authService.getAdminRegisterRequests(status, pageNum, pageSize));
     }
 
+    /** 审核后台管理员注册申请 */
     @Operation(summary = "审核后台管理员注册申请", description = "管理员审核后台管理员注册申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @org.majun.backend.annotation.OperationLog(type = "REVIEW", module = "认证管理", description = "审核管理员注册申请", targetType = "ADMIN_REGISTER")
@@ -110,6 +115,7 @@ public class AuthController {
         return Result.success("审核完成");
     }
 
+    /** 批量审核后台管理员注册申请 */
     @Operation(summary = "批量审核后台管理员注册申请", description = "管理员批量审核后台管理员注册申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @org.majun.backend.annotation.OperationLog(type = "BATCH_REVIEW", module = "认证管理", description = "批量审核管理员注册申请", targetType = "ADMIN_REGISTER")
@@ -121,6 +127,7 @@ public class AuthController {
         return Result.success(result);
     }
 
+    /** 发送忘记密码邮箱验证码 */
     @Operation(summary = "发送忘记密码邮箱验证码", description = "根据账号和邮箱发送找回密码验证码")
     @PostMapping("/email-code/forgot-password")
     public Result<Void> sendForgotPasswordEmailCode(@Valid @RequestBody ForgotPasswordCodeSendRequest request) {
@@ -128,6 +135,7 @@ public class AuthController {
         return Result.success("验证码已发送，请注意查收邮箱");
     }
 
+    /** 邮箱验证码重置密码 */
     @Operation(summary = "邮箱验证码重置密码", description = "通过登录账号+邮箱+验证码重置密码")
     @PostMapping("/password/reset-by-email")
     public Result<Void> resetPasswordByEmail(@Valid @RequestBody EmailResetPasswordRequest request) {

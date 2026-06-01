@@ -34,18 +34,21 @@ public class ModelListAdminController {
 
     private final ModelListService modelListService;
 
+    /** 清单管理分页查询 */
     @Operation(summary = "清单管理分页查询")
     @PostMapping("/page")
     public Result<PageResult<ModelListAdminVO>> getAdminPage(@Valid @RequestBody ModelListAdminQueryRequest request) {
         return Result.success(modelListService.getAdminPage(request));
     }
 
+    /** 清单管理详情 */
     @Operation(summary = "清单管理详情")
     @GetMapping("/detail/{listId}")
     public Result<ModelListAdminVO> getAdminDetail(@PathVariable Long listId) {
         return Result.success(modelListService.getAdminDetail(listId));
     }
 
+    /** 更新清单状态 */
     @Operation(summary = "更新清单状态")
     @PostMapping("/status")
     public Result<Void> updateStatus(@Valid @RequestBody ModelListStatusUpdateRequest request) {
@@ -53,6 +56,7 @@ public class ModelListAdminController {
         return Result.success();
     }
 
+    /** 删除清单 */
     @Operation(summary = "删除清单")
     @PostMapping("/delete/{listId}")
     public Result<Void> adminDeleteList(@PathVariable Long listId) {
@@ -60,6 +64,7 @@ public class ModelListAdminController {
         return Result.success();
     }
 
+    /** 批量更新清单状态 */
     @Operation(summary = "批量更新清单状态")
     @PostMapping("/batch/status")
     public Result<Void> batchUpdateStatus(@Valid @RequestBody ModelListBatchRequest request) {
@@ -67,6 +72,7 @@ public class ModelListAdminController {
         return Result.success();
     }
 
+    /** 批量删除清单 */
     @Operation(summary = "批量删除清单")
     @PostMapping("/batch/delete")
     public Result<Void> batchDelete(@Valid @RequestBody ModelListBatchRequest request) {
@@ -74,6 +80,7 @@ public class ModelListAdminController {
         return Result.success();
     }
 
+    /** 清单统计数据 */
     @Operation(summary = "清单统计数据")
     @GetMapping("/statistics")
     public Result<ModelListStatisticsVO> getStatistics() {

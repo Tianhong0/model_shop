@@ -32,6 +32,9 @@ public class UsedTradeController {
 
     private final UsedTradeService usedTradeService;
 
+    /**
+     * 二手商品分页
+     */
     @Operation(summary = "二手商品分页")
     @PostMapping("/listing/page")
     public Result<PageResult<UsedListingListVO>> pageListings(@AuthenticationPrincipal LoginUser loginUser,
@@ -39,6 +42,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageListings(request, loginUser == null ? null : loginUser.getId(), false));
     }
 
+    /**
+     * 我的二手商品
+     */
     @Operation(summary = "我的二手商品")
     @PostMapping("/listing/my/page")
     public Result<PageResult<UsedListingListVO>> pageMyListings(@AuthenticationPrincipal LoginUser loginUser,
@@ -50,6 +56,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageListings(request, loginUser.getId(), false));
     }
 
+    /**
+     * 二手商品详情
+     */
     @Operation(summary = "二手商品详情")
     @GetMapping("/listing/detail/{listingId}")
     public Result<UsedListingDetailVO> getListingDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -57,6 +66,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.getListingDetail(listingId, loginUser == null ? null : loginUser.getId(), false));
     }
 
+    /**
+     * 发布二手商品
+     */
     @Operation(summary = "发布二手商品")
     @PostMapping("/listing/create")
     public Result<Long> createListing(@AuthenticationPrincipal LoginUser loginUser,
@@ -64,6 +76,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.createListing(request, loginUser.getId()));
     }
 
+    /**
+     * 编辑二手商品
+     */
     @Operation(summary = "编辑二手商品")
     @PostMapping("/listing/update")
     public Result<Void> updateListing(@AuthenticationPrincipal LoginUser loginUser,
@@ -72,6 +87,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 修改二手商品状态
+     */
     @Operation(summary = "修改二手商品状态")
     @PostMapping("/listing/status")
     public Result<Void> updateListingStatus(@AuthenticationPrincipal LoginUser loginUser,
@@ -80,6 +98,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 创建议价
+     */
     @Operation(summary = "创建议价")
     @PostMapping("/offer/create")
     public Result<Long> createOffer(@AuthenticationPrincipal LoginUser loginUser,
@@ -87,6 +108,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.createOffer(request, loginUser.getId()));
     }
 
+    /**
+     * 处理议价
+     */
     @Operation(summary = "处理议价")
     @PostMapping("/offer/respond")
     public Result<Void> respondOffer(@AuthenticationPrincipal LoginUser loginUser,
@@ -95,6 +119,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 创建二手订单
+     */
     @Operation(summary = "创建二手订单")
     @PostMapping("/order/create")
     public Result<Long> createOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -102,6 +129,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.createOrder(request, loginUser.getId()));
     }
 
+    /**
+     * 支付二手订单
+     */
     @Operation(summary = "支付二手订单")
     @PostMapping("/order/pay/{orderId}")
     public Result<OrderPayCreateResponse> payOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -109,6 +139,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.payOrder(orderId, loginUser.getId()));
     }
 
+    /**
+     * 查询二手订单支付状态
+     */
     @Operation(summary = "查询二手订单支付状态")
     @GetMapping("/order/pay/status/{orderId}")
     public Result<OrderPayStatusVO> queryPayStatus(@AuthenticationPrincipal LoginUser loginUser,
@@ -116,6 +149,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.queryPayStatus(orderId, loginUser.getId()));
     }
 
+    /**
+     * 余额支付二手订单
+     */
     @Operation(summary = "余额支付二手订单")
     @PostMapping("/order/pay/wallet/{orderId}")
     public Result<OrderPayStatusVO> payOrderByWallet(@AuthenticationPrincipal LoginUser loginUser,
@@ -123,6 +159,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.payOrderByWallet(orderId, loginUser.getId()));
     }
 
+    /**
+     * 同步二手订单支付状态
+     */
     @Operation(summary = "同步二手订单支付状态")
     @PostMapping("/order/pay/sync/{orderId}")
     public Result<OrderPayStatusVO> syncPayStatus(@AuthenticationPrincipal LoginUser loginUser,
@@ -130,6 +169,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.syncPayStatus(orderId, loginUser.getId()));
     }
 
+    /**
+     * 二手订单支付宝回调
+     */
     @Operation(summary = "二手订单支付宝回调")
     @PostMapping("/order/pay/alipay/notify")
     public String alipayNotify(HttpServletRequest request) {
@@ -148,6 +190,9 @@ public class UsedTradeController {
         }
     }
 
+    /**
+     * 取消二手订单
+     */
     @Operation(summary = "取消二手订单")
     @PostMapping("/order/cancel/{orderId}")
     public Result<Void> cancelOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -156,6 +201,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 我的购买订单
+     */
     @Operation(summary = "我的购买订单")
     @PostMapping("/order/buy/page")
     public Result<PageResult<UsedOrderListVO>> pageBuyerOrders(@AuthenticationPrincipal LoginUser loginUser,
@@ -163,6 +211,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageBuyerOrders(request, loginUser.getId()));
     }
 
+    /**
+     * 我的出售订单
+     */
     @Operation(summary = "我的出售订单")
     @PostMapping("/order/sell/page")
     public Result<PageResult<UsedOrderListVO>> pageSellerOrders(@AuthenticationPrincipal LoginUser loginUser,
@@ -170,6 +221,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageSellerOrders(request, loginUser.getId()));
     }
 
+    /**
+     * 二手订单详情
+     */
     @Operation(summary = "二手订单详情")
     @GetMapping("/order/detail/{orderId}")
     public Result<UsedOrderDetailVO> getOrderDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -177,6 +231,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.getOrderDetail(orderId, loginUser.getId(), false));
     }
 
+    /**
+     * 卖家发货
+     */
     @Operation(summary = "卖家发货")
     @PostMapping("/order/ship")
     public Result<Void> shipOrder(@AuthenticationPrincipal LoginUser loginUser,
@@ -185,6 +242,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 确认收货
+     */
     @Operation(summary = "确认收货")
     @PostMapping("/order/confirm/{orderId}")
     public Result<Void> confirmReceive(@AuthenticationPrincipal LoginUser loginUser,
@@ -193,6 +253,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 修改收货地址
+     */
     @Operation(summary = "修改收货地址")
     @PostMapping("/order/address/update")
     public Result<Void> updateOrderAddress(@AuthenticationPrincipal LoginUser loginUser,
@@ -201,6 +264,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 发送二手消息
+     */
     @Operation(summary = "发送二手消息")
     @PostMapping("/message/send")
     public Result<Long> sendMessage(@AuthenticationPrincipal LoginUser loginUser,
@@ -208,6 +274,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.sendMessage(request, loginUser.getId()));
     }
 
+    /**
+     * 二手消息会话列表
+     */
     @Operation(summary = "二手消息会话列表")
     @GetMapping("/message/session/list")
     public Result<java.util.List<UsedMessageSessionVO>> listMessageSessions(@AuthenticationPrincipal LoginUser loginUser,
@@ -215,6 +284,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.listMessageSessions(listingId, loginUser.getId()));
     }
 
+    /**
+     * 二手消息分页
+     */
     @Operation(summary = "二手消息分页")
     @GetMapping("/message/page")
     public Result<PageResult<UsedMessageVO>> pageMessages(@AuthenticationPrincipal LoginUser loginUser,
@@ -225,6 +297,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageMessages(listingId, counterpartId, pageNum, pageSize, loginUser.getId()));
     }
 
+    /**
+     * 申请二手售后
+     */
     @Operation(summary = "申请二手售后")
     @PostMapping("/after-sale/create")
     public Result<Long> createAfterSale(@AuthenticationPrincipal LoginUser loginUser,
@@ -232,6 +307,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.createAfterSale(request, loginUser.getId()));
     }
 
+    /**
+     * 我的售后列表
+     */
     @Operation(summary = "我的售后列表")
     @PostMapping("/after-sale/buy/page")
     public Result<PageResult<UsedAfterSaleVO>> pageBuyerAfterSales(@AuthenticationPrincipal LoginUser loginUser,
@@ -239,6 +317,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageBuyerAfterSales(request, loginUser.getId()));
     }
 
+    /**
+     * 卖家售后列表
+     */
     @Operation(summary = "卖家售后列表")
     @PostMapping("/after-sale/sell/page")
     public Result<PageResult<UsedAfterSaleVO>> pageSellerAfterSales(@AuthenticationPrincipal LoginUser loginUser,
@@ -246,6 +327,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageSellerAfterSales(request, loginUser.getId()));
     }
 
+    /**
+     * 售后详情
+     */
     @Operation(summary = "售后详情")
     @GetMapping("/after-sale/detail/{afterSaleId}")
     public Result<UsedAfterSaleVO> getAfterSaleDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -253,6 +337,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.getAfterSaleDetail(afterSaleId, loginUser.getId(), false));
     }
 
+    /**
+     * 卖家处理售后
+     */
     @Operation(summary = "卖家处理售后")
     @PostMapping("/after-sale/seller/audit")
     public Result<Void> auditAfterSaleBySeller(@AuthenticationPrincipal LoginUser loginUser,
@@ -261,6 +348,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 提交举报
+     */
     @Operation(summary = "提交举报")
     @PostMapping("/report/create")
     public Result<Long> createReport(@AuthenticationPrincipal LoginUser loginUser,
@@ -268,6 +358,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.createReport(request, loginUser.getId()));
     }
 
+    /**
+     * 后台二手商品分页
+     */
     @Operation(summary = "后台二手商品分页")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/listing/page")
@@ -275,6 +368,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageListings(request, null, true));
     }
 
+    /**
+     * 后台二手商品详情
+     */
     @Operation(summary = "后台二手商品详情")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/listing/detail/{listingId}")
@@ -282,6 +378,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.getListingDetail(listingId, null, true));
     }
 
+    /**
+     * 后台二手商品状态
+     */
     @Operation(summary = "后台二手商品状态")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/listing/status")
@@ -290,6 +389,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 后台二手订单分页
+     */
     @Operation(summary = "后台二手订单分页")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/order/page")
@@ -297,6 +399,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageAdminOrders(request));
     }
 
+    /**
+     * 后台二手订单详情
+     */
     @Operation(summary = "后台二手订单详情")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/order/detail/{orderId}")
@@ -304,6 +409,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.getOrderDetail(orderId, null, true));
     }
 
+    /**
+     * 后台代发货
+     */
     @Operation(summary = "后台代发货")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/order/ship")
@@ -312,6 +420,9 @@ public class UsedTradeController {
         return Result.success();
     }
 
+    /**
+     * 后台举报分页
+     */
     @Operation(summary = "后台举报分页")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/report/page")
@@ -319,6 +430,9 @@ public class UsedTradeController {
         return Result.success(usedTradeService.pageAdminReports(request));
     }
 
+    /**
+     * 后台处理举报
+     */
     @Operation(summary = "后台处理举报")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/report/handle")

@@ -43,6 +43,7 @@ public class OperationController {
 
     private final OperationService operationService;
 
+    /** 管理端轮播分页 */
     @Operation(summary = "管理端轮播分页")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/banner/admin/list")
@@ -50,6 +51,7 @@ public class OperationController {
         return Result.success(operationService.getBannerAdminList(request));
     }
 
+    /** 轮播详情 */
     @Operation(summary = "轮播详情")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/banner/admin/detail/{id}")
@@ -57,6 +59,7 @@ public class OperationController {
         return Result.success(operationService.getBannerDetail(id));
     }
 
+    /** 创建轮播 */
     @Operation(summary = "创建轮播")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/banner/admin/create")
@@ -64,6 +67,7 @@ public class OperationController {
         return Result.success(operationService.createBanner(request));
     }
 
+    /** 更新轮播 */
     @Operation(summary = "更新轮播")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/banner/admin/update")
@@ -72,6 +76,7 @@ public class OperationController {
         return Result.success();
     }
 
+    /** 更新轮播状态 */
     @Operation(summary = "更新轮播状态")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/banner/admin/status")
@@ -80,6 +85,7 @@ public class OperationController {
         return Result.success();
     }
 
+    /** 删除轮播 */
     @Operation(summary = "删除轮播")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/banner/admin/delete/{id}")
@@ -88,6 +94,7 @@ public class OperationController {
         return Result.success();
     }
 
+    /** 管理端公告分页 */
     @Operation(summary = "管理端公告分页")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/notice/admin/list")
@@ -95,6 +102,7 @@ public class OperationController {
         return Result.success(operationService.getNoticeAdminList(request));
     }
 
+    /** 公告详情 */
     @Operation(summary = "公告详情")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/notice/admin/detail/{id}")
@@ -102,6 +110,7 @@ public class OperationController {
         return Result.success(operationService.getNoticeDetail(id));
     }
 
+    /** 创建公告 */
     @Operation(summary = "创建公告")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/notice/admin/create")
@@ -110,6 +119,7 @@ public class OperationController {
         return Result.success(operationService.createNotice(request, loginUser.getId()));
     }
 
+    /** 更新公告 */
     @Operation(summary = "更新公告")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/notice/admin/update")
@@ -118,6 +128,7 @@ public class OperationController {
         return Result.success();
     }
 
+    /** 更新公告状态 */
     @Operation(summary = "更新公告状态")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/notice/admin/status")
@@ -126,6 +137,7 @@ public class OperationController {
         return Result.success();
     }
 
+    /** 删除公告 */
     @Operation(summary = "删除公告")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/notice/admin/delete/{id}")
@@ -134,12 +146,14 @@ public class OperationController {
         return Result.success();
     }
 
+    /** 首页配置 */
     @Operation(summary = "首页配置")
     @GetMapping("/home/config")
     public Result<HomeConfigVO> getHomeConfig() {
         return Result.success(operationService.getHomeConfig());
     }
 
+    /** 后台运营状态 */
     @Operation(summary = "后台运营状态")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/status")
@@ -147,6 +161,7 @@ public class OperationController {
         return Result.success(operationService.getAdminOperationStatus());
     }
 
+    /** 更新后台运营状态 */
     @Operation(summary = "更新后台运营状态")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/admin/status")

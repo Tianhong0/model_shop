@@ -53,6 +53,7 @@ public class OrderCommentController {
     private final OrderCommentService orderCommentService;
     private final MinioUtil minioUtil;
 
+    /** 创建评价 */
     @Operation(summary = "Create comment", description = "User creates comment for completed order")
     @PostMapping("/create")
     public Result<Long> createComment(@AuthenticationPrincipal LoginUser loginUser,
@@ -60,6 +61,7 @@ public class OrderCommentController {
         return Result.success(orderCommentService.createComment(request, loginUser.getId()));
     }
 
+    /** 上传评价媒体文件 */
     @Operation(summary = "Upload order comment media", description = "type: image/video")
     @PostMapping("/my/media/upload")
     public Result<String> uploadCommentMedia(@AuthenticationPrincipal LoginUser loginUser,
@@ -77,6 +79,7 @@ public class OrderCommentController {
         }
     }
 
+    /** 我的评价列表 */
     @Operation(summary = "My comment list", description = "Current user comment list")
     @PostMapping("/my/list")
     public Result<PageResult<OrderCommentListVO>> getMyComments(@AuthenticationPrincipal LoginUser loginUser,
@@ -84,18 +87,21 @@ public class OrderCommentController {
         return Result.success(orderCommentService.getMyComments(request, loginUser.getId()));
     }
 
+    /** 模型评价列表 */
     @Operation(summary = "Model comment list", description = "Query model comments")
     @PostMapping("/model/list")
     public Result<PageResult<OrderCommentListVO>> getModelComments(@Valid @RequestBody OrderCommentModelQueryRequest request) {
         return Result.success(orderCommentService.getModelComments(request));
     }
 
+    /** 模型评分统计 */
     @Operation(summary = "Model comment stats", description = "Get model score statistics")
     @GetMapping("/model/stats/{modelId}")
     public Result<OrderCommentStatsVO> getModelCommentStats(@PathVariable Long modelId) {
         return Result.success(orderCommentService.getModelCommentStats(modelId));
     }
 
+    /** 切换评价点赞 */
     @Operation(summary = "Toggle comment like", description = "Current user toggles like on comment")
     @PostMapping("/model/like/toggle")
     public Result<OrderCommentLikeToggleVO> toggleCommentLike(@AuthenticationPrincipal LoginUser loginUser,
@@ -103,6 +109,7 @@ public class OrderCommentController {
         return Result.success(orderCommentService.toggleCommentLike(request, loginUser.getId()));
     }
 
+    /** 创建评价回复 */
     @Operation(summary = "Create comment reply", description = "Current user creates reply under comment")
     @PostMapping("/reply/create")
     public Result<Long> createCommentReply(@AuthenticationPrincipal LoginUser loginUser,
@@ -110,12 +117,14 @@ public class OrderCommentController {
         return Result.success(orderCommentService.createCommentReply(request, loginUser.getId()));
     }
 
+    /** 评价回复列表 */
     @Operation(summary = "Comment reply list", description = "Query replies under a comment")
     @PostMapping("/reply/list")
     public Result<PageResult<OrderCommentReplyVO>> getCommentReplies(@Valid @RequestBody OrderCommentReplyQueryRequest request) {
         return Result.success(orderCommentService.getCommentReplies(request, false));
     }
 
+    /** 切换回复点赞 */
     @Operation(summary = "Toggle comment reply like", description = "Current user toggles like on comment reply")
     @PostMapping("/reply/like/toggle")
     public Result<OrderCommentReplyLikeToggleVO> toggleCommentReplyLike(@AuthenticationPrincipal LoginUser loginUser,
@@ -123,6 +132,7 @@ public class OrderCommentController {
         return Result.success(orderCommentService.toggleCommentReplyLike(request, loginUser.getId()));
     }
 
+    /** 我的评价详情 */
     @Operation(summary = "My comment detail", description = "Current user query own comment detail")
     @GetMapping("/my/detail/{commentId}")
     public Result<OrderCommentDetailVO> getMyCommentDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -130,6 +140,7 @@ public class OrderCommentController {
         return Result.success(orderCommentService.getCommentDetail(commentId, loginUser.getId(), false));
     }
 
+    /** 设计者回复评价 */
     @Operation(summary = "Designer reply comment", description = "Designer replies a comment of own model")
     @PreAuthorize("hasAuthority('ROLE_DESIGNER')")
     @PostMapping("/designer/reply")
@@ -139,6 +150,7 @@ public class OrderCommentController {
         return Result.success();
     }
 
+    /** 管理员评价列表 */
     @Operation(summary = "Admin comment list", description = "Admin query all comments")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/list")
@@ -146,6 +158,7 @@ public class OrderCommentController {
         return Result.success(orderCommentService.getAdminComments(request));
     }
 
+    /** 管理员评价详情 */
     @Operation(summary = "Admin comment detail", description = "Admin query comment detail")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/detail/{commentId}")
@@ -153,6 +166,7 @@ public class OrderCommentController {
         return Result.success(orderCommentService.getCommentDetail(commentId, null, true));
     }
 
+    /** 管理员评价回复列表 */
     @Operation(summary = "Admin comment reply list", description = "Admin query replies under comment")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/reply/list/{commentId}")
@@ -166,6 +180,7 @@ public class OrderCommentController {
         return Result.success(orderCommentService.getCommentReplies(request, true));
     }
 
+    /** 管理员更新评价状态 */
     @Operation(summary = "Admin update comment status", description = "Admin hide or show comment")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/status")

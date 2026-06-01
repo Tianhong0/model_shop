@@ -93,6 +93,9 @@ public class UserController {
         return result ? Result.success("密码修改成功") : Result.fail("密码修改失败");
     }
 
+    /**
+     * 发送修改密码邮箱验证码
+     */
     @Operation(summary = "发送修改密码邮箱验证码", description = "用户修改密码前发送邮箱验证码")
     @PostMapping("/password/email-code")
     public Result<Void> sendChangePasswordEmailCode(@AuthenticationPrincipal LoginUser loginUser) {
@@ -100,6 +103,9 @@ public class UserController {
         return Result.success("验证码已发送，请注意查收邮箱");
     }
 
+    /**
+     * 发送修改邮箱验证码
+     */
     @Operation(summary = "发送修改邮箱验证码", description = "用户修改个人资料邮箱前发送验证码")
     @PostMapping("/profile/email-code")
     public Result<Void> sendChangeEmailCode(@AuthenticationPrincipal LoginUser loginUser,
@@ -108,6 +114,9 @@ public class UserController {
         return Result.success("验证码已发送，请注意查收邮箱");
     }
 
+    /**
+     * 提交设计者申请
+     */
     @Operation(summary = "提交设计者申请", description = "普通用户提交成为设计者的申请")
     @PostMapping("/designer-apply")
     public Result<Void> submitDesignerApply(@AuthenticationPrincipal LoginUser loginUser,
@@ -116,12 +125,18 @@ public class UserController {
         return Result.success("申请已提交，请等待管理员审核");
     }
 
+    /**
+     * 查询我的设计者申请状态
+     */
     @Operation(summary = "查询我的设计者申请状态", description = "查询当前登录用户最新设计者申请状态")
     @GetMapping("/designer-apply/my-status")
     public Result<MyDesignerApplyStatusVO> getMyDesignerApplyStatus(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(userService.getMyDesignerApplyStatus(loginUser.getId()));
     }
 
+    /**
+     * 分页查询设计者申请
+     */
     @Operation(summary = "分页查询设计者申请", description = "管理员分页查询普通用户设计者申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/designer-apply/requests")
@@ -132,6 +147,9 @@ public class UserController {
         return Result.success("查询成功", userService.getDesignerApplyRequests(status, pageNum, pageSize));
     }
 
+    /**
+     * 审核设计者申请
+     */
     @Operation(summary = "审核设计者申请", description = "管理员审核普通用户设计者申请")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "REVIEW", module = "用户管理", description = "审核设计者申请", targetType = "DESIGNER_APPLY")

@@ -28,6 +28,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
+    /** 后台仪表盘总览 */
     @Operation(summary = "后台仪表盘总览", description = "管理员获取仪表盘核心指标、趋势、待办和最近订单")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/overview")
@@ -35,6 +36,7 @@ public class DashboardController {
         return Result.success(dashboardService.getAdminOverview());
     }
 
+    /** 后台消息列表 */
     @Operation(summary = "后台消息列表", description = "管理员获取右上角消息通知")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/messages")
@@ -42,6 +44,7 @@ public class DashboardController {
         return Result.success(dashboardService.getAdminMessages(loginUser.getId()));
     }
 
+    /** 消息全部已读 */
     @Operation(summary = "消息全部已读", description = "管理员将当前消息全部标记为已读")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/messages/read-all")

@@ -39,6 +39,7 @@ public class ModelListController {
 
     private final ModelListService modelListService;
 
+    /** 创建清单 */
     @Operation(summary = "创建清单", description = "创建草稿或发布清单，可带初始模型")
     @PostMapping("/create")
     public Result<Long> createList(@AuthenticationPrincipal LoginUser loginUser,
@@ -46,6 +47,7 @@ public class ModelListController {
         return Result.success(modelListService.createList(request, loginUser.getId()));
     }
 
+    /** 更新清单 */
     @Operation(summary = "更新清单", description = "更新自己的清单信息")
     @PostMapping("/update")
     public Result<Void> updateList(@AuthenticationPrincipal LoginUser loginUser,
@@ -54,6 +56,7 @@ public class ModelListController {
         return Result.success();
     }
 
+    /** 删除清单 */
     @Operation(summary = "删除清单", description = "删除自己的清单")
     @PostMapping("/delete/{listId}")
     public Result<Void> deleteList(@AuthenticationPrincipal LoginUser loginUser,
@@ -62,6 +65,7 @@ public class ModelListController {
         return Result.success();
     }
 
+    /** 发布清单 */
     @Operation(summary = "发布清单", description = "将草稿清单发布")
     @PostMapping("/publish/{listId}")
     public Result<Void> publishList(@AuthenticationPrincipal LoginUser loginUser,
@@ -70,6 +74,7 @@ public class ModelListController {
         return Result.success();
     }
 
+    /** 添加模型到清单 */
     @Operation(summary = "添加模型到清单", description = "向清单中添加一个或多个模型")
     @PostMapping("/item/add")
     public Result<Void> addItems(@AuthenticationPrincipal LoginUser loginUser,
@@ -78,6 +83,7 @@ public class ModelListController {
         return Result.success();
     }
 
+    /** 从清单移除模型 */
     @Operation(summary = "从清单移除模型", description = "从清单中移除一个模型")
     @PostMapping("/item/remove")
     public Result<Void> removeItem(@AuthenticationPrincipal LoginUser loginUser,
@@ -86,6 +92,7 @@ public class ModelListController {
         return Result.success();
     }
 
+    /** 调整清单项排序 */
     @Operation(summary = "调整清单项排序", description = "批量更新清单内模型的排序")
     @PostMapping("/item/sort")
     public Result<Void> sortItems(@AuthenticationPrincipal LoginUser loginUser,
@@ -94,6 +101,7 @@ public class ModelListController {
         return Result.success();
     }
 
+    /** 公开清单分页 */
     @Operation(summary = "公开清单分页", description = "浏览已发布的模型清单")
     @PostMapping("/page")
     public Result<PageResult<ModelListShareListVO>> getPublicPage(@AuthenticationPrincipal LoginUser loginUser,
@@ -101,6 +109,7 @@ public class ModelListController {
         return Result.success(modelListService.getPublicPage(request, loginUser.getId()));
     }
 
+    /** 清单详情 */
     @Operation(summary = "清单详情", description = "查看清单详情及包含的模型")
     @GetMapping("/detail/{listId}")
     public Result<ModelListShareDetailVO> getDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -108,6 +117,7 @@ public class ModelListController {
         return Result.success(modelListService.getDetail(listId, loginUser.getId()));
     }
 
+    /** 点赞/收藏切换 */
     @Operation(summary = "点赞/收藏切换", description = "再次点击取消")
     @PostMapping("/interaction/toggle")
     public Result<ModelListInteractionToggleVO> toggleInteraction(@AuthenticationPrincipal LoginUser loginUser,
@@ -115,6 +125,7 @@ public class ModelListController {
         return Result.success(modelListService.toggleInteraction(request, loginUser.getId()));
     }
 
+    /** 我的清单 */
     @Operation(summary = "我的清单", description = "查询当前用户创建的清单")
     @PostMapping("/my/page")
     public Result<PageResult<ModelListShareListVO>> getMyLists(@AuthenticationPrincipal LoginUser loginUser,
@@ -122,6 +133,7 @@ public class ModelListController {
         return Result.success(modelListService.getMyLists(request, loginUser.getId()));
     }
 
+    /** 我的点赞/收藏清单 */
     @Operation(summary = "我的点赞/收藏清单", description = "查询当前用户互动过的清单")
     @PostMapping("/interaction/my/page")
     public Result<PageResult<ModelListShareListVO>> getMyInteractionLists(@AuthenticationPrincipal LoginUser loginUser,

@@ -27,6 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 推广控制器 — 用户端推广中心、邀请码、排行榜和奖励查询
+ */
 @Tag(name = "Promotion", description = "推广分享接口")
 @RestController
 @RequestMapping("/api/promotion")
@@ -35,18 +38,21 @@ public class PromotionController {
 
     private final PromotionService promotionService;
 
+    /** 推广中心首页 */
     @GetMapping("/center")
     @Operation(summary = "推广中心首页")
     public Result<PromotionCenterVO> getPromotionCenter(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(promotionService.getPromotionCenter(loginUser.getId()));
     }
 
+    /** 获取我的邀请码 */
     @GetMapping("/invite-code")
     @Operation(summary = "获取我的邀请码")
     public Result<InviteCodeVO> getInviteCode(@AuthenticationPrincipal LoginUser loginUser) {
         return Result.success(promotionService.getOrCreateInviteCode(loginUser.getId()));
     }
 
+    /** 记录分享行为 */
     @PostMapping("/share")
     @Operation(summary = "记录分享行为")
     public Result<String> recordShare(@AuthenticationPrincipal LoginUser loginUser,
@@ -55,6 +61,7 @@ public class PromotionController {
         return Result.success(String.valueOf(shareId));
     }
 
+    /** 生成推广海报 */
     @GetMapping("/poster")
     @Operation(summary = "生成推广海报")
     public Result<String> generatePoster(@AuthenticationPrincipal LoginUser loginUser) {
@@ -62,6 +69,7 @@ public class PromotionController {
         return Result.success(posterUrl);
     }
 
+    /** 被邀请人列表分页 */
     @PostMapping("/invitees/page")
     @Operation(summary = "被邀请人列表分页")
     public Result<PageResult<InviteeVO>> pageInvitees(@AuthenticationPrincipal LoginUser loginUser,
@@ -70,6 +78,7 @@ public class PromotionController {
         return Result.success(promotionService.pageInvitees(req, loginUser.getId()));
     }
 
+    /** 推广奖励记录分页 */
     @PostMapping("/rewards/page")
     @Operation(summary = "推广奖励记录分页")
     public Result<PageResult<PromotionRewardVO>> pageRewards(@AuthenticationPrincipal LoginUser loginUser,
@@ -78,6 +87,7 @@ public class PromotionController {
         return Result.success(promotionService.pageRewards(req, loginUser.getId()));
     }
 
+    /** 推广排行榜 */
     @GetMapping("/rank")
     @Operation(summary = "推广排行榜")
     public Result<List<PromotionRankVO>> getRankList(
@@ -86,6 +96,7 @@ public class PromotionController {
         return Result.success(promotionService.getRankList(limit, period));
     }
 
+    /** 获取海报配置（公开接口） */
     @GetMapping("/poster/config")
     @Operation(summary = "获取海报配置（公开接口）")
     public Result<PosterConfigVO> getPosterConfig() {

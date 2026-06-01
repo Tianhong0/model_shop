@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+/**
+ * 邀请落地页控制器 — 处理推广邀请链接的落地展示与注册引导
+ */
 @Slf4j
 @Tag(name = "InviteLanding", description = "邀请链接落地页")
 @Controller
@@ -22,6 +25,7 @@ public class InviteLandingController {
 
     private final PromotionConfigRepository configRepository;
 
+    /** 邀请链接落地页，检测APP并跳转 */
     @GetMapping("/invite/{inviteCode}")
     @ResponseBody
     @Operation(summary = "邀请链接落地页，检测APP并跳转")
@@ -34,6 +38,7 @@ public class InviteLandingController {
         return buildLandingPage(schemeUrl, downloadUrl, inviteCode, "邀请注册", "注册即可获得积分奖励");
     }
 
+    /** 拼团分享落地页，检测APP并跳转 */
     @GetMapping("/group-buy/{shareCode}")
     @ResponseBody
     @Operation(summary = "拼团分享落地页，检测APP并跳转")

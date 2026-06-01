@@ -26,6 +26,7 @@ public class EventController {
 
     // ==================== 管理端接口 ====================
 
+    /** 管理端活动分页 */
     @Operation(summary = "管理端活动分页")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/list")
@@ -33,6 +34,7 @@ public class EventController {
         return Result.success(eventService.getAdminEventList(request));
     }
 
+    /** 创建活动 */
     @Operation(summary = "创建活动")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/create")
@@ -42,6 +44,7 @@ public class EventController {
         return Result.success(eventService.createEvent(request, loginUser.getId()));
     }
 
+    /** 更新活动 */
     @Operation(summary = "更新活动")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/admin/update")
@@ -50,6 +53,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 更新活动状态 */
     @Operation(summary = "更新活动状态")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/admin/status")
@@ -58,6 +62,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 删除活动 */
     @Operation(summary = "删除活动")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/admin/delete/{id}")
@@ -66,6 +71,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 活动详情(管理端) */
     @Operation(summary = "活动详情(管理端)")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/detail/{id}")
@@ -75,12 +81,14 @@ public class EventController {
 
     // ==================== 移动端接口 ====================
 
+    /** 活动列表(移动端) */
     @Operation(summary = "活动列表(移动端)")
     @PostMapping("/list")
     public Result<PageResult<EventListVO>> list(@Valid @RequestBody EventQueryRequest request) {
         return Result.success(eventService.getEventList(request));
     }
 
+    /** 活动详情(移动端) */
     @Operation(summary = "活动详情(移动端)")
     @GetMapping("/detail/{id}")
     public Result<EventDetailVO> detail(
@@ -90,6 +98,7 @@ public class EventController {
         return Result.success(eventService.getEventDetail(id, userId));
     }
 
+    /** 活动报名 */
     @Operation(summary = "活动报名")
     @PostMapping("/signup/{id}")
     public Result<Void> signup(
@@ -99,6 +108,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 取消报名 */
     @Operation(summary = "取消报名")
     @PostMapping("/cancel/{id}")
     public Result<Void> cancelSignup(
@@ -108,6 +118,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 我参加的活动 */
     @Operation(summary = "我参加的活动")
     @PostMapping("/my/participations")
     public Result<PageResult<EventParticipationVO>> myParticipations(
@@ -116,6 +127,7 @@ public class EventController {
         return Result.success(eventService.getMyParticipations(loginUser.getId(), request));
     }
 
+    /** 上传作品(设计竞赛) */
     @Operation(summary = "上传作品(设计竞赛)")
     @PostMapping("/submission/create")
     public Result<Long> createSubmission(
@@ -124,6 +136,7 @@ public class EventController {
         return Result.success(eventService.createSubmission(request, loginUser.getId()));
     }
 
+    /** 签到(线下活动) */
     @Operation(summary = "签到(线下活动)")
     @PostMapping("/checkin/{id}")
     public Result<Void> checkin(
@@ -133,6 +146,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 获取活动作品列表 */
     @Operation(summary = "获取活动作品列表")
     @PostMapping("/submissions/{eventId}")
     public Result<PageResult<EventSubmissionVO>> getSubmissions(
@@ -143,6 +157,7 @@ public class EventController {
         return Result.success(eventService.getEventSubmissions(eventId, userId, request));
     }
 
+    /** 获取我在某活动的作品 */
     @Operation(summary = "获取我在某活动的作品")
     @GetMapping("/my-submission/{eventId}")
     public Result<EventSubmissionVO> getMySubmission(
@@ -151,6 +166,7 @@ public class EventController {
         return Result.success(eventService.getMySubmission(eventId, loginUser.getId()));
     }
 
+    /** 更新作品 */
     @Operation(summary = "更新作品")
     @PutMapping("/submission/update/{submissionId}")
     public Result<Void> updateSubmission(
@@ -163,6 +179,7 @@ public class EventController {
 
     // ==================== 作品互动接口 ====================
 
+    /** 作品详情 */
     @Operation(summary = "作品详情")
     @GetMapping("/submission/{submissionId}")
     public Result<EventSubmissionVO> getSubmissionDetail(
@@ -172,6 +189,7 @@ public class EventController {
         return Result.success(eventService.getSubmissionDetail(submissionId, userId));
     }
 
+    /** 点赞作品 */
     @Operation(summary = "点赞作品")
     @PostMapping("/submission/like/{submissionId}")
     public Result<Void> likeSubmission(
@@ -181,6 +199,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 取消点赞作品 */
     @Operation(summary = "取消点赞作品")
     @DeleteMapping("/submission/like/{submissionId}")
     public Result<Void> unlikeSubmission(
@@ -190,6 +209,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 获取作品评论列表 */
     @Operation(summary = "获取作品评论列表")
     @PostMapping("/submission/comments/{submissionId}")
     public Result<PageResult<SubmissionCommentVO>> getSubmissionComments(
@@ -200,6 +220,7 @@ public class EventController {
         return Result.success(eventService.getSubmissionComments(submissionId, userId, request));
     }
 
+    /** 评论作品 */
     @Operation(summary = "评论作品")
     @PostMapping("/submission/comment")
     public Result<Long> commentSubmission(
@@ -208,6 +229,7 @@ public class EventController {
         return Result.success(eventService.commentSubmission(request, loginUser.getId()));
     }
 
+    /** 删除评论 */
     @Operation(summary = "删除评论")
     @DeleteMapping("/submission/comment/{commentId}")
     public Result<Void> deleteComment(
@@ -217,6 +239,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 点赞评论 */
     @Operation(summary = "点赞评论")
     @PostMapping("/submission/comment/like/{commentId}")
     public Result<Void> likeComment(
@@ -226,6 +249,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 取消点赞评论 */
     @Operation(summary = "取消点赞评论")
     @DeleteMapping("/submission/comment/like/{commentId}")
     public Result<Void> unlikeComment(
@@ -237,6 +261,7 @@ public class EventController {
 
     // ==================== 管理端作品审核接口 ====================
 
+    /** 管理端获取活动作品列表 */
     @Operation(summary = "管理端获取活动作品列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/submissions/{eventId}")
@@ -246,6 +271,7 @@ public class EventController {
         return Result.success(eventService.getAdminSubmissions(eventId, request));
     }
 
+    /** 管理端获取所有作品列表 */
     @Operation(summary = "管理端获取所有作品列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/submissions/all")
@@ -254,6 +280,7 @@ public class EventController {
         return Result.success(eventService.getAllAdminSubmissions(request));
     }
 
+    /** 审核作品 */
     @Operation(summary = "审核作品")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/submission/review")
@@ -264,6 +291,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 管理端获取作品评论列表 */
     @Operation(summary = "管理端获取作品评论列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/submission/comments/{submissionId}")
@@ -273,6 +301,7 @@ public class EventController {
         return Result.success(eventService.getSubmissionComments(submissionId, null, request));
     }
 
+    /** 管理端删除评论 */
     @Operation(summary = "管理端删除评论")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/admin/submission/comment/{commentId}")
@@ -283,6 +312,7 @@ public class EventController {
 
     // ==================== 管理端报名管理接口 ====================
 
+    /** 管理端获取活动报名列表 */
     @Operation(summary = "管理端获取活动报名列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/participations/{eventId}")
@@ -292,6 +322,7 @@ public class EventController {
         return Result.success(eventService.getAdminParticipations(eventId, request));
     }
 
+    /** 管理端获取所有报名列表 */
     @Operation(summary = "管理端获取所有报名列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/participations/all")
@@ -300,6 +331,7 @@ public class EventController {
         return Result.success(eventService.getAdminParticipations(null, request));
     }
 
+    /** 管理端更新参与状态 */
     @Operation(summary = "管理端更新参与状态")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/admin/participation/status")
@@ -310,6 +342,7 @@ public class EventController {
 
     // ==================== 管理端颁奖接口 ====================
 
+    /** 为指定获奖者颁发积分 */
     @Operation(summary = "为指定获奖者颁发积分")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/award-points")
@@ -318,6 +351,7 @@ public class EventController {
         return Result.success();
     }
 
+    /** 批量发放活动所有获奖者积分 */
     @Operation(summary = "批量发放活动所有获奖者积分")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/award-all/{eventId}")

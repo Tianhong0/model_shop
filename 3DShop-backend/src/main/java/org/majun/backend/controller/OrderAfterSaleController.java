@@ -48,6 +48,7 @@ public class OrderAfterSaleController {
     private final OrderAfterSaleService afterSaleService;
     private final MinioUtil minioUtil;
 
+    /** 创建售后申请 */
     @Operation(summary = "Create after-sale")
     @PostMapping("/create")
     public Result<Long> createAfterSale(@AuthenticationPrincipal LoginUser loginUser,
@@ -55,6 +56,7 @@ public class OrderAfterSaleController {
         return Result.success(afterSaleService.createAfterSale(request, loginUser.getId()));
     }
 
+    /** 我的售后列表 */
     @Operation(summary = "My after-sale list")
     @PostMapping("/my/list")
     public Result<PageResult<AfterSaleListVO>> pageMyAfterSales(@AuthenticationPrincipal LoginUser loginUser,
@@ -65,6 +67,7 @@ public class OrderAfterSaleController {
         return Result.success(afterSaleService.pageMyAfterSales(request, loginUser.getId()));
     }
 
+    /** 我的售后详情 */
     @Operation(summary = "My after-sale detail")
     @GetMapping("/my/detail/{afterSaleId}")
     public Result<AfterSaleDetailVO> getMyDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -72,6 +75,7 @@ public class OrderAfterSaleController {
         return Result.success(afterSaleService.getMyAfterSaleDetail(afterSaleId, loginUser.getId()));
     }
 
+    /** 根据售后编号查询我的售后详情 */
     @Operation(summary = "My after-sale detail by sn")
     @GetMapping("/my/detail/by-sn/{afterSaleSn}")
     public Result<AfterSaleDetailVO> getMyDetailBySn(@AuthenticationPrincipal LoginUser loginUser,
@@ -79,6 +83,7 @@ public class OrderAfterSaleController {
         return Result.success(afterSaleService.getMyAfterSaleDetailBySn(afterSaleSn, loginUser.getId()));
     }
 
+    /** 取消我的售后 */
     @Operation(summary = "Cancel my after-sale")
     @DeleteMapping("/my/cancel/{afterSaleId}")
     public Result<Void> cancelAfterSale(@AuthenticationPrincipal LoginUser loginUser,
@@ -87,6 +92,7 @@ public class OrderAfterSaleController {
         return Result.success();
     }
 
+    /** 根据售后编号取消我的售后 */
     @Operation(summary = "Cancel my after-sale by sn")
     @DeleteMapping("/my/cancel/by-sn/{afterSaleSn}")
     public Result<Void> cancelAfterSaleBySn(@AuthenticationPrincipal LoginUser loginUser,
@@ -95,6 +101,7 @@ public class OrderAfterSaleController {
         return Result.success();
     }
 
+    /** 发送售后消息 */
     @Operation(summary = "Send message in after-sale")
     @PostMapping("/my/message/send")
     public Result<Void> sendMyMessage(@AuthenticationPrincipal LoginUser loginUser,
@@ -103,6 +110,7 @@ public class OrderAfterSaleController {
         return Result.success();
     }
 
+    /** 上传售后凭证 */
     @Operation(summary = "Upload after-sale evidence", description = "type: image/video")
     @PostMapping("/my/evidence/upload")
     public Result<String> uploadMyEvidence(@AuthenticationPrincipal LoginUser loginUser,
@@ -120,6 +128,7 @@ public class OrderAfterSaleController {
         }
     }
 
+    /** 分页查询售后消息 */
     @Operation(summary = "Page after-sale messages")
     @PostMapping("/my/message/page")
     public Result<PageResult<AfterSaleMessageVO>> pageMyMessages(@AuthenticationPrincipal LoginUser loginUser,
@@ -127,6 +136,7 @@ public class OrderAfterSaleController {
         return Result.success(afterSaleService.pageMessages(request, loginUser.getId(), false));
     }
 
+    /** 管理员售后列表 */
     @Operation(summary = "Admin after-sale list")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/list")
@@ -137,6 +147,7 @@ public class OrderAfterSaleController {
         return Result.success(afterSaleService.pageAdminAfterSales(request));
     }
 
+    /** 管理员售后详情 */
     @Operation(summary = "Admin after-sale detail")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/detail/{afterSaleId}")
@@ -144,6 +155,7 @@ public class OrderAfterSaleController {
         return Result.success(afterSaleService.getAdminAfterSaleDetail(afterSaleId));
     }
 
+    /** 审核售后申请 */
     @Operation(summary = "Admin audit after-sale")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "REVIEW", module = "售后管理", description = "审核售后申请", targetType = "AFTER_SALE")
@@ -153,6 +165,7 @@ public class OrderAfterSaleController {
         return Result.success();
     }
 
+    /** 执行退款 */
     @Operation(summary = "Admin execute refund")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "REFUND", module = "售后管理", description = "执行退款", targetType = "AFTER_SALE")
@@ -162,6 +175,7 @@ public class OrderAfterSaleController {
         return Result.success();
     }
 
+    /** 管理员发送售后消息 */
     @Operation(summary = "Admin send message")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/message/send")
@@ -171,6 +185,7 @@ public class OrderAfterSaleController {
         return Result.success();
     }
 
+    /** 管理员分页查询售后消息 */
     @Operation(summary = "Admin page messages")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/message/page")

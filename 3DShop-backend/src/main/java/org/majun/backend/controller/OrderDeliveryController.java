@@ -38,6 +38,7 @@ public class OrderDeliveryController {
 
     private final OrderDeliveryService orderDeliveryService;
 
+    /** 我的物流详情 */
     @Operation(summary = "My delivery detail", description = "Query my delivery detail by order serial number")
     @PostMapping("/my/detail")
     public Result<DeliveryDetailVO> getMyDeliveryDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -45,6 +46,7 @@ public class OrderDeliveryController {
         return Result.success(orderDeliveryService.getUserDeliveryByOrderSn(request.getOrderSn(), loginUser.getId()));
     }
 
+    /** 确认收货 */
     @Operation(summary = "Confirm receive", description = "User confirms receive by order serial number")
     @OperationLog(type = "SIGN", module = "物流管理", description = "用户签收", targetType = "ORDER")
     @PostMapping("/my/sign/{orderSn}")
@@ -54,6 +56,7 @@ public class OrderDeliveryController {
         return Result.success();
     }
 
+    /** 发货 */
     @Operation(summary = "Ship order", description = "Create delivery order and mark as shipped")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "SHIP", module = "物流管理", description = "发货", targetType = "ORDER")
@@ -62,6 +65,7 @@ public class OrderDeliveryController {
         return Result.success(orderDeliveryService.shipOrder(request));
     }
 
+    /** 管理员物流列表 */
     @Operation(summary = "Admin delivery list", description = "Admin query delivery list")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/list")
@@ -69,6 +73,7 @@ public class OrderDeliveryController {
         return Result.success(orderDeliveryService.getDeliveryPage(request));
     }
 
+    /** 管理员物流详情 */
     @Operation(summary = "Admin delivery detail", description = "Admin query delivery detail")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/detail/{deliveryId}")
@@ -76,6 +81,7 @@ public class OrderDeliveryController {
         return Result.success(orderDeliveryService.getAdminDeliveryDetail(deliveryId));
     }
 
+    /** 更新物流状态 */
     @Operation(summary = "Update delivery status", description = "Admin update delivery status")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/status")
@@ -84,6 +90,7 @@ public class OrderDeliveryController {
         return Result.success();
     }
 
+    /** 添加物流轨迹 */
     @Operation(summary = "Add delivery track", description = "Admin add manual delivery track")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/track/add")
@@ -91,6 +98,7 @@ public class OrderDeliveryController {
         return Result.success(orderDeliveryService.addTrack(request));
     }
 
+    /** 模拟物流轨迹 */
     @Operation(summary = "Simulate delivery track", description = "Simulate delivery tracks based on receiver address")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/track/simulate")
@@ -99,6 +107,7 @@ public class OrderDeliveryController {
         return Result.success();
     }
 
+    /** 重试自动发货 */
     @Operation(summary = "Retry auto ship", description = "Manually trigger auto-ship for orders that failed to auto-ship")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/retry-ship")

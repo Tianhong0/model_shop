@@ -26,6 +26,7 @@ public class GroupBuyController {
 
     private final GroupBuyService groupBuyService;
 
+    /** 获取拼团活动列表 */
     @Operation(summary = "获取拼团活动列表")
     @PostMapping("/activities")
     public Result<PageResult<GroupBuyActivityVO>> listActivities(@RequestBody(required = false) GroupBuyActivityQueryRequest request) {
@@ -35,12 +36,14 @@ public class GroupBuyController {
         return Result.success(groupBuyService.listUserActivities(request));
     }
 
+    /** 获取活动详情 */
     @Operation(summary = "获取活动详情")
     @GetMapping("/activity/{activityId}")
     public Result<GroupBuyActivityDetailVO> getActivityDetail(@PathVariable Long activityId) {
         return Result.success(groupBuyService.getUserActivityDetail(activityId));
     }
 
+    /** 获取活动下进行中的拼团列表 */
     @Operation(summary = "获取活动下进行中的拼团列表")
     @GetMapping("/activity/{activityId}/ongoing-groups")
     public Result<List<GroupBuyGroupVO>> getOngoingGroupsByActivity(
@@ -49,6 +52,7 @@ public class GroupBuyController {
         return Result.success(groupBuyService.getOngoingGroupsByActivity(activityId, limit));
     }
 
+    /** 发起拼团 */
     @Operation(summary = "发起拼团")
     @PostMapping("/create")
     public Result<GroupBuyCreateResponse> createGroupBuy(
@@ -57,6 +61,7 @@ public class GroupBuyController {
         return Result.success(groupBuyService.createGroupBuy(loginUser.getId(), request));
     }
 
+    /** 参与拼团 */
     @Operation(summary = "参与拼团")
     @PostMapping("/join")
     public Result<GroupBuyJoinResponse> joinGroupBuy(
@@ -65,6 +70,7 @@ public class GroupBuyController {
         return Result.success(groupBuyService.joinGroupBuy(loginUser.getId(), request));
     }
 
+    /** 获取拼团详情 */
     @Operation(summary = "获取拼团详情")
     @GetMapping("/group/{groupId}")
     public Result<GroupBuyGroupDetailVO> getGroupDetail(
@@ -74,6 +80,7 @@ public class GroupBuyController {
         return Result.success(groupBuyService.getGroupDetail(groupId, userId));
     }
 
+    /** 通过分享码获取拼团详情 */
     @Operation(summary = "通过分享码获取拼团详情")
     @GetMapping("/group/by-code/{shareCode}")
     public Result<GroupBuyGroupDetailVO> getGroupByShareCode(
@@ -83,6 +90,7 @@ public class GroupBuyController {
         return Result.success(groupBuyService.getGroupByShareCode(shareCode, userId));
     }
 
+    /** 获取我参与的拼团列表 */
     @Operation(summary = "获取我参与的拼团列表")
     @PostMapping("/my-groups")
     public Result<PageResult<GroupBuyGroupVO>> getMyGroups(
@@ -94,6 +102,7 @@ public class GroupBuyController {
         return Result.success(groupBuyService.getMyGroups(loginUser.getId(), request));
     }
 
+    /** 取消拼团 */
     @Operation(summary = "取消拼团")
     @DeleteMapping("/cancel/{groupId}")
     public Result<Void> cancelGroupBuy(
@@ -103,12 +112,14 @@ public class GroupBuyController {
         return Result.success();
     }
 
+    /** 计算批量打印价格 */
     @Operation(summary = "计算批量打印价格")
     @PostMapping("/calculate-batch-price")
     public Result<BatchPriceResultVO> calculateBatchPrice(@Valid @RequestBody BatchPriceCalculateRequest request) {
         return Result.success(groupBuyService.calculateBatchPrice(request));
     }
 
+    /** 为参与者创建订单 */
     @Operation(summary = "为参与者创建订单")
     @PostMapping("/participant/{participantId}/create-order")
     public Result<Long> createOrderForParticipant(
@@ -117,6 +128,7 @@ public class GroupBuyController {
         return Result.success(groupBuyService.createOrderForParticipant(participantId, loginUser.getId()));
     }
 
+    /** 获取批量打印折扣配置 */
     @Operation(summary = "获取批量打印折扣配置")
     @GetMapping("/batch-discount/list")
     public Result<List<SysBatchPrintDiscount>> getBatchDiscountList() {

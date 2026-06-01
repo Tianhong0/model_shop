@@ -63,6 +63,7 @@ public class BountyController {
     private final BountyService bountyService;
     private final BountyPaymentService bountyPaymentService;
 
+    /** 发布悬赏任务 */
     @Operation(summary = "发布悬赏任务")
     @PostMapping("/task/create")
     public Result<Long> createTask(@AuthenticationPrincipal LoginUser loginUser,
@@ -70,6 +71,7 @@ public class BountyController {
         return Result.success(bountyService.createTask(request, loginUser.getId()));
     }
 
+    /** 驳回后重新提交审核 */
     @Operation(summary = "驳回后重新提交审核")
     @PostMapping("/task/resubmit")
     public Result<Void> resubmitTask(@AuthenticationPrincipal LoginUser loginUser,
@@ -78,6 +80,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 悬赏任务分页 */
     @Operation(summary = "悬赏任务分页")
     @PostMapping("/task/page")
     public Result<PageResult<BountyTaskListVO>> pageTasks(@AuthenticationPrincipal LoginUser loginUser,
@@ -88,6 +91,7 @@ public class BountyController {
         return Result.success(bountyService.pageTasks(request, loginUser.getId()));
     }
 
+    /** 悬赏任务详情 */
     @Operation(summary = "悬赏任务详情")
     @GetMapping("/task/detail/{taskId}")
     public Result<BountyTaskDetailVO> taskDetail(@AuthenticationPrincipal LoginUser loginUser,
@@ -95,6 +99,7 @@ public class BountyController {
         return Result.success(bountyService.getTaskDetail(taskId, loginUser.getId()));
     }
 
+    /** 管理员分页查询悬赏任务 */
     @Operation(summary = "管理员分页查询悬赏任务")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/admin/task/page")
@@ -105,6 +110,7 @@ public class BountyController {
         return Result.success(bountyService.pageTasksForAdmin(request));
     }
 
+    /** 管理员查看悬赏任务详情 */
     @Operation(summary = "管理员查看悬赏任务详情")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/task/detail/{taskId}")
@@ -112,6 +118,7 @@ public class BountyController {
         return Result.success(bountyService.getTaskDetailForAdmin(taskId));
     }
 
+    /** 管理员审核悬赏任务 */
     @Operation(summary = "管理员审核悬赏任务")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "REVIEW", module = "悬赏管理", description = "审核悬赏任务", targetType = "BOUNTY_TASK")
@@ -122,6 +129,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 管理员审核取消悬赏 */
     @Operation(summary = "管理员审核取消悬赏")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "REVIEW", module = "悬赏管理", description = "审核取消悬赏", targetType = "BOUNTY_TASK")
@@ -132,6 +140,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 提交竞标 */
     @Operation(summary = "提交竞标")
     @PostMapping("/bid/create")
     public Result<Long> createBid(@AuthenticationPrincipal LoginUser loginUser,
@@ -139,6 +148,7 @@ public class BountyController {
         return Result.success(bountyService.createBid(request, loginUser.getId()));
     }
 
+    /** 修改竞标 */
     @Operation(summary = "修改竞标")
     @PostMapping("/bid/update")
     public Result<Void> updateBid(@AuthenticationPrincipal LoginUser loginUser,
@@ -147,6 +157,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 撤回竞标 */
     @Operation(summary = "撤回竞标")
     @PostMapping("/bid/withdraw/{bidId}")
     public Result<Void> withdrawBid(@AuthenticationPrincipal LoginUser loginUser,
@@ -155,6 +166,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 选中标 */
     @Operation(summary = "选中标")
     @PostMapping("/bid/pick")
     public Result<Void> pickBid(@AuthenticationPrincipal LoginUser loginUser,
@@ -163,6 +175,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 提交交付 */
     @Operation(summary = "提交交付")
     @PostMapping("/delivery/submit")
     public Result<Long> submitDelivery(@AuthenticationPrincipal LoginUser loginUser,
@@ -170,6 +183,7 @@ public class BountyController {
         return Result.success(bountyService.submitDelivery(request, loginUser.getId()));
     }
 
+    /** 验收交付 */
     @Operation(summary = "验收交付")
     @PostMapping("/delivery/accept")
     public Result<Void> acceptDelivery(@AuthenticationPrincipal LoginUser loginUser,
@@ -178,6 +192,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 申请取消悬赏 */
     @Operation(summary = "申请取消悬赏")
     @PostMapping("/task/cancel-request")
     public Result<Void> requestCancelTask(@AuthenticationPrincipal LoginUser loginUser,
@@ -186,6 +201,7 @@ public class BountyController {
         return Result.success();
     }
 
+    /** 发起改价 */
     @Operation(summary = "发起改价")
     @PostMapping("/price/change/apply")
     public Result<Long> applyPriceChange(@AuthenticationPrincipal LoginUser loginUser,
@@ -193,6 +209,7 @@ public class BountyController {
         return Result.success(bountyService.applyPriceChange(request, loginUser.getId()));
     }
 
+    /** 确认改价 */
     @Operation(summary = "确认改价")
     @PostMapping("/price/change/confirm")
     public Result<Void> confirmPriceChange(@AuthenticationPrincipal LoginUser loginUser,
@@ -203,6 +220,7 @@ public class BountyController {
 
     // ==================== 托管金支付接口 ====================
 
+    /** 创建托管金支付 */
     @Operation(summary = "创建托管金支付")
     @PostMapping("/escrow/pay/create/{taskId}")
     public Result<BountyPayCreateResponse> createEscrowPay(@AuthenticationPrincipal LoginUser loginUser,
@@ -210,6 +228,7 @@ public class BountyController {
         return Result.success(bountyPaymentService.createEscrowPayOrder(taskId, loginUser.getId()));
     }
 
+    /** 查询托管金支付状态 */
     @Operation(summary = "查询托管金支付状态")
     @GetMapping("/escrow/pay/status/{taskId}")
     public Result<BountyPayStatusVO> queryEscrowPay(@AuthenticationPrincipal LoginUser loginUser,
@@ -217,6 +236,7 @@ public class BountyController {
         return Result.success(bountyPaymentService.queryEscrowPayStatus(taskId, loginUser.getId()));
     }
 
+    /** 同步托管金支付状态 */
     @Operation(summary = "同步托管金支付状态")
     @PostMapping("/escrow/pay/sync/{taskId}")
     public Result<BountyPayStatusVO> syncEscrowPay(@AuthenticationPrincipal LoginUser loginUser,
@@ -226,6 +246,7 @@ public class BountyController {
 
     // ==================== 改价补差支付接口 ====================
 
+    /** 创建改价补差支付 */
     @Operation(summary = "创建改价补差支付")
     @PostMapping("/price/change/pay/create/{priceChangeId}")
     public Result<BountyPayCreateResponse> createPriceIncreasePay(@AuthenticationPrincipal LoginUser loginUser,
@@ -233,6 +254,7 @@ public class BountyController {
         return Result.success(bountyPaymentService.createPriceIncreasePayOrder(priceChangeId, loginUser.getId()));
     }
 
+    /** 查询改价补差支付状态 */
     @Operation(summary = "查询改价补差支付状态")
     @GetMapping("/price/change/pay/status/{priceChangeId}")
     public Result<BountyPayStatusVO> queryPriceIncreasePay(@AuthenticationPrincipal LoginUser loginUser,
@@ -240,6 +262,7 @@ public class BountyController {
         return Result.success(bountyPaymentService.queryPriceIncreasePayStatus(priceChangeId, loginUser.getId()));
     }
 
+    /** 按任务查询改价补差支付状态 */
     @Operation(summary = "按任务查询改价补差支付状态")
     @GetMapping("/price/change/pay/status/by-task/{taskId}")
     public Result<BountyPayStatusVO> queryPriceIncreasePayByTask(@AuthenticationPrincipal LoginUser loginUser,
@@ -247,6 +270,7 @@ public class BountyController {
         return Result.success(bountyPaymentService.queryPriceIncreasePayStatusByTask(taskId, loginUser.getId(), isAdmin(loginUser)));
     }
 
+    /** 同步改价补差支付状态 */
     @Operation(summary = "同步改价补差支付状态")
     @PostMapping("/price/change/pay/sync/{priceChangeId}")
     public Result<BountyPayStatusVO> syncPriceIncreasePay(@AuthenticationPrincipal LoginUser loginUser,
@@ -254,6 +278,7 @@ public class BountyController {
         return Result.success(bountyPaymentService.syncPriceIncreasePayStatus(priceChangeId, loginUser.getId()));
     }
 
+    /** 按任务同步改价补差支付状态 */
     @Operation(summary = "按任务同步改价补差支付状态")
     @PostMapping("/price/change/pay/sync/by-task/{taskId}")
     public Result<BountyPayStatusVO> syncPriceIncreasePayByTask(@AuthenticationPrincipal LoginUser loginUser,
@@ -261,6 +286,7 @@ public class BountyController {
         return Result.success(bountyPaymentService.syncPriceIncreasePayStatusByTask(taskId, loginUser.getId(), isAdmin(loginUser)));
     }
 
+    /** 悬赏补差支付支付宝回调 */
     @Operation(summary = "悬赏补差支付支付宝回调")
     @PostMapping("/pay/alipay/notify")
     public String alipayNotify(HttpServletRequest request) {
@@ -287,6 +313,7 @@ public class BountyController {
                 .anyMatch(item -> "ROLE_ADMIN".equals(item.getAuthority()));
     }
 
+    /** 发送消息 */
     @Operation(summary = "发送消息")
     @PostMapping("/message/send")
     public Result<Long> sendMessage(@AuthenticationPrincipal LoginUser loginUser,
@@ -294,6 +321,7 @@ public class BountyController {
         return Result.success(bountyService.sendMessage(request, loginUser.getId(), "USER"));
     }
 
+    /** 消息分页 */
     @Operation(summary = "消息分页")
     @GetMapping("/message/page")
     public Result<PageResult<BountyMessageVO>> pageMessages(@AuthenticationPrincipal LoginUser loginUser,
@@ -305,6 +333,7 @@ public class BountyController {
 
     // ==================== 评价相关接口 ====================
 
+    /** 创建悬赏评价 */
     @Operation(summary = "创建悬赏评价")
     @PostMapping("/rating/create")
     public Result<Long> createRating(@AuthenticationPrincipal LoginUser loginUser,
@@ -312,6 +341,7 @@ public class BountyController {
         return Result.success(bountyService.createRating(request, loginUser.getId()));
     }
 
+    /** 获取任务评价 */
     @Operation(summary = "获取任务评价")
     @GetMapping("/rating/task/{taskId}")
     public Result<BountyRatingVO> getRatingByTask(@AuthenticationPrincipal LoginUser loginUser,
@@ -319,6 +349,7 @@ public class BountyController {
         return Result.success(bountyService.getRatingByTask(taskId, loginUser.getId()));
     }
 
+    /** 获取设计者评价列表 */
     @Operation(summary = "获取设计者评价列表")
     @GetMapping("/rating/designer/{designerId}")
     public Result<PageResult<BountyRatingVO>> getDesignerRatings(@PathVariable Long designerId,
@@ -329,6 +360,7 @@ public class BountyController {
 
     // ==================== 申诉相关接口 ====================
 
+    /** 创建评价申诉 */
     @Operation(summary = "创建评价申诉")
     @PostMapping("/rating/appeal/create")
     public Result<Long> createRatingAppeal(@AuthenticationPrincipal LoginUser loginUser,
@@ -336,6 +368,7 @@ public class BountyController {
         return Result.success(bountyService.createRatingAppeal(request, loginUser.getId()));
     }
 
+    /** 获取我的申诉列表 */
     @Operation(summary = "获取我的申诉列表")
     @GetMapping("/rating/appeal/my")
     public Result<PageResult<BountyRatingAppealVO>> getMyAppeals(@AuthenticationPrincipal LoginUser loginUser,
@@ -344,6 +377,7 @@ public class BountyController {
         return Result.success(bountyService.getMyAppeals(loginUser.getId(), pageNum, pageSize));
     }
 
+    /** 管理员获取申诉列表 */
     @Operation(summary = "管理员获取申诉列表")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin/rating/appeal/list")
@@ -353,6 +387,7 @@ public class BountyController {
         return Result.success(bountyService.getAllAppeals(pageNum, pageSize, status));
     }
 
+    /** 管理员审核申诉 */
     @Operation(summary = "管理员审核申诉")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @OperationLog(type = "REVIEW", module = "悬赏管理", description = "审核评价申诉", targetType = "RATING_APPEAL")
@@ -365,6 +400,7 @@ public class BountyController {
 
     // ==================== 信誉相关接口 ====================
 
+    /** 获取设计者信誉信息 */
     @Operation(summary = "获取设计者信誉信息")
     @GetMapping("/reputation/{designerId}")
     public Result<DesignerReputationVO> getDesignerReputation(@PathVariable Long designerId) {

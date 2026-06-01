@@ -14,3 +14,7 @@
 upload.py
 .mcp.json
 wendang
+3DShop-backend/src/main/java/org/majun/backend/config/RabbitMqConfig.java
+3DShop-backend/src/main/java/org/majun/backend/message/PrintJobConsumer.java
+3DShop-backend/src/main/java/org/majun/backend/message/PrintJobMessage.java
+3DShop-backend/src/main/java/org/majun/backend/message/PrintJobProducer.java
