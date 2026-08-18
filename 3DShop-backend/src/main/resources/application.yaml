@@ -15,8 +15,8 @@
     mail:
       host: smtp.163.com
       port: 465
-      username: 15693096384@163.com
-      password: RA7R83Bj7YVxAv3B
+      username: xxx
+      password: xxx
       protocol: smtp
       properties:
         mail:
@@ -44,11 +44,11 @@
     prefix: "Bearer "
 
   minio:
-    endpoint: http://127.0.0.1:9000
-#    endpoint: http://120.48.50.30:9000
-    public-endpoint: http://120.48.50.30:9000
+    endpoint: http://xxx:9000
+#    endpoint: http://xxx:9000
+    public-endpoint: http://xxx:9000
     accessKey: admin
-    secretKey: a1900574183
+    secretKey: xxx
     bucketName: shop
 
   # 自定义切片工具配置
